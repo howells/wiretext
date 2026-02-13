@@ -14,8 +14,9 @@
   --color-grid-dot: #131320;
   --color-selection: rgba(108, 138, 255, 0.15);
   --color-selection-border: rgba(108, 138, 255, 0.5);
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono",
-    Menlo, Consolas, "Liberation Mono", monospace;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
 }
 
 html,

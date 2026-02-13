@@ -4,62 +4,78 @@ import type { ToolHandler } from "./types";
 
 let dragStart: { col: number; row: number } | null = null;
 
-function snapToAxis(
-	startCol: number,
-	startRow: number,
-	endCol: number,
-	endRow: number,
+/** Snap to horizontal, vertical, or 45° diagonal */
+function snapDirection(
+  startCol: number,
+  startRow: number,
+  endCol: number,
+  endRow: number
 ): { col: number; row: number } {
-	const dx = Math.abs(endCol - startCol);
-	const dy = Math.abs(endRow - startRow);
-	if (dx >= dy) {
-		return { col: endCol, row: startRow };
-	}
-	return { col: startCol, row: endRow };
+  const dx = endCol - startCol;
+  const dy = endRow - startRow;
+  const adx = Math.abs(dx);
+  const ady = Math.abs(dy);
+
+  if (adx > ady * 2) {
+    return { col: endCol, row: startRow };
+  }
+  if (ady > adx * 2) {
+    return { col: startCol, row: endRow };
+  }
+  const dist = Math.min(adx, ady);
+  return {
+    col: startCol + dist * Math.sign(dx),
+    row: startRow + dist * Math.sign(dy),
+  };
 }
 
 export const arrowTool: ToolHandler = {
-	name: "arrow",
-	cursor: "crosshair",
+  name: "arrow",
+  cursor: "crosshair",
 
-	onMouseDown(col, row) {
-		dragStart = { col, row };
-		useEditorStore.getState().setDraft({
-			id: "__draft__",
-			type: "arrow",
-			position: { col, row },
-			endPosition: { col, row },
-			zIndex: useEditorStore.getState().objects.length,
-		} as ArrowObject);
-	},
+  onMouseDown(col, row) {
+    dragStart = { col, row };
+    useEditorStore.getState().setDraft({
+      id: "__draft__",
+      type: "arrow",
+      position: { col, row },
+      endPosition: { col, row },
+      zIndex: useEditorStore.getState().objects.length,
+    } as ArrowObject);
+  },
 
-	onMouseMove(col, row) {
-		if (!dragStart) return;
-		const end = snapToAxis(dragStart.col, dragStart.row, col, row);
-		useEditorStore.getState().setDraft({
-			id: "__draft__",
-			type: "arrow",
-			position: { col: dragStart.col, row: dragStart.row },
-			endPosition: end,
-			zIndex: useEditorStore.getState().objects.length,
-		} as ArrowObject);
-	},
+  onMouseMove(col, row) {
+    if (!dragStart) {
+      return;
+    }
+    const end = snapDirection(dragStart.col, dragStart.row, col, row);
+    useEditorStore.getState().setDraft({
+      id: "__draft__",
+      type: "arrow",
+      position: { col: dragStart.col, row: dragStart.row },
+      endPosition: end,
+      zIndex: useEditorStore.getState().objects.length,
+    } as ArrowObject);
+  },
 
-	onMouseUp(col, row) {
-		if (!dragStart) return;
-		const end = snapToAxis(dragStart.col, dragStart.row, col, row);
+  onMouseUp(col, row) {
+    if (!dragStart) {
+      return;
+    }
+    const end = snapDirection(dragStart.col, dragStart.row, col, row);
+    const state = useEditorStore.getState();
+    state.setDraft(null);
 
-		useEditorStore.getState().setDraft(null);
+    if (end.col !== dragStart.col || end.row !== dragStart.row) {
+      state.addObject({
+        type: "arrow",
+        position: { col: dragStart.col, row: dragStart.row },
+        endPosition: end,
+        zIndex: state.objects.length,
+      });
+    }
 
-		if (end.col !== dragStart.col || end.row !== dragStart.row) {
-			useEditorStore.getState().addObject({
-				type: "arrow",
-				position: { col: dragStart.col, row: dragStart.row },
-				endPosition: end,
-				zIndex: useEditorStore.getState().objects.length,
-			});
-		}
-
-		dragStart = null;
-	},
+    dragStart = null;
+    state.setActiveTool("select");
+  },
 };

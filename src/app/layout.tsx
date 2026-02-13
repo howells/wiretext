@@ -1,26 +1,27 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const mono = JetBrains_Mono({
-	subsets: ["latin"],
-	variable: "--font-mono",
+const mono = localFont({
+  src: "./fonts/JetBrainsMono-Regular.woff2",
+  variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-	title: "Wiretext — Wireframe with text",
-	description:
-		"A spatial design tool where everything renders as Unicode box-drawing characters. Share as text.",
+  title: "Wiretext — Wireframe with text",
+  description:
+    "A spatial design tool where everything renders as Unicode box-drawing characters. Share as text.",
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-	return (
-		<html lang="en" className={mono.variable}>
-			<body className="font-mono antialiased">{children}</body>
-		</html>
-	);
+  return (
+    <html className={mono.variable} lang="en">
+      <body className="font-mono antialiased">{children}</body>
+    </html>
+  );
 }
