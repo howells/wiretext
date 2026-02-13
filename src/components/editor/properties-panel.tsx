@@ -310,13 +310,13 @@ function ComponentProperties({
         <div>
           <FieldLabel>Columns</FieldLabel>
           <div className="flex flex-col gap-1">
-            {(obj.columns ?? ["Col A", "Col B"]).map((colName, i) => (
+            {(obj.columns ?? []).map((colName, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: editable list without stable IDs
               <div className="flex items-center gap-1" key={i}>
                 <input
                   className="flex-1 rounded border border-border bg-bg px-1.5 py-0.5 text-text text-xs outline-none focus:border-accent"
                   onChange={(e) => {
-                    const cols = [...(obj.columns ?? ["Col A", "Col B"])];
+                    const cols = [...(obj.columns ?? [])];
                     cols[i] = e.target.value;
                     updateObject(obj.id, {
                       columns: cols,
@@ -325,11 +325,11 @@ function ComponentProperties({
                   type="text"
                   value={colName}
                 />
-                {(obj.columns ?? ["Col A", "Col B"]).length > 1 && (
+                {(obj.columns ?? []).length > 1 && (
                   <button
                     className="rounded px-1 text-text-dim text-xs hover:text-text"
                     onClick={() => {
-                      const cols = [...(obj.columns ?? ["Col A", "Col B"])];
+                      const cols = [...(obj.columns ?? [])];
                       cols.splice(i, 1);
                       updateObject(obj.id, {
                         columns: cols,
@@ -346,7 +346,7 @@ function ComponentProperties({
             <button
               className="rounded bg-surface-hover px-2 py-0.5 text-text-dim text-xs hover:text-text"
               onClick={() => {
-                const cols = [...(obj.columns ?? ["Col A", "Col B"])];
+                const cols = [...(obj.columns ?? [])];
                 cols.push(`Col ${String.fromCharCode(65 + cols.length)}`);
                 updateObject(obj.id, { columns: cols } as Partial<WireObject>);
               }}
@@ -358,31 +358,84 @@ function ComponentProperties({
         </div>
       )}
 
-      {/* Tabs: tab management */}
-      {obj.componentType === "tabs" && (
+      {/* Navbar: nav item management */}
+      {obj.componentType === "navbar" && (
         <div>
-          <FieldLabel>Tabs</FieldLabel>
+          <FieldLabel>Nav Items</FieldLabel>
           <div className="flex flex-col gap-1">
-            {(obj.tabs ?? ["Tab 1", "Tab 2", "Tab 3"]).map((tabName, i) => (
+            {(obj.navItems ?? []).map((itemName, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: editable list without stable IDs
               <div className="flex items-center gap-1" key={i}>
                 <input
                   className="flex-1 rounded border border-border bg-bg px-1.5 py-0.5 text-text text-xs outline-none focus:border-accent"
                   onChange={(e) => {
-                    const tabs = [...(obj.tabs ?? ["Tab 1", "Tab 2", "Tab 3"])];
+                    const items = [...(obj.navItems ?? [])];
+                    items[i] = e.target.value;
+                    updateObject(obj.id, {
+                      navItems: items,
+                    } as Partial<WireObject>);
+                  }}
+                  type="text"
+                  value={itemName}
+                />
+                {(obj.navItems ?? []).length > 1 && (
+                  <button
+                    className="rounded px-1 text-text-dim text-xs hover:text-text"
+                    onClick={() => {
+                      const items = [...(obj.navItems ?? [])];
+                      items.splice(i, 1);
+                      updateObject(obj.id, {
+                        navItems: items,
+                      } as Partial<WireObject>);
+                    }}
+                    title="Remove item"
+                    type="button"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              className="rounded bg-surface-hover px-2 py-0.5 text-text-dim text-xs hover:text-text"
+              onClick={() => {
+                const items = [...(obj.navItems ?? [])];
+                items.push(`Item ${items.length + 1}`);
+                updateObject(obj.id, {
+                  navItems: items,
+                } as Partial<WireObject>);
+              }}
+              type="button"
+            >
+              + Add item
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tabs: tab management */}
+      {obj.componentType === "tabs" && (
+        <div>
+          <FieldLabel>Tabs</FieldLabel>
+          <div className="flex flex-col gap-1">
+            {(obj.tabs ?? []).map((tabName, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: editable list without stable IDs
+              <div className="flex items-center gap-1" key={i}>
+                <input
+                  className="flex-1 rounded border border-border bg-bg px-1.5 py-0.5 text-text text-xs outline-none focus:border-accent"
+                  onChange={(e) => {
+                    const tabs = [...(obj.tabs ?? [])];
                     tabs[i] = e.target.value;
                     updateObject(obj.id, { tabs } as Partial<WireObject>);
                   }}
                   type="text"
                   value={tabName}
                 />
-                {(obj.tabs ?? ["Tab 1", "Tab 2", "Tab 3"]).length > 1 && (
+                {(obj.tabs ?? []).length > 1 && (
                   <button
                     className="rounded px-1 text-text-dim text-xs hover:text-text"
                     onClick={() => {
-                      const tabs = [
-                        ...(obj.tabs ?? ["Tab 1", "Tab 2", "Tab 3"]),
-                      ];
+                      const tabs = [...(obj.tabs ?? [])];
                       tabs.splice(i, 1);
                       updateObject(obj.id, { tabs } as Partial<WireObject>);
                     }}
@@ -397,7 +450,7 @@ function ComponentProperties({
             <button
               className="rounded bg-surface-hover px-2 py-0.5 text-text-dim text-xs hover:text-text"
               onClick={() => {
-                const tabs = [...(obj.tabs ?? ["Tab 1", "Tab 2", "Tab 3"])];
+                const tabs = [...(obj.tabs ?? [])];
                 tabs.push(`Tab ${tabs.length + 1}`);
                 updateObject(obj.id, { tabs } as Partial<WireObject>);
               }}

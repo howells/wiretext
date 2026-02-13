@@ -440,6 +440,7 @@ describe("compose", () => {
       height: 8,
       borderStyle: "single",
       zIndex: 0,
+      columns: ["Col A", "Col B"],
     };
     const result = gridToString(compose([table], { cols: 30, rows: 10 }));
     const lines = result.split("\n");
@@ -747,6 +748,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      tabs: ["Tab 1", "Tab 2", "Tab 3"],
     };
     const result = gridToString(compose([tabs], { cols: 35, rows: 5 }));
     expect(result).toContain("Tab 1");

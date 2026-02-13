@@ -286,7 +286,7 @@ function stampComponent(grid: string[][], obj: ComponentObject) {
     }
     case "table": {
       if (height >= 5) {
-        const cols = obj.columns ?? ["Col A", "Col B"];
+        const cols = obj.columns ?? [];
         const innerW = width - 2;
         const colW = Math.floor(innerW / cols.length);
 
@@ -352,13 +352,14 @@ function stampComponent(grid: string[][], obj: ComponentObject) {
       // Hamburger + nav items
       const mid = row + Math.floor(height / 2);
       stampText(grid, col + 2, mid, "≡");
-      const items = obj.label ?? "Home  About  Contact";
-      stampText(grid, col + 5, mid, items);
+      const navItems = obj.navItems ?? [];
+      const navStr = navItems.join("  ");
+      stampText(grid, col + 5, mid, navStr);
       break;
     }
     case "tabs": {
       const mid = row + Math.floor(height / 2);
-      const tabNames = obj.tabs ?? ["Tab 1", "Tab 2", "Tab 3"];
+      const tabNames = obj.tabs ?? [];
       const tabStr = tabNames.join(" │ ");
       stampText(grid, col + 2, mid, tabStr);
       break;

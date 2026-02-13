@@ -70,6 +70,7 @@ export interface ComponentObject extends BaseObject {
   progress?: number;
   columns?: string[];
   tabs?: string[];
+  navItems?: string[];
 }
 
 export type WireObject =

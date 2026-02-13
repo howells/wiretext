@@ -43,6 +43,11 @@ export function useCanvasEvents() {
           height: def.defaultHeight,
           borderStyle: "single",
           zIndex: state.objects.length,
+          ...(pending === "tabs" && { tabs: ["Tab 1", "Tab 2", "Tab 3"] }),
+          ...(pending === "navbar" && {
+            navItems: ["Home", "About", "Contact"],
+          }),
+          ...(pending === "table" && { columns: ["Col A", "Col B"] }),
         });
         state.setPendingComponent(null);
         state.setActiveTool("select");
@@ -57,9 +62,15 @@ export function useCanvasEvents() {
 
   const onMouseMove = useCallback(
     (col: number, row: number, e: ReactMouseEvent) => {
-      // Detect resize handle hover for cursor
+      // Detect resize/endpoint handle hover for cursor
       const handle = getHoveredHandle(col, row);
-      hoverCursorRef.current = handle ? getResizeCursor(handle) : null;
+      if (handle === "endpoint") {
+        hoverCursorRef.current = "crosshair";
+      } else if (handle) {
+        hoverCursorRef.current = getResizeCursor(handle);
+      } else {
+        hoverCursorRef.current = null;
+      }
 
       getActiveHandler()?.onMouseMove?.(col, row, e);
     },
