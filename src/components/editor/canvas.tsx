@@ -201,9 +201,10 @@ export function Canvas({
   const gridPixelHeight = gridSize.rows * metrics.lineHeight;
 
   // Build selection overlay rects with handle info
-  const HANDLE_SIZE = 6;
+  const HANDLE_SIZE = 7;
   const HALF = HANDLE_SIZE / 2;
   const PAD = 5; // padding between object edge and bounding box
+  const INSET = 4; // how far inside the bounding box handles sit
 
   const selectionRects = objects
     .filter((obj) => selection.has(obj.id))
@@ -268,16 +269,32 @@ export function Canvas({
         >
           {rect.resizable &&
             [
-              // Corners
-              { key: "nw", left: -HALF, top: -HALF },
-              { key: "ne", left: rect.w - HALF, top: -HALF },
-              { key: "sw", left: -HALF, top: rect.h - HALF },
-              { key: "se", left: rect.w - HALF, top: rect.h - HALF },
-              // Edge midpoints
-              { key: "n", left: rect.w / 2 - HALF, top: -HALF },
-              { key: "s", left: rect.w / 2 - HALF, top: rect.h - HALF },
-              { key: "w", left: -HALF, top: rect.h / 2 - HALF },
-              { key: "e", left: rect.w - HALF, top: rect.h / 2 - HALF },
+              // Corners (inset inside the bounding box)
+              { key: "nw", left: INSET, top: INSET },
+              { key: "ne", left: rect.w - INSET - HANDLE_SIZE, top: INSET },
+              {
+                key: "sw",
+                left: INSET,
+                top: rect.h - INSET - HANDLE_SIZE,
+              },
+              {
+                key: "se",
+                left: rect.w - INSET - HANDLE_SIZE,
+                top: rect.h - INSET - HANDLE_SIZE,
+              },
+              // Edge midpoints (inset)
+              { key: "n", left: rect.w / 2 - HALF, top: INSET },
+              {
+                key: "s",
+                left: rect.w / 2 - HALF,
+                top: rect.h - INSET - HANDLE_SIZE,
+              },
+              { key: "w", left: INSET, top: rect.h / 2 - HALF },
+              {
+                key: "e",
+                left: rect.w - INSET - HANDLE_SIZE,
+                top: rect.h / 2 - HALF,
+              },
             ].map((h) => (
               <div
                 key={h.key}
@@ -289,7 +306,7 @@ export function Canvas({
                   height: HANDLE_SIZE,
                   background: "var(--color-accent)",
                   border: "1px solid var(--color-bg)",
-                  borderRadius: 1,
+                  borderRadius: "50%",
                 }}
               />
             ))}

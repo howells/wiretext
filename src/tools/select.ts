@@ -96,13 +96,14 @@ export function getResizeHandle(
   const right = bCol + obj.width - 1;
   const bottom = bRow + obj.height - 1;
 
-  // Allow 1-cell tolerance outside object bounds to match visual handle positions
-  const onLeft = col >= bCol - 1 && col <= bCol;
-  const onRight = col >= right && col <= right + 1;
-  const onTop = row >= bRow - 1 && row <= bRow;
-  const onBottom = row >= bottom && row <= bottom + 1;
-  const inColRange = col >= bCol - 1 && col <= right + 1;
-  const inRowRange = row >= bRow - 1 && row <= bottom + 1;
+  // 3-cell hit zone around each edge for easier grabbing
+  const T = 3;
+  const onLeft = col >= bCol - T && col <= bCol + 1;
+  const onRight = col >= right - 1 && col <= right + T;
+  const onTop = row >= bRow - T && row <= bRow + 1;
+  const onBottom = row >= bottom - 1 && row <= bottom + T;
+  const inColRange = col >= bCol - T && col <= right + T;
+  const inRowRange = row >= bRow - T && row <= bottom + T;
 
   // Corners first (must be in both edge zones)
   if (onTop && onLeft) {
@@ -163,6 +164,23 @@ export const selectTool: ToolHandler = {
 
   onMouseDown(col, row, e) {
     const state = useEditorStore.getState();
+
+    // Check resize handles on selected objects FIRST (before general hit test)
+    // This lets users grab edges even when clicking slightly outside object bounds
+    for (const obj of state.objects) {
+      if (state.selection.has(obj.id) && hasRectBounds(obj)) {
+        const handle = getResizeHandle(col, row, obj);
+        if (handle) {
+          resizeHandle = handle;
+          dragStart = { col, row };
+          dragTarget = obj.id;
+          originalPosition = { ...obj.position };
+          originalSize = { width: obj.width, height: obj.height };
+          return;
+        }
+      }
+    }
+
     const hit = hitTest(col, row, state.objects);
 
     if (!hit) {
@@ -183,19 +201,6 @@ export const selectTool: ToolHandler = {
       if (hit.type === "box" || hit.type === "component") {
         state.setEditingLabelId(hit.id);
         state.selectObject(hit.id);
-        return;
-      }
-    }
-
-    // Check for resize handle on selected rect-bounded objects
-    if (state.selection.has(hit.id)) {
-      const handle = getResizeHandle(col, row, hit);
-      if (handle && hasRectBounds(hit)) {
-        resizeHandle = handle;
-        dragStart = { col, row };
-        dragTarget = hit.id;
-        originalPosition = { ...hit.position };
-        originalSize = { width: hit.width, height: hit.height };
         return;
       }
     }
