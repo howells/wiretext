@@ -14,9 +14,6 @@
       "suspicious": {
         "noUnknownAtRules": "off"
       },
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "off"
-      },
       "security": {
         "noDangerouslySetInnerHtml": "off"
       },
