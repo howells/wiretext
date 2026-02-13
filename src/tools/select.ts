@@ -1,4 +1,4 @@
-import type { WireObject } from "@/engine/types";
+import type { ArrowObject, LineObject, WireObject } from "@/engine/types";
 import { hasRectBounds } from "@/engine/types";
 import { useEditorStore } from "@/store";
 import type { ToolHandler } from "./types";
@@ -6,7 +6,9 @@ import type { ToolHandler } from "./types";
 let dragStart: { col: number; row: number } | null = null;
 let dragTarget: string | null = null;
 let resizeHandle: string | null = null;
+let endpointHandle: "start" | "end" | null = null;
 let originalPosition: { col: number; row: number } | null = null;
+let originalEndPosition: { col: number; row: number } | null = null;
 let originalSize: { width: number; height: number } | null = null;
 
 export type ResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
@@ -137,20 +139,51 @@ export function getResizeCursor(handle: ResizeHandle): string {
   return HANDLE_CURSORS[handle];
 }
 
-/** Check if a grid point is over a resize handle of any selected object */
+function hasLineEnds(obj: WireObject): obj is LineObject | ArrowObject {
+  return obj.type === "line" || obj.type === "arrow";
+}
+
+/** Check if a point is near a line/arrow endpoint (within 1 cell) */
+function getEndpointHandle(
+  col: number,
+  row: number,
+  obj: LineObject | ArrowObject
+): "start" | "end" | null {
+  const { col: c1, row: r1 } = obj.position;
+  const { col: c2, row: r2 } = obj.endPosition;
+  // Check end first so dragging overlapping endpoints prefers the arrowhead
+  if (Math.abs(col - c2) <= 1 && Math.abs(row - r2) <= 1) {
+    return "end";
+  }
+  if (Math.abs(col - c1) <= 1 && Math.abs(row - r1) <= 1) {
+    return "start";
+  }
+  return null;
+}
+
+/** Check if a grid point is over a resize/endpoint handle of any selected object */
 export function getHoveredHandle(
   col: number,
   row: number
-): ResizeHandle | null {
+): ResizeHandle | "endpoint" | null {
   const state = useEditorStore.getState();
   if (state.activeTool !== "select") {
     return null;
   }
   for (const obj of state.objects) {
-    if (state.selection.has(obj.id)) {
+    if (!state.selection.has(obj.id)) {
+      continue;
+    }
+    if (hasRectBounds(obj)) {
       const handle = getResizeHandle(col, row, obj);
       if (handle) {
         return handle;
+      }
+    }
+    if (hasLineEnds(obj)) {
+      const ep = getEndpointHandle(col, row, obj);
+      if (ep) {
+        return "endpoint";
       }
     }
   }
@@ -164,10 +197,12 @@ export const selectTool: ToolHandler = {
   onMouseDown(col, row, e) {
     const state = useEditorStore.getState();
 
-    // Check resize handles on selected objects FIRST (before general hit test)
-    // This lets users grab edges even when clicking slightly outside object bounds
+    // Check resize/endpoint handles on selected objects FIRST (before general hit test)
     for (const obj of state.objects) {
-      if (state.selection.has(obj.id) && hasRectBounds(obj)) {
+      if (!state.selection.has(obj.id)) {
+        continue;
+      }
+      if (hasRectBounds(obj)) {
         const handle = getResizeHandle(col, row, obj);
         if (handle) {
           resizeHandle = handle;
@@ -175,6 +210,17 @@ export const selectTool: ToolHandler = {
           dragTarget = obj.id;
           originalPosition = { ...obj.position };
           originalSize = { width: obj.width, height: obj.height };
+          return;
+        }
+      }
+      if (hasLineEnds(obj)) {
+        const ep = getEndpointHandle(col, row, obj);
+        if (ep) {
+          endpointHandle = ep;
+          dragStart = { col, row };
+          dragTarget = obj.id;
+          originalPosition = { ...obj.position };
+          originalEndPosition = { ...obj.endPosition };
           return;
         }
       }
@@ -197,10 +243,19 @@ export const selectTool: ToolHandler = {
         state.selectObject(hit.id);
         return;
       }
-      if (hit.type === "box" || hit.type === "component") {
+      if (hit.type === "box") {
         state.setEditingLabelId(hit.id);
         state.selectObject(hit.id);
         return;
+      }
+      // Only allow label editing on components that have a single centered label
+      if (hit.type === "component") {
+        const noInlineEdit = new Set(["tabs", "navbar", "table", "progress"]);
+        if (!noInlineEdit.has(hit.componentType)) {
+          state.setEditingLabelId(hit.id);
+          state.selectObject(hit.id);
+          return;
+        }
       }
     }
 
@@ -254,6 +309,35 @@ export const selectTool: ToolHandler = {
       return;
     }
 
+    // Endpoint drag mode for lines/arrows
+    if (endpointHandle && originalPosition && originalEndPosition) {
+      const deltaCol = col - dragStart.col;
+      const deltaRow = row - dragStart.row;
+      const obj = state.objects.find((o) => o.id === dragTarget);
+      if (obj && hasLineEnds(obj)) {
+        const newPos =
+          endpointHandle === "start"
+            ? {
+                col: originalPosition.col + deltaCol,
+                row: originalPosition.row + deltaRow,
+              }
+            : obj.position;
+        const newEnd =
+          endpointHandle === "end"
+            ? {
+                col: originalEndPosition.col + deltaCol,
+                row: originalEndPosition.row + deltaRow,
+              }
+            : obj.endPosition;
+        state.setDraft({
+          ...obj,
+          position: newPos,
+          endPosition: newEnd,
+        });
+      }
+      return;
+    }
+
     // Move mode
     const deltaCol = col - dragStart.col;
     const deltaRow = row - dragStart.row;
@@ -288,10 +372,23 @@ export const selectTool: ToolHandler = {
       }
     }
 
+    if (endpointHandle && dragTarget) {
+      const draft = state.draft;
+      if (draft && hasLineEnds(draft)) {
+        state.setDraft(null);
+        state.updateObject(dragTarget, {
+          position: draft.position,
+          endPosition: draft.endPosition,
+        } as Partial<WireObject>);
+      }
+    }
+
     dragStart = null;
     dragTarget = null;
     resizeHandle = null;
+    endpointHandle = null;
     originalPosition = null;
+    originalEndPosition = null;
     originalSize = null;
   },
 };

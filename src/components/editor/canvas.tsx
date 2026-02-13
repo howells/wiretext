@@ -206,21 +206,46 @@ export function Canvas({
   const PAD = 5; // padding between object edge and bounding box
   const INSET = 4; // how far inside the bounding box handles sit
 
-  const selectionRects = objects
-    .filter((obj) => selection.has(obj.id))
-    .map((obj) => {
-      const bounds = getObjectBounds(obj);
-      const topLeft = gridToScreen(bounds.col, bounds.row, viewport, metrics);
-      const w = bounds.width * metrics.charWidth * viewport.zoom + PAD * 2;
-      const h = bounds.height * metrics.lineHeight * viewport.zoom + PAD * 2;
-      return {
-        id: obj.id,
-        x: topLeft.x - PAD,
-        y: topLeft.y - PAD,
-        w,
-        h,
-        resizable: hasRectBounds(obj),
-      };
+  const selectedObjects = objects.filter((obj) => selection.has(obj.id));
+
+  const selectionRects = selectedObjects.map((obj) => {
+    const bounds = getObjectBounds(obj);
+    const topLeft = gridToScreen(bounds.col, bounds.row, viewport, metrics);
+    const w = bounds.width * metrics.charWidth * viewport.zoom + PAD * 2;
+    const h = bounds.height * metrics.lineHeight * viewport.zoom + PAD * 2;
+    return {
+      id: obj.id,
+      x: topLeft.x - PAD,
+      y: topLeft.y - PAD,
+      w,
+      h,
+      resizable: hasRectBounds(obj),
+    };
+  });
+
+  // Endpoint handles for selected lines/arrows
+  const endpointHandles = selectedObjects
+    .filter(
+      (obj): obj is Extract<WireObject, { type: "line" | "arrow" }> =>
+        obj.type === "line" || obj.type === "arrow"
+    )
+    .flatMap((obj) => {
+      const startPos = gridToScreen(
+        obj.position.col,
+        obj.position.row,
+        viewport,
+        metrics
+      );
+      const endPos = gridToScreen(
+        obj.endPosition.col,
+        obj.endPosition.row,
+        viewport,
+        metrics
+      );
+      return [
+        { key: `${obj.id}-start`, x: startPos.x, y: startPos.y },
+        { key: `${obj.id}-end`, x: endPos.x, y: endPos.y },
+      ];
     });
 
   return (
@@ -311,6 +336,23 @@ export function Canvas({
               />
             ))}
         </div>
+      ))}
+
+      {/* Endpoint handles for lines/arrows */}
+      {endpointHandles.map((ep) => (
+        <div
+          className="pointer-events-none absolute"
+          key={ep.key}
+          style={{
+            left: ep.x - HALF,
+            top: ep.y - HALF,
+            width: HANDLE_SIZE,
+            height: HANDLE_SIZE,
+            background: "var(--color-accent)",
+            border: "1px solid var(--color-bg)",
+            borderRadius: "50%",
+          }}
+        />
       ))}
 
       {/* Mouse overlay */}
