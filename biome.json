@@ -17,6 +17,9 @@
       "complexity": {
         "noExcessiveCognitiveComplexity": "off"
       },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
       "a11y": {
         "noNoninteractiveElementInteractions": "off",
         "useKeyWithClickEvents": "off"

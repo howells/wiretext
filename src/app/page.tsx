@@ -56,6 +56,9 @@ export default function EditorPage() {
 
   return (
     <div className="flex h-screen w-screen flex-col bg-bg">
+      <h1 className="sr-only">
+        Wiretext: Unicode wireframe design tool — draw with text
+      </h1>
       <div className="flex flex-1 overflow-hidden">
         <Toolbar />
 
