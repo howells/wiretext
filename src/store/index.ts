@@ -48,6 +48,7 @@ export interface EditorActions {
   moveObject: (id: ObjectId, deltaCol: number, deltaRow: number) => void;
   moveSelection: (deltaCol: number, deltaRow: number) => void;
   resizeObject: (id: ObjectId, newWidth: number, newHeight: number) => void;
+  clearAll: () => void;
 
   // Clipboard
   copySelection: () => void;
@@ -195,6 +196,17 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
           height: Math.max(3, newHeight),
         };
       }),
+    }));
+  },
+
+  clearAll: () => {
+    set((state) => ({
+      ...pushHistory(state),
+      objects: [],
+      selection: new Set<ObjectId>(),
+      editingTextId: null,
+      editingLabelId: null,
+      draft: null,
     }));
   },
 

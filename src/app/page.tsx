@@ -83,6 +83,13 @@ export default function EditorPage() {
           <div className="absolute top-3 right-3 flex gap-2">
             <button
               className="rounded border border-border bg-surface px-3 py-1.5 text-text-dim text-xs transition-colors hover:bg-surface-hover hover:text-text"
+              onClick={() => useEditorStore.getState().clearAll()}
+              type="button"
+            >
+              Clear All
+            </button>
+            <button
+              className="rounded border border-border bg-surface px-3 py-1.5 text-text-dim text-xs transition-colors hover:bg-surface-hover hover:text-text"
               onClick={() => setExportOpen(true)}
               type="button"
             >
