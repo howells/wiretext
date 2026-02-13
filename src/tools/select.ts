@@ -66,6 +66,17 @@ function isPointInObject(col: number, row: number, obj: WireObject): boolean {
       if (c1 === c2) {
         return col === c1 && row >= Math.min(r1, r2) && row <= Math.max(r1, r2);
       }
+      // Diagonal: check if point lies on the line path (within 1 cell tolerance)
+      const dc = c2 - c1;
+      const dr = r2 - r1;
+      const steps = Math.max(Math.abs(dc), Math.abs(dr));
+      for (let i = 0; i <= steps; i++) {
+        const lc = c1 + Math.round((dc * i) / steps);
+        const lr = r1 + Math.round((dr * i) / steps);
+        if (Math.abs(col - lc) <= 1 && Math.abs(row - lr) <= 1) {
+          return true;
+        }
+      }
       return false;
     }
     default:
