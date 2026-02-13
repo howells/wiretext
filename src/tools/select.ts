@@ -96,14 +96,13 @@ export function getResizeHandle(
   const right = bCol + obj.width - 1;
   const bottom = bRow + obj.height - 1;
 
-  // 3-cell hit zone around each edge for easier grabbing
-  const T = 3;
-  const onLeft = col >= bCol - T && col <= bCol + 1;
-  const onRight = col >= right - 1 && col <= right + T;
-  const onTop = row >= bRow - T && row <= bRow + 1;
-  const onBottom = row >= bottom - 1 && row <= bottom + T;
-  const inColRange = col >= bCol - T && col <= right + T;
-  const inRowRange = row >= bRow - T && row <= bottom + T;
+  // 1-cell hit zone around each edge (resize check runs before hit-test so this is sufficient)
+  const onLeft = col >= bCol - 1 && col <= bCol;
+  const onRight = col >= right && col <= right + 1;
+  const onTop = row >= bRow - 1 && row <= bRow;
+  const onBottom = row >= bottom && row <= bottom + 1;
+  const inColRange = col >= bCol - 1 && col <= right + 1;
+  const inRowRange = row >= bRow - 1 && row <= bottom + 1;
 
   // Corners first (must be in both edge zones)
   if (onTop && onLeft) {
