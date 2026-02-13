@@ -30,6 +30,12 @@ export interface EditorState {
   editingLabelId: ObjectId | null;
   pendingComponent: ComponentType | null;
   sidebarExpanded: boolean;
+  marquee: {
+    startCol: number;
+    startRow: number;
+    endCol: number;
+    endRow: number;
+  } | null;
 
   // Clipboard
   clipboard: WireObject[];
@@ -66,6 +72,14 @@ export interface EditorActions {
   setEditingTextId: (id: ObjectId | null) => void;
   setEditingLabelId: (id: ObjectId | null) => void;
   setPendingComponent: (type: ComponentType | null) => void;
+  setMarquee: (
+    marquee: {
+      startCol: number;
+      startRow: number;
+      endCol: number;
+      endRow: number;
+    } | null
+  ) => void;
   toggleSidebar: () => void;
 
   // History
@@ -97,6 +111,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   editingLabelId: null,
   pendingComponent: null,
   sidebarExpanded: true,
+  marquee: null,
   clipboard: [],
   past: [],
   future: [],
@@ -350,6 +365,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   setEditingLabelId: (id) => set({ editingLabelId: id }),
 
   setPendingComponent: (type) => set({ pendingComponent: type }),
+
+  setMarquee: (marquee) => set({ marquee }),
 
   toggleSidebar: () =>
     set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),

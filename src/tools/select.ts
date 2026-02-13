@@ -7,6 +7,8 @@ let dragStart: { col: number; row: number } | null = null;
 let dragTarget: string | null = null;
 let resizeHandle: string | null = null;
 let endpointHandle: "start" | "end" | null = null;
+let marqueeActive = false;
+let marqueeShift = false;
 let originalPosition: { col: number; row: number } | null = null;
 let originalEndPosition: { col: number; row: number } | null = null;
 let originalSize: { width: number; height: number } | null = null;
@@ -139,6 +141,59 @@ export function getResizeCursor(handle: ResizeHandle): string {
   return HANDLE_CURSORS[handle];
 }
 
+/** Get the bounding rect for any object in grid coordinates */
+function getObjectBounds(obj: WireObject) {
+  switch (obj.type) {
+    case "box":
+    case "component":
+      return {
+        col: obj.position.col,
+        row: obj.position.row,
+        width: obj.width,
+        height: obj.height,
+      };
+    case "text": {
+      const lines = obj.content.split("\n");
+      return {
+        col: obj.position.col,
+        row: obj.position.row,
+        width: Math.max(...lines.map((l) => l.length), 1),
+        height: lines.length || 1,
+      };
+    }
+    case "line":
+    case "arrow": {
+      const minCol = Math.min(obj.position.col, obj.endPosition.col);
+      const minRow = Math.min(obj.position.row, obj.endPosition.row);
+      return {
+        col: minCol,
+        row: minRow,
+        width: Math.max(obj.position.col, obj.endPosition.col) - minCol + 1,
+        height: Math.max(obj.position.row, obj.endPosition.row) - minRow + 1,
+      };
+    }
+    default:
+      return { col: 0, row: 0, width: 0, height: 0 };
+  }
+}
+
+/** Check if an object's bounds intersect with a marquee rectangle */
+function objectIntersectsRect(
+  obj: WireObject,
+  minCol: number,
+  minRow: number,
+  maxCol: number,
+  maxRow: number
+): boolean {
+  const b = getObjectBounds(obj);
+  return (
+    b.col < maxCol &&
+    b.col + b.width > minCol &&
+    b.row < maxRow &&
+    b.row + b.height > minRow
+  );
+}
+
 function hasLineEnds(obj: WireObject): obj is LineObject | ArrowObject {
   return obj.type === "line" || obj.type === "arrow";
 }
@@ -229,10 +284,21 @@ export const selectTool: ToolHandler = {
     const hit = hitTest(col, row, state.objects);
 
     if (!hit) {
-      state.clearSelection();
+      if (!e.shiftKey) {
+        state.clearSelection();
+      }
       state.setEditingLabelId(null);
-      dragStart = null;
+      // Start marquee selection
+      marqueeActive = true;
+      marqueeShift = e.shiftKey;
+      dragStart = { col, row };
       dragTarget = null;
+      state.setMarquee({
+        startCol: col,
+        startRow: row,
+        endCol: col,
+        endRow: row,
+      });
       return;
     }
 
@@ -268,10 +334,25 @@ export const selectTool: ToolHandler = {
   },
 
   onMouseMove(col, row) {
-    if (!(dragStart && dragTarget)) {
+    if (!dragStart) {
       return;
     }
     const state = useEditorStore.getState();
+
+    // Marquee selection drag
+    if (marqueeActive) {
+      state.setMarquee({
+        startCol: dragStart.col,
+        startRow: dragStart.row,
+        endCol: col,
+        endRow: row,
+      });
+      return;
+    }
+
+    if (!dragTarget) {
+      return;
+    }
 
     if (resizeHandle && originalPosition && originalSize) {
       const deltaCol = col - dragStart.col;
@@ -351,6 +432,36 @@ export const selectTool: ToolHandler = {
 
   onMouseUp(_col, _row) {
     const state = useEditorStore.getState();
+
+    // Finalize marquee selection
+    if (marqueeActive && dragStart) {
+      const m = state.marquee;
+      if (m) {
+        const minCol = Math.min(m.startCol, m.endCol);
+        const maxCol = Math.max(m.startCol, m.endCol);
+        const minRow = Math.min(m.startRow, m.endRow);
+        const maxRow = Math.max(m.startRow, m.endRow);
+        // Only select if the marquee has some area
+        if (maxCol > minCol || maxRow > minRow) {
+          const hits = state.objects.filter((obj) =>
+            objectIntersectsRect(obj, minCol, minRow, maxCol + 1, maxRow + 1)
+          );
+          const ids = new Set(hits.map((o) => o.id));
+          if (marqueeShift) {
+            // Add to existing selection
+            for (const id of state.selection) {
+              ids.add(id);
+            }
+          }
+          state.setSelection(ids);
+        }
+      }
+      state.setMarquee(null);
+      marqueeActive = false;
+      marqueeShift = false;
+      dragStart = null;
+      return;
+    }
 
     if (resizeHandle && dragTarget && originalPosition && originalSize) {
       const draft = state.draft;

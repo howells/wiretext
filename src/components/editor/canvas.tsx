@@ -75,6 +75,7 @@ export function Canvas({
   const gridSize = useEditorStore((s) => s.gridSize);
   const viewport = useEditorStore((s) => s.viewport);
   const selection = useEditorStore((s) => s.selection);
+  const marquee = useEditorStore((s) => s.marquee);
   const panViewport = useEditorStore((s) => s.panViewport);
   const zoomViewport = useEditorStore((s) => s.zoomViewport);
 
@@ -354,6 +355,40 @@ export function Canvas({
           }}
         />
       ))}
+
+      {/* Marquee selection rectangle */}
+      {marquee &&
+        (() => {
+          const p1 = gridToScreen(
+            marquee.startCol,
+            marquee.startRow,
+            viewport,
+            metrics
+          );
+          const p2 = gridToScreen(
+            marquee.endCol,
+            marquee.endRow,
+            viewport,
+            metrics
+          );
+          const x = Math.min(p1.x, p2.x);
+          const y = Math.min(p1.y, p2.y);
+          const w = Math.abs(p2.x - p1.x);
+          const h = Math.abs(p2.y - p1.y);
+          return (
+            <div
+              className="pointer-events-none absolute"
+              style={{
+                left: x,
+                top: y,
+                width: w,
+                height: h,
+                border: "1px dashed var(--color-selection-border)",
+                background: "var(--color-selection)",
+              }}
+            />
+          );
+        })()}
 
       {/* Mouse overlay */}
       <div
