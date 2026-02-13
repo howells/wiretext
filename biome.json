@@ -1,21 +1,31 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
-	"organizeImports": { "enabled": true },
-	"linter": {
-		"enabled": true,
-		"rules": { "recommended": true }
-	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "tab"
-	},
-	"javascript": {
-		"formatter": {
-			"quoteStyle": "double",
-			"semicolons": "always"
-		}
-	},
-	"files": {
-		"ignore": [".next", "node_modules", "*.css"]
-	}
+  "$schema": "https://biomejs.dev/schemas/2.3.15/schema.json",
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/next"
+  ],
+  "root": true,
+  "files": {
+    "includes": ["src/**/*.ts", "src/**/*.tsx"]
+  },
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noUnknownAtRules": "off"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "off"
+      },
+      "a11y": {
+        "noNoninteractiveElementInteractions": "off",
+        "useKeyWithClickEvents": "off"
+      }
+    }
+  },
+  "css": {
+    "linter": {
+      "enabled": false
+    }
+  }
 }

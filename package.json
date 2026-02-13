@@ -1,39 +1,53 @@
 {
-	"name": "wiretext",
-	"version": "0.1.0",
-	"private": true,
-	"scripts": {
-		"dev": "next dev --turbopack",
-		"build": "next build",
-		"start": "next start",
-		"typecheck": "tsc --noEmit",
-		"lint": "biome check .",
-		"lint:fix": "biome check --write .",
-		"test": "vitest run",
-		"test:watch": "vitest"
-	},
-	"dependencies": {
-		"next": "^15.3.0",
-		"react": "^19.1.0",
-		"react-dom": "^19.1.0",
-		"zustand": "^5.0.0",
-		"immer": "^10.1.0",
-		"nanoid": "^5.1.0",
-		"lz-string": "^1.5.0"
-	},
-	"pnpm": {
-		"onlyBuiltDependencies": ["@biomejs/biome", "esbuild", "sharp"]
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^1.9.0",
-		"@types/lz-string": "^1.5.0",
-		"@types/node": "^22.0.0",
-		"@types/react": "^19.0.0",
-		"@types/react-dom": "^19.0.0",
-		"typescript": "^5.7.0",
-		"tailwindcss": "^4.0.0",
-		"@tailwindcss/postcss": "^4.0.0",
-		"postcss": "^8.5.0",
-		"vitest": "^3.0.0"
-	}
+  "name": "wiretext",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack -p 4200",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "knip": "knip",
+    "check": "pnpm typecheck && pnpm lint && pnpm knip",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "immer": "^10.1.0",
+    "lz-string": "^1.5.0",
+    "nanoid": "^5.1.0",
+    "next": "^15.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "esbuild",
+      "sharp"
+    ]
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx,json,jsonc,css}": "biome format --write --no-errors-on-unmatched"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.15",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "husky": "9.1.7",
+    "knip": "^5.83.1",
+    "lint-staged": "^16.2.7",
+    "postcss": "^8.5.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "ultracite": "7.1.5",
+    "vitest": "^3.0.0"
+  }
 }
