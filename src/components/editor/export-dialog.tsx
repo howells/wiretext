@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getEffectiveGridSize } from "@/engine/grid-size";
 import { trackExport } from "@/lib/analytics";
 import {
   composeToGitHub,
@@ -29,27 +30,31 @@ interface ExportDialogProps {
 export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const objects = useEditorStore((s) => s.objects);
   const gridSize = useEditorStore((s) => s.gridSize);
+  const effectiveGridSize = useMemo(
+    () => getEffectiveGridSize(objects, gridSize),
+    [objects, gridSize]
+  );
   const [format, setFormat] = useState<ExportFormat>("text");
   const [copied, setCopied] = useState(false);
 
   const getOutput = useCallback(() => {
     switch (format) {
       case "text":
-        return composeToText(objects, gridSize);
+        return composeToText(objects, effectiveGridSize);
       case "markdown":
-        return composeToMarkdown(objects, gridSize);
+        return composeToMarkdown(objects, effectiveGridSize);
       case "html":
-        return composeToHtml(objects, gridSize);
+        return composeToHtml(objects, effectiveGridSize);
       case "github":
         return composeToGitHub(
           objects,
-          gridSize,
+          effectiveGridSize,
           objects.length > 0 ? getShareUrl(objects) : undefined
         );
       default:
-        return composeToText(objects, gridSize);
+        return composeToText(objects, effectiveGridSize);
     }
-  }, [objects, gridSize, format]);
+  }, [objects, effectiveGridSize, format]);
 
   const handleCopy = useCallback(async () => {
     const ok = await copyToClipboard(getOutput());

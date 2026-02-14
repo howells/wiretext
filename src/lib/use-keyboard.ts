@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { getEffectiveGridSize } from "@/engine/grid-size";
 import type { ToolType } from "@/engine/types";
 import { composeToText, copyToClipboard } from "@/lib/clipboard";
 import { useEditorStore } from "@/store";
@@ -56,7 +57,11 @@ function handleCopy(e: KeyboardEvent, key: string): boolean {
     if (state.selection.size > 0) {
       state.copySelection();
     }
-    const text = composeToText(state.objects, state.gridSize);
+    const effectiveGridSize = getEffectiveGridSize(
+      state.objects,
+      state.gridSize
+    );
+    const text = composeToText(state.objects, effectiveGridSize);
     copyToClipboard(text);
     return true;
   }

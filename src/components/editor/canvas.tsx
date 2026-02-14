@@ -5,56 +5,17 @@ import {
   type WheelEvent as ReactWheelEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
 } from "react";
+import { getObjectBounds } from "@/engine/bounds";
 import { compose, gridToString } from "@/engine/compose";
+import { getEffectiveGridSize } from "@/engine/grid-size";
 import type { WireObject } from "@/engine/types";
 import { hasRectBounds } from "@/engine/types";
 import { gridToScreen, screenToGrid } from "@/lib/coordinates";
 import { useCharMetrics } from "@/lib/use-char-metrics";
 import { useEditorStore } from "@/store";
-
-function getObjectBounds(obj: WireObject): {
-  col: number;
-  row: number;
-  width: number;
-  height: number;
-} {
-  switch (obj.type) {
-    case "box":
-    case "component":
-      return {
-        col: obj.position.col,
-        row: obj.position.row,
-        width: obj.width,
-        height: obj.height,
-      };
-    case "text": {
-      const lines = obj.content.split("\n");
-      return {
-        col: obj.position.col,
-        row: obj.position.row,
-        width: Math.max(...lines.map((l) => l.length), 1),
-        height: lines.length || 1,
-      };
-    }
-    case "line":
-    case "arrow": {
-      const minCol = Math.min(obj.position.col, obj.endPosition.col);
-      const minRow = Math.min(obj.position.row, obj.endPosition.row);
-      const maxCol = Math.max(obj.position.col, obj.endPosition.col);
-      const maxRow = Math.max(obj.position.row, obj.endPosition.row);
-      return {
-        col: minCol,
-        row: minRow,
-        width: maxCol - minCol + 1,
-        height: maxRow - minRow + 1,
-      };
-    }
-    default:
-      return { col: 0, row: 0, width: 0, height: 0 };
-  }
-}
 
 interface CanvasProps {
   onMouseDown?: (col: number, row: number, e: ReactMouseEvent) => void;
@@ -85,8 +46,12 @@ export function Canvas({
   const spaceHeld = useRef(false);
 
   // Compose all objects + draft
-  const allObjects: WireObject[] = draft ? [...objects, draft] : objects;
-  const grid = compose(allObjects, gridSize);
+  const allObjects = draft ? [...objects, draft] : objects;
+  const effectiveGridSize = useMemo(
+    () => getEffectiveGridSize(allObjects, gridSize),
+    [allObjects, gridSize]
+  );
+  const grid = compose(allObjects, effectiveGridSize);
   const text = gridToString(grid);
 
   const getGridPoint = useCallback(
@@ -198,8 +163,8 @@ export function Canvas({
     return null;
   }
 
-  const gridPixelWidth = gridSize.cols * metrics.charWidth;
-  const gridPixelHeight = gridSize.rows * metrics.lineHeight;
+  const gridPixelWidth = effectiveGridSize.cols * metrics.charWidth;
+  const gridPixelHeight = effectiveGridSize.rows * metrics.lineHeight;
 
   // Build selection overlay rects with handle info
   const HANDLE_SIZE = 7;
