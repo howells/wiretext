@@ -14,6 +14,8 @@ export function initPostHog() {
     capture_pageleave: true,
     capture_exceptions: true,
     disable_session_recording: true,
+    disable_compression: true,
+    request_batching: true,
     ui_host: "https://eu.posthog.com",
   });
 }
