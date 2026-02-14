@@ -8,6 +8,7 @@ import { PropertiesPanel } from "@/components/editor/properties-panel";
 import { StatusBar } from "@/components/editor/status-bar";
 import { TextEditorOverlay } from "@/components/editor/text-editor-overlay";
 import { Toolbar } from "@/components/editor/toolbar";
+import { trackDocumentLoaded, trackShare } from "@/lib/analytics";
 import { copyToClipboard } from "@/lib/clipboard";
 import { decodeDocument, getShareUrl } from "@/lib/sharing";
 import { useCanvasEvents } from "@/lib/use-canvas-events";
@@ -37,6 +38,7 @@ export default function EditorPage() {
       for (const obj of decoded) {
         store.addObject(obj);
       }
+      trackDocumentLoaded();
     }
   }, []);
 
@@ -51,6 +53,7 @@ export default function EditorPage() {
       window.history.replaceState(null, "", url);
       setShareMsg("URL copied!");
       setTimeout(() => setShareMsg(""), 2000);
+      trackShare();
     }
   }, []);
 

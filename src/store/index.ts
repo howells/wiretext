@@ -11,6 +11,11 @@ import type {
   WireObject,
 } from "@/engine/types";
 import { hasRectBounds } from "@/engine/types";
+import {
+  trackClearAll,
+  trackObjectCreated,
+  trackToolSelected,
+} from "@/lib/analytics";
 
 enableMapSet();
 
@@ -124,6 +129,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       ...pushHistory(state),
       objects: [...state.objects, obj],
     }));
+    trackObjectCreated(obj.type);
     return obj;
   },
 
@@ -223,6 +229,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       editingLabelId: null,
       draft: null,
     }));
+    trackClearAll();
   },
 
   // Clipboard
@@ -316,7 +323,10 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   },
 
   // UI mutations
-  setActiveTool: (tool) => set({ activeTool: tool }),
+  setActiveTool: (tool) => {
+    set({ activeTool: tool });
+    trackToolSelected(tool);
+  },
 
   setSelection: (ids) => set({ selection: ids }),
 

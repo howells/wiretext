@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { trackExport } from "@/lib/analytics";
 import {
   composeToHtml,
   composeToMarkdown,
@@ -46,8 +47,9 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
     if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      trackExport(format);
     }
-  }, [getOutput]);
+  }, [getOutput, format]);
 
   useEffect(() => {
     if (!open) {
