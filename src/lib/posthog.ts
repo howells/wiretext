@@ -8,7 +8,7 @@ export function initPostHog() {
   }
 
   posthog.init(POSTHOG_KEY, {
-    api_host: "https://eu.i.posthog.com",
+    api_host: "/ingest",
     person_profiles: "identified_only",
     capture_pageview: true,
     capture_pageleave: true,
