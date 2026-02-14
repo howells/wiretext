@@ -3,19 +3,22 @@
 import { useCallback, useEffect, useState } from "react";
 import { trackExport } from "@/lib/analytics";
 import {
+  composeToGitHub,
   composeToHtml,
   composeToMarkdown,
   composeToText,
   copyToClipboard,
 } from "@/lib/clipboard";
+import { getShareUrl } from "@/lib/sharing";
 import { useEditorStore } from "@/store";
 
-type ExportFormat = "text" | "markdown" | "html";
+type ExportFormat = "text" | "markdown" | "html" | "github";
 
 const FORMAT_LABELS: Record<ExportFormat, string> = {
   text: "Plain Text",
   markdown: "Markdown",
   html: "HTML",
+  github: "GitHub",
 };
 
 interface ExportDialogProps {
@@ -37,6 +40,12 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
         return composeToMarkdown(objects, gridSize);
       case "html":
         return composeToHtml(objects, gridSize);
+      case "github":
+        return composeToGitHub(
+          objects,
+          gridSize,
+          objects.length > 0 ? getShareUrl(objects) : undefined
+        );
       default:
         return composeToText(objects, gridSize);
     }
@@ -103,20 +112,22 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
 
         {/* Format tabs */}
         <div className="flex gap-1 border-border border-b px-4 py-2">
-          {(["text", "markdown", "html"] as ExportFormat[]).map((f) => (
-            <button
-              className={`rounded px-3 py-1 text-xs transition-colors ${
-                format === f
-                  ? "bg-accent text-bg"
-                  : "text-text-dim hover:text-text"
-              }`}
-              key={f}
-              onClick={() => setFormat(f)}
-              type="button"
-            >
-              {FORMAT_LABELS[f]}
-            </button>
-          ))}
+          {(["text", "markdown", "html", "github"] as ExportFormat[]).map(
+            (f) => (
+              <button
+                className={`rounded px-3 py-1 text-xs transition-colors ${
+                  format === f
+                    ? "bg-accent text-bg"
+                    : "text-text-dim hover:text-text"
+                }`}
+                key={f}
+                onClick={() => setFormat(f)}
+                type="button"
+              >
+                {FORMAT_LABELS[f]}
+              </button>
+            )
+          )}
         </div>
 
         {/* Preview */}

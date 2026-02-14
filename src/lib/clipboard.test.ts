@@ -1,0 +1,42 @@
+import { describe, expect, it } from "vitest";
+import type { BoxObject, GridSize } from "../engine/types";
+import { composeToGitHub } from "./clipboard";
+
+const gridSize: GridSize = { cols: 20, rows: 10 };
+
+const box: BoxObject = {
+  id: "1",
+  type: "box",
+  position: { col: 0, row: 0 },
+  width: 6,
+  height: 3,
+  borderStyle: "single",
+  zIndex: 0,
+};
+
+describe("composeToGitHub", () => {
+  it("wraps output in a collapsible details tag with code fence", () => {
+    const result = composeToGitHub([box], gridSize);
+    expect(result).toContain("<details>");
+    expect(result).toContain("<summary>Wireframe</summary>");
+    expect(result).toContain("```");
+    expect(result).toContain("</details>");
+  });
+
+  it("includes share URL when provided", () => {
+    const url = "https://wiretext.app#abc123";
+    const result = composeToGitHub([box], gridSize, url);
+    expect(result).toContain(`[Edit in Wiretext](${url})`);
+  });
+
+  it("omits share link when no URL provided", () => {
+    const result = composeToGitHub([box], gridSize);
+    expect(result).not.toContain("Edit in Wiretext");
+  });
+
+  it("renders the wireframe content inside the code fence", () => {
+    const result = composeToGitHub([box], gridSize);
+    expect(result).toContain("┌────┐");
+    expect(result).toContain("└────┘");
+  });
+});
