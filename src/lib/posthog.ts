@@ -12,6 +12,7 @@ export function initPostHog() {
     person_profiles: "identified_only",
     capture_pageview: true,
     capture_pageleave: true,
+    capture_exceptions: true,
     disable_session_recording: true,
     ui_host: "https://eu.posthog.com",
   });
