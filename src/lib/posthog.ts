@@ -8,13 +8,12 @@ export function initPostHog() {
   }
 
   posthog.init(POSTHOG_KEY, {
-    api_host: "/i",
+    api_host: "https://eu.i.posthog.com",
     person_profiles: "identified_only",
     capture_pageview: true,
     capture_pageleave: true,
     capture_exceptions: true,
     disable_session_recording: true,
-    disable_compression: true,
     ui_host: "https://eu.posthog.com",
   });
 }
