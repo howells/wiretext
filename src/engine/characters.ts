@@ -7,6 +7,8 @@ export interface BoxChars {
   bottomRight: string;
   horizontal: string;
   vertical: string;
+  teeRight: string;
+  teeLeft: string;
 }
 
 const SINGLE_BOX: BoxChars = {
@@ -16,6 +18,8 @@ const SINGLE_BOX: BoxChars = {
   bottomRight: "┘",
   horizontal: "─",
   vertical: "│",
+  teeRight: "├",
+  teeLeft: "┤",
 };
 
 const DOUBLE_BOX: BoxChars = {
@@ -25,6 +29,8 @@ const DOUBLE_BOX: BoxChars = {
   bottomRight: "╝",
   horizontal: "═",
   vertical: "║",
+  teeRight: "╠",
+  teeLeft: "╣",
 };
 
 const ROUNDED_BOX: BoxChars = {
@@ -34,6 +40,8 @@ const ROUNDED_BOX: BoxChars = {
   bottomRight: "╯",
   horizontal: "─",
   vertical: "│",
+  teeRight: "├",
+  teeLeft: "┤",
 };
 
 const HEAVY_BOX: BoxChars = {
@@ -43,6 +51,8 @@ const HEAVY_BOX: BoxChars = {
   bottomRight: "┛",
   horizontal: "━",
   vertical: "┃",
+  teeRight: "┣",
+  teeLeft: "┫",
 };
 
 export const BOX_CHARS: Record<BorderStyle, BoxChars> = {

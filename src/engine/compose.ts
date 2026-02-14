@@ -337,7 +337,10 @@ function stampComponentTitleBar(
   if (obj.height < 5) {
     return;
   }
+  const chars = getBoxChars(obj.borderStyle);
   stampHLine(grid, col + 1, row + 2, obj.width - 2);
+  forceSetChar(grid, col, row + 2, chars.teeRight);
+  forceSetChar(grid, col + obj.width - 1, row + 2, chars.teeLeft);
   if (showClose) {
     setChar(grid, col + obj.width - 3, row + 1, "×");
   }
@@ -353,7 +356,10 @@ function stampComponentBrowser(
   if (obj.height < 5) {
     return;
   }
+  const chars = getBoxChars(obj.borderStyle);
   stampHLine(grid, col + 1, row + 2, obj.width - 2);
+  forceSetChar(grid, col, row + 2, chars.teeRight);
+  forceSetChar(grid, col + obj.width - 1, row + 2, chars.teeLeft);
   stampText(grid, col + 2, row + 1, "◄ ► ⟳");
   const url = obj.label ?? "https://";
   const barStart = col + 10;
