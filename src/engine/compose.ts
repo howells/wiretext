@@ -5,6 +5,7 @@ import type {
   BoxObject,
   ComponentObject,
   GridSize,
+  Layer,
   LineObject,
   TextObject,
   WireObject,
@@ -482,9 +483,41 @@ function stampComponent(grid: string[][], obj: ComponentObject) {
   stampComponentContent(grid, obj, col, row);
 }
 
-export function compose(objects: WireObject[], gridSize: GridSize): string[][] {
+/** Sort objects for rendering: layer order first, then zIndex within layer */
+function sortForRendering(
+  objects: WireObject[],
+  layers: Layer[]
+): WireObject[] {
+  const layerOrder = new Map<string, number>();
+  for (let i = 0; i < layers.length; i++) {
+    layerOrder.set(layers[i].id, i);
+  }
+
+  // Filter out objects on hidden layers
+  const hiddenLayerIds = new Set(
+    layers.filter((l) => !l.visible).map((l) => l.id)
+  );
+  const visible = objects.filter((obj) => !hiddenLayerIds.has(obj.layerId));
+
+  return [...visible].sort((a, b) => {
+    const layerA = layerOrder.get(a.layerId) ?? 0;
+    const layerB = layerOrder.get(b.layerId) ?? 0;
+    if (layerA !== layerB) {
+      return layerA - layerB;
+    }
+    return a.zIndex - b.zIndex;
+  });
+}
+
+export function compose(
+  objects: WireObject[],
+  gridSize: GridSize,
+  layers?: Layer[]
+): string[][] {
   const grid = createGrid(gridSize);
-  const sorted = [...objects].sort((a, b) => a.zIndex - b.zIndex);
+  const sorted = layers
+    ? sortForRendering(objects, layers)
+    : [...objects].sort((a, b) => a.zIndex - b.zIndex);
 
   for (const obj of sorted) {
     switch (obj.type) {

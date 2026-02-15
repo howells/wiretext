@@ -4,6 +4,8 @@ import { create } from "zustand";
 import type {
   ComponentType,
   GridSize,
+  Layer,
+  LayerId,
   NewWireObject,
   ObjectId,
   ToolType,
@@ -21,13 +23,24 @@ enableMapSet();
 
 const MAX_HISTORY = 100;
 
+export type SidebarTab = "properties" | "layers";
+
+export interface HistorySnapshot {
+  objects: WireObject[];
+  layers: Layer[];
+}
+
+const DEFAULT_LAYER_ID = nanoid();
+
 export interface EditorState {
   // Document
   objects: WireObject[];
+  layers: Layer[];
   gridSize: GridSize;
 
   // UI
   activeTool: ToolType;
+  activeLayerId: LayerId;
   selection: Set<ObjectId>;
   viewport: Viewport;
   draft: WireObject | null;
@@ -35,6 +48,7 @@ export interface EditorState {
   editingLabelId: ObjectId | null;
   pendingComponent: ComponentType | null;
   sidebarExpanded: boolean;
+  sidebarTab: SidebarTab;
   marquee: {
     startCol: number;
     startRow: number;
@@ -46,8 +60,8 @@ export interface EditorState {
   clipboard: WireObject[];
 
   // History
-  past: WireObject[][];
-  future: WireObject[][];
+  past: HistorySnapshot[];
+  future: HistorySnapshot[];
 }
 
 export interface EditorActions {
@@ -60,6 +74,22 @@ export interface EditorActions {
   moveSelection: (deltaCol: number, deltaRow: number) => void;
   resizeObject: (id: ObjectId, newWidth: number, newHeight: number) => void;
   clearAll: () => void;
+  loadDocument: (objects: WireObject[], layers: Layer[]) => void;
+
+  // Layer management (push history)
+  addLayer: (name?: string) => Layer;
+  deleteLayer: (id: LayerId) => void;
+  renameLayer: (id: LayerId, name: string) => void;
+  reorderLayer: (id: LayerId, newIndex: number) => void;
+  toggleLayerVisibility: (id: LayerId) => void;
+  toggleLayerLock: (id: LayerId) => void;
+  moveObjectsToLayer: (objectIds: ObjectId[], layerId: LayerId) => void;
+
+  // Z-ordering (push history)
+  bringToFront: (ids: ObjectId[]) => void;
+  sendToBack: (ids: ObjectId[]) => void;
+  bringForward: (ids: ObjectId[]) => void;
+  sendBackward: (ids: ObjectId[]) => void;
 
   // Clipboard
   copySelection: () => void;
@@ -68,6 +98,7 @@ export interface EditorActions {
 
   // UI mutations (no history)
   setActiveTool: (tool: ToolType) => void;
+  setActiveLayer: (id: LayerId) => void;
   setSelection: (ids: Set<ObjectId>) => void;
   selectObject: (id: ObjectId, toggle?: boolean) => void;
   clearSelection: () => void;
@@ -86,6 +117,7 @@ export interface EditorActions {
     } | null
   ) => void;
   toggleSidebar: () => void;
+  setSidebarTab: (tab: SidebarTab) => void;
 
   // History
   undo: () => void;
@@ -95,11 +127,14 @@ export interface EditorActions {
 export type EditorStore = EditorState & EditorActions;
 
 function pushHistory(state: EditorState): {
-  past: WireObject[][];
-  future: WireObject[][];
+  past: HistorySnapshot[];
+  future: HistorySnapshot[];
 } {
   return {
-    past: [...state.past.slice(-(MAX_HISTORY - 1)), state.objects],
+    past: [
+      ...state.past.slice(-(MAX_HISTORY - 1)),
+      { objects: state.objects, layers: state.layers },
+    ],
     future: [],
   };
 }
@@ -107,8 +142,17 @@ function pushHistory(state: EditorState): {
 export const useEditorStore = create<EditorStore>()((set, get) => ({
   // Initial state
   objects: [],
+  layers: [
+    {
+      id: DEFAULT_LAYER_ID,
+      name: "Layer 1",
+      visible: true,
+      locked: false,
+    },
+  ],
   gridSize: { cols: 120, rows: 60 },
   activeTool: "select",
+  activeLayerId: DEFAULT_LAYER_ID,
   selection: new Set<ObjectId>(),
   viewport: { panX: 0, panY: 0, zoom: 1 },
   draft: null,
@@ -116,6 +160,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   editingLabelId: null,
   pendingComponent: null,
   sidebarExpanded: true,
+  sidebarTab: "properties" as SidebarTab,
   marquee: null,
   clipboard: [],
   past: [],
@@ -124,7 +169,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   // Document mutations
   addObject: (objWithoutId) => {
     const id = nanoid();
-    const obj = { ...objWithoutId, id } as WireObject;
+    const { activeLayerId } = get();
+    const obj = { ...objWithoutId, id, layerId: activeLayerId } as WireObject;
     set((state) => ({
       ...pushHistory(state),
       objects: [...state.objects, obj],
@@ -232,6 +278,19 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     trackClearAll();
   },
 
+  loadDocument: (objects, layers) => {
+    set((state) => ({
+      ...pushHistory(state),
+      objects,
+      layers,
+      activeLayerId: layers[0]?.id ?? state.activeLayerId,
+      selection: new Set<ObjectId>(),
+      editingTextId: null,
+      editingLabelId: null,
+      draft: null,
+    }));
+  },
+
   // Clipboard
   copySelection: () => {
     const { selection, objects } = get();
@@ -243,7 +302,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   },
 
   pasteClipboard: () => {
-    const { clipboard } = get();
+    const { clipboard, activeLayerId } = get();
     if (clipboard.length === 0) {
       return;
     }
@@ -256,6 +315,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       const base = {
         ...obj,
         id: newId,
+        layerId: activeLayerId,
         position: {
           col: obj.position.col + OFFSET_COL,
           row: obj.position.row + OFFSET_ROW,
@@ -287,7 +347,6 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     if (state.selection.size === 0) {
       return;
     }
-    // Copy then paste in one step
     const copied = state.objects.filter((obj) => state.selection.has(obj.id));
     const OFFSET_COL = 2;
     const OFFSET_ROW = 1;
@@ -298,6 +357,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       const base = {
         ...obj,
         id: newId,
+        layerId: state.activeLayerId,
         position: {
           col: obj.position.col + OFFSET_COL,
           row: obj.position.row + OFFSET_ROW,
@@ -381,6 +441,239 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   toggleSidebar: () =>
     set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
 
+  setSidebarTab: (tab) => set({ sidebarTab: tab }),
+
+  setActiveLayer: (id) => set({ activeLayerId: id }),
+
+  // Layer management
+  addLayer: (name) => {
+    const layer: Layer = {
+      id: nanoid(),
+      name: name ?? `Layer ${get().layers.length + 1}`,
+      visible: true,
+      locked: false,
+    };
+    set((state) => {
+      const activeIdx = state.layers.findIndex(
+        (l) => l.id === state.activeLayerId
+      );
+      const insertIdx = activeIdx + 1;
+      const newLayers = [...state.layers];
+      newLayers.splice(insertIdx, 0, layer);
+      return {
+        ...pushHistory(state),
+        layers: newLayers,
+        activeLayerId: layer.id,
+      };
+    });
+    return layer;
+  },
+
+  deleteLayer: (id) => {
+    const state = get();
+    if (state.layers.length <= 1) {
+      return;
+    }
+    const idx = state.layers.findIndex((l) => l.id === id);
+    if (idx === -1) {
+      return;
+    }
+    // Find nearest layer to receive orphaned objects
+    const targetLayer = state.layers[idx === 0 ? 1 : idx - 1];
+    set((s) => ({
+      ...pushHistory(s),
+      layers: s.layers.filter((l) => l.id !== id),
+      objects: s.objects.map((obj) =>
+        obj.layerId === id ? { ...obj, layerId: targetLayer.id } : obj
+      ),
+      activeLayerId: s.activeLayerId === id ? targetLayer.id : s.activeLayerId,
+    }));
+  },
+
+  renameLayer: (id, name) => {
+    set((state) => ({
+      ...pushHistory(state),
+      layers: state.layers.map((l) => (l.id === id ? { ...l, name } : l)),
+    }));
+  },
+
+  reorderLayer: (id, newIndex) => {
+    set((state) => {
+      const oldIdx = state.layers.findIndex((l) => l.id === id);
+      if (oldIdx === -1) {
+        return state;
+      }
+      const clamped = Math.max(0, Math.min(state.layers.length - 1, newIndex));
+      if (oldIdx === clamped) {
+        return state;
+      }
+      const newLayers = [...state.layers];
+      const [removed] = newLayers.splice(oldIdx, 1);
+      newLayers.splice(clamped, 0, removed);
+      return {
+        ...pushHistory(state),
+        layers: newLayers,
+      };
+    });
+  },
+
+  toggleLayerVisibility: (id) => {
+    set((state) => ({
+      ...pushHistory(state),
+      layers: state.layers.map((l) =>
+        l.id === id ? { ...l, visible: !l.visible } : l
+      ),
+    }));
+  },
+
+  toggleLayerLock: (id) => {
+    set((state) => ({
+      ...pushHistory(state),
+      layers: state.layers.map((l) =>
+        l.id === id ? { ...l, locked: !l.locked } : l
+      ),
+    }));
+  },
+
+  moveObjectsToLayer: (objectIds, layerId) => {
+    const idSet = new Set(objectIds);
+    set((state) => ({
+      ...pushHistory(state),
+      objects: state.objects.map((obj) =>
+        idSet.has(obj.id) ? { ...obj, layerId } : obj
+      ),
+    }));
+  },
+
+  // Z-ordering
+  bringToFront: (ids) => {
+    const idSet = new Set(ids);
+    set((state) => {
+      const targetObjs = state.objects.filter((o) => idSet.has(o.id));
+      if (targetObjs.length === 0) {
+        return state;
+      }
+      const layerId = targetObjs[0].layerId;
+      const layerObjs = state.objects.filter(
+        (o) => o.layerId === layerId && !idSet.has(o.id)
+      );
+      const maxZ = layerObjs.reduce((m, o) => Math.max(m, o.zIndex), -1);
+      let nextZ = maxZ + 1;
+      return {
+        ...pushHistory(state),
+        objects: state.objects.map((obj) => {
+          if (!idSet.has(obj.id)) {
+            return obj;
+          }
+          return { ...obj, zIndex: nextZ++ } as WireObject;
+        }),
+      };
+    });
+  },
+
+  sendToBack: (ids) => {
+    const idSet = new Set(ids);
+    set((state) => {
+      const targetObjs = state.objects.filter((o) => idSet.has(o.id));
+      if (targetObjs.length === 0) {
+        return state;
+      }
+      const layerId = targetObjs[0].layerId;
+      const layerObjs = state.objects.filter(
+        (o) => o.layerId === layerId && !idSet.has(o.id)
+      );
+      const minZ = layerObjs.reduce(
+        (m, o) => Math.min(m, o.zIndex),
+        Number.POSITIVE_INFINITY
+      );
+      const startZ = Math.max(0, minZ - targetObjs.length);
+      let nextZ = startZ;
+      return {
+        ...pushHistory(state),
+        objects: state.objects.map((obj) => {
+          if (!idSet.has(obj.id)) {
+            return obj;
+          }
+          return { ...obj, zIndex: nextZ++ } as WireObject;
+        }),
+      };
+    });
+  },
+
+  bringForward: (ids) => {
+    const idSet = new Set(ids);
+    set((state) => {
+      const newObjects = [...state.objects];
+      for (const obj of newObjects) {
+        if (idSet.has(obj.id)) {
+          // Find the next higher zIndex object in same layer
+          const sameLayer = newObjects.filter(
+            (o) =>
+              o.layerId === obj.layerId &&
+              !idSet.has(o.id) &&
+              o.zIndex > obj.zIndex
+          );
+          if (sameLayer.length > 0) {
+            const nextUp = sameLayer.reduce((min, o) =>
+              o.zIndex < min.zIndex ? o : min
+            );
+            // Swap zIndex values
+            const objIdx = newObjects.indexOf(obj);
+            const nextIdx = newObjects.indexOf(nextUp);
+            newObjects[objIdx] = {
+              ...obj,
+              zIndex: nextUp.zIndex,
+            } as WireObject;
+            newObjects[nextIdx] = {
+              ...nextUp,
+              zIndex: obj.zIndex,
+            } as WireObject;
+          }
+        }
+      }
+      return {
+        ...pushHistory(state),
+        objects: newObjects,
+      };
+    });
+  },
+
+  sendBackward: (ids) => {
+    const idSet = new Set(ids);
+    set((state) => {
+      const newObjects = [...state.objects];
+      for (const obj of newObjects) {
+        if (idSet.has(obj.id)) {
+          const sameLayer = newObjects.filter(
+            (o) =>
+              o.layerId === obj.layerId &&
+              !idSet.has(o.id) &&
+              o.zIndex < obj.zIndex
+          );
+          if (sameLayer.length > 0) {
+            const nextDown = sameLayer.reduce((max, o) =>
+              o.zIndex > max.zIndex ? o : max
+            );
+            const objIdx = newObjects.indexOf(obj);
+            const nextIdx = newObjects.indexOf(nextDown);
+            newObjects[objIdx] = {
+              ...obj,
+              zIndex: nextDown.zIndex,
+            } as WireObject;
+            newObjects[nextIdx] = {
+              ...nextDown,
+              zIndex: obj.zIndex,
+            } as WireObject;
+          }
+        }
+      }
+      return {
+        ...pushHistory(state),
+        objects: newObjects,
+      };
+    });
+  },
+
   // History
   undo: () => {
     set((state) => {
@@ -388,10 +681,17 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
         return state;
       }
       const previous = state.past.at(-1);
+      if (!previous) {
+        return state;
+      }
       return {
         past: state.past.slice(0, -1),
-        future: [state.objects, ...state.future],
-        objects: previous,
+        future: [
+          { objects: state.objects, layers: state.layers },
+          ...state.future,
+        ],
+        objects: previous.objects,
+        layers: previous.layers,
       };
     });
   },
@@ -403,9 +703,10 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       }
       const next = state.future[0];
       return {
-        past: [...state.past, state.objects],
+        past: [...state.past, { objects: state.objects, layers: state.layers }],
         future: state.future.slice(1),
-        objects: next,
+        objects: next.objects,
+        layers: next.layers,
       };
     });
   },

@@ -1,27 +1,30 @@
 import { compose, gridToString } from "@/engine/compose";
-import type { GridSize, WireObject } from "@/engine/types";
+import type { GridSize, Layer, WireObject } from "@/engine/types";
 
 export function composeToText(
   objects: WireObject[],
-  gridSize: GridSize
+  gridSize: GridSize,
+  layers?: Layer[]
 ): string {
-  const grid = compose(objects, gridSize);
+  const grid = compose(objects, gridSize, layers);
   return gridToString(grid);
 }
 
 export function composeToMarkdown(
   objects: WireObject[],
-  gridSize: GridSize
+  gridSize: GridSize,
+  layers?: Layer[]
 ): string {
-  const text = composeToText(objects, gridSize);
+  const text = composeToText(objects, gridSize, layers);
   return `\`\`\`\n${text}\n\`\`\``;
 }
 
 export function composeToHtml(
   objects: WireObject[],
-  gridSize: GridSize
+  gridSize: GridSize,
+  layers?: Layer[]
 ): string {
-  const text = composeToText(objects, gridSize);
+  const text = composeToText(objects, gridSize, layers);
   const escaped = text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -32,9 +35,10 @@ export function composeToHtml(
 export function composeToGitHub(
   objects: WireObject[],
   gridSize: GridSize,
-  shareUrl?: string
+  shareUrl?: string,
+  layers?: Layer[]
 ): string {
-  const text = composeToText(objects, gridSize);
+  const text = composeToText(objects, gridSize, layers);
   const lines = [
     "<details>",
     "<summary>Wireframe</summary>",

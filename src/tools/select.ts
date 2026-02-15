@@ -1,8 +1,18 @@
 import type { MouseEvent as ReactMouseEvent } from "react";
-import type { ArrowObject, LineObject, WireObject } from "@/engine/types";
+import type {
+  ArrowObject,
+  Layer,
+  LineObject,
+  WireObject,
+} from "@/engine/types";
 import { hasRectBounds } from "@/engine/types";
 import { useEditorStore } from "@/store";
 import type { ToolHandler } from "./types";
+
+/** Get the set of layer IDs that should be excluded from interaction */
+function getExcludedLayerIds(layers: Layer[]): Set<string> {
+  return new Set(layers.filter((l) => !l.visible || l.locked).map((l) => l.id));
+}
 
 let dragStart: { col: number; row: number } | null = null;
 let dragTarget: string | null = null;
@@ -30,9 +40,12 @@ const HANDLE_CURSORS: Record<ResizeHandle, string> = {
 function hitTest(
   col: number,
   row: number,
-  objects: WireObject[]
+  objects: WireObject[],
+  layers: Layer[]
 ): WireObject | null {
-  const sorted = [...objects].sort((a, b) => b.zIndex - a.zIndex);
+  const excluded = getExcludedLayerIds(layers);
+  const interactable = objects.filter((obj) => !excluded.has(obj.layerId));
+  const sorted = [...interactable].sort((a, b) => b.zIndex - a.zIndex);
   for (const obj of sorted) {
     if (isPointInObject(col, row, obj)) {
       return obj;
@@ -256,8 +269,9 @@ export function getHoveredHandle(
   if (state.activeTool !== "select") {
     return null;
   }
+  const excluded = getExcludedLayerIds(state.layers);
   for (const obj of state.objects) {
-    if (!state.selection.has(obj.id)) {
+    if (!state.selection.has(obj.id) || excluded.has(obj.layerId)) {
       continue;
     }
     if (hasRectBounds(obj)) {
@@ -284,8 +298,9 @@ function tryHandleDrag(
   row: number,
   state: ReturnType<typeof useEditorStore.getState>
 ): boolean {
+  const excluded = getExcludedLayerIds(state.layers);
   for (const obj of state.objects) {
-    if (!state.selection.has(obj.id)) {
+    if (!state.selection.has(obj.id) || excluded.has(obj.layerId)) {
       continue;
     }
     if (hasRectBounds(obj)) {
@@ -436,8 +451,11 @@ function finalizeMarquee() {
     const minRow = Math.min(m.startRow, m.endRow);
     const maxRow = Math.max(m.startRow, m.endRow);
     if (maxCol > minCol || maxRow > minRow) {
-      const hits = state.objects.filter((obj) =>
-        objectIntersectsRect(obj, minCol, minRow, maxCol + 1, maxRow + 1)
+      const excluded = getExcludedLayerIds(state.layers);
+      const hits = state.objects.filter(
+        (obj) =>
+          !excluded.has(obj.layerId) &&
+          objectIntersectsRect(obj, minCol, minRow, maxCol + 1, maxRow + 1)
       );
       const ids = new Set(hits.map((o) => o.id));
       if (marqueeShift) {
@@ -512,7 +530,7 @@ export const selectTool: ToolHandler = {
       return;
     }
 
-    const hit = hitTest(col, row, state.objects);
+    const hit = hitTest(col, row, state.objects, state.layers);
 
     if (!hit) {
       startMarquee(col, row, e, state);

@@ -12,6 +12,7 @@ const box: BoxObject = {
   height: 3,
   borderStyle: "single",
   zIndex: 0,
+  layerId: "layer-1",
 };
 
 describe("composeToGitHub", () => {

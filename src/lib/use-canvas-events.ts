@@ -43,6 +43,7 @@ export function useCanvasEvents() {
           height: def.defaultHeight,
           borderStyle: "single",
           zIndex: state.objects.length,
+          layerId: state.activeLayerId,
           ...(pending === "tabs" && { tabs: ["Tab 1", "Tab 2", "Tab 3"] }),
           ...(pending === "navbar" && {
             navItems: ["Home", "About", "Contact"],

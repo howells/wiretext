@@ -29,6 +29,7 @@ interface ExportDialogProps {
 
 export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const objects = useEditorStore((s) => s.objects);
+  const layers = useEditorStore((s) => s.layers);
   const gridSize = useEditorStore((s) => s.gridSize);
   const effectiveGridSize = useMemo(
     () => getEffectiveGridSize(objects, gridSize),
@@ -40,21 +41,22 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const getOutput = useCallback(() => {
     switch (format) {
       case "text":
-        return composeToText(objects, effectiveGridSize);
+        return composeToText(objects, effectiveGridSize, layers);
       case "markdown":
-        return composeToMarkdown(objects, effectiveGridSize);
+        return composeToMarkdown(objects, effectiveGridSize, layers);
       case "html":
-        return composeToHtml(objects, effectiveGridSize);
+        return composeToHtml(objects, effectiveGridSize, layers);
       case "github":
         return composeToGitHub(
           objects,
           effectiveGridSize,
-          objects.length > 0 ? getShareUrl(objects) : undefined
+          objects.length > 0 ? getShareUrl(objects, layers) : undefined,
+          layers
         );
       default:
-        return composeToText(objects, effectiveGridSize);
+        return composeToText(objects, effectiveGridSize, layers);
     }
-  }, [objects, effectiveGridSize, format]);
+  }, [objects, effectiveGridSize, format, layers]);
 
   const handleCopy = useCallback(async () => {
     const ok = await copyToClipboard(getOutput());

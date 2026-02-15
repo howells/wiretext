@@ -10,6 +10,7 @@ function makeDraftBox(
   endCol: number,
   endRow: number
 ): Omit<BoxObject, "id"> {
+  const state = useEditorStore.getState();
   return {
     type: "box",
     position: {
@@ -19,7 +20,8 @@ function makeDraftBox(
     width: Math.max(3, Math.abs(endCol - startCol) + 1),
     height: Math.max(3, Math.abs(endRow - startRow) + 1),
     borderStyle: "single",
-    zIndex: useEditorStore.getState().objects.length,
+    zIndex: state.objects.length,
+    layerId: state.activeLayerId,
   };
 }
 
@@ -65,6 +67,7 @@ export const boxTool: ToolHandler = {
         height: 6,
         borderStyle: "single",
         zIndex: state.objects.length,
+        layerId: state.activeLayerId,
       });
     }
 

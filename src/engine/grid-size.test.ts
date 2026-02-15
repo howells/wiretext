@@ -24,6 +24,7 @@ describe("getEffectiveGridSize", () => {
       height: 5,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = getEffectiveGridSize([box], DEFAULT_MIN);
     // box ends at col 15, row 10 — well within 120×60
@@ -39,6 +40,7 @@ describe("getEffectiveGridSize", () => {
       height: 15,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = getEffectiveGridSize([box], DEFAULT_MIN);
     // box ends at col 130, row 65 → + 20 padding = 150, 85
@@ -53,6 +55,7 @@ describe("getEffectiveGridSize", () => {
       position: { col: 115, row: 55 },
       content: "Hello\nWorld!",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = getEffectiveGridSize([text], DEFAULT_MIN);
     // text: width = max(5, 6) = 6, height = 2
@@ -68,6 +71,7 @@ describe("getEffectiveGridSize", () => {
       position: { col: 100, row: 50 },
       endPosition: { col: 130, row: 70 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = getEffectiveGridSize([arrow], DEFAULT_MIN);
     // bounds: col=100, row=50, width=31, height=21
@@ -85,6 +89,7 @@ describe("getEffectiveGridSize", () => {
       height: 5,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const line: LineObject = {
       id: "2",
@@ -92,6 +97,7 @@ describe("getEffectiveGridSize", () => {
       position: { col: 0, row: 0 },
       endPosition: { col: 200, row: 100 },
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = getEffectiveGridSize([box, line], DEFAULT_MIN);
     // line ends at col 201, row 101 → + 20 = 221, 121
@@ -108,6 +114,7 @@ describe("getEffectiveGridSize", () => {
       height: 100,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = getEffectiveGridSize([box], DEFAULT_MIN);
     expect(result.cols).toBe(2000);
@@ -123,6 +130,7 @@ describe("getEffectiveGridSize", () => {
       height: 15,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = getEffectiveGridSize([box], DEFAULT_MIN, 5);
     // box ends at col 130, row 65 → + 5 padding = 135, 70
@@ -139,6 +147,7 @@ describe("getEffectiveGridSize", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = getEffectiveGridSize([box], DEFAULT_MIN, 0);
     // box ends at col 5, row 3 — much smaller than minSize

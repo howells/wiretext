@@ -23,6 +23,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box], { cols: 10, rows: 5 }));
     expect(result).toContain("┌───┐");
@@ -39,6 +40,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "double",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box], { cols: 10, rows: 5 }));
     expect(result).toContain("╔═══╗");
@@ -56,6 +58,7 @@ describe("compose", () => {
       borderStyle: "single",
       label: "Hello",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box], { cols: 15, rows: 5 }));
     expect(result).toContain("│ Hello  │");
@@ -68,6 +71,7 @@ describe("compose", () => {
       position: { col: 2, row: 1 },
       content: "Hi",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([text], { cols: 10, rows: 5 }));
     const lines = result.split("\n");
@@ -81,6 +85,7 @@ describe("compose", () => {
       position: { col: 0, row: 0 },
       content: "AB\nCD",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([text], { cols: 5, rows: 5 }));
     const lines = result.split("\n");
@@ -95,6 +100,7 @@ describe("compose", () => {
       position: { col: 1, row: 1 },
       endPosition: { col: 5, row: 1 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([line], { cols: 10, rows: 5 }));
     const lines = result.split("\n");
@@ -108,6 +114,7 @@ describe("compose", () => {
       position: { col: 2, row: 0 },
       endPosition: { col: 2, row: 3 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([line], { cols: 5, rows: 5 }));
     const lines = result.split("\n");
@@ -123,6 +130,7 @@ describe("compose", () => {
       position: { col: 0, row: 0 },
       endPosition: { col: 4, row: 0 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([arrow], { cols: 10, rows: 3 }));
     expect(result).toContain("────→");
@@ -135,6 +143,7 @@ describe("compose", () => {
       position: { col: 0, row: 0 },
       endPosition: { col: 0, row: 3 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([arrow], { cols: 5, rows: 5 }));
     const lines = result.split("\n");
@@ -151,6 +160,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const text: TextObject = {
       id: "2",
@@ -158,6 +168,7 @@ describe("compose", () => {
       position: { col: 0, row: 0 },
       content: "X",
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box, text], { cols: 10, rows: 5 }));
     const lines = result.split("\n");
@@ -175,6 +186,7 @@ describe("compose", () => {
       borderStyle: "single",
       fill: "transparent",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const box2: BoxObject = {
       id: "2",
@@ -185,6 +197,7 @@ describe("compose", () => {
       borderStyle: "single",
       fill: "transparent",
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box1, box2], { cols: 12, rows: 8 }));
     const lines = result.split("\n");
@@ -209,6 +222,7 @@ describe("compose", () => {
       height: 4,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const box2: BoxObject = {
       id: "2",
@@ -218,6 +232,7 @@ describe("compose", () => {
       height: 4,
       borderStyle: "single",
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box1, box2], { cols: 12, rows: 8 }));
     const lines = result.split("\n");
@@ -240,6 +255,7 @@ describe("compose", () => {
       position: { col: 1, row: 1 },
       content: "Hello",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const box: BoxObject = {
       id: "2",
@@ -249,6 +265,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([text, box], { cols: 10, rows: 5 }));
     const lines = result.split("\n");
@@ -265,6 +282,7 @@ describe("compose", () => {
       position: { col: 1, row: 1 },
       content: "Hello",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const box: BoxObject = {
       id: "2",
@@ -275,6 +293,7 @@ describe("compose", () => {
       borderStyle: "single",
       fill: "transparent",
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([text, box], { cols: 10, rows: 5 }));
     const lines = result.split("\n");
@@ -291,6 +310,7 @@ describe("compose", () => {
       position: { col: 1, row: 1 },
       content: "Hello",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const box: BoxObject = {
       id: "2",
@@ -301,6 +321,7 @@ describe("compose", () => {
       borderStyle: "single",
       fill: "solid",
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([text, box], { cols: 10, rows: 5 }));
     const lines = result.split("\n");
@@ -316,6 +337,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const text: TextObject = {
       id: "2",
@@ -323,6 +345,7 @@ describe("compose", () => {
       position: { col: 2, row: 1 },
       content: "Hi",
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box, text], { cols: 12, rows: 5 }));
     const lines = result.split("\n");
@@ -340,6 +363,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const line: LineObject = {
       id: "2",
@@ -347,6 +371,7 @@ describe("compose", () => {
       position: { col: 1, row: 1 },
       endPosition: { col: 6, row: 1 },
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box, line], { cols: 12, rows: 5 }));
     const lines = result.split("\n");
@@ -364,6 +389,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const text: TextObject = {
       id: "2",
@@ -371,6 +397,7 @@ describe("compose", () => {
       position: { col: 0, row: 0 },
       content: "X",
       zIndex: 1,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([box, text], { cols: 10, rows: 5 }));
     const lines = result.split("\n");
@@ -389,6 +416,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     // Should not throw
     const result = compose([box], { cols: 3, rows: 3 });
@@ -406,6 +434,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([btn], { cols: 20, rows: 5 }));
     const lines = result.split("\n");
@@ -425,6 +454,7 @@ describe("compose", () => {
       borderStyle: "single",
       label: "OK",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([btn], { cols: 20, rows: 5 }));
     expect(result).toContain("OK");
@@ -440,6 +470,7 @@ describe("compose", () => {
       height: 8,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
       columns: ["Col A", "Col B"],
     };
     const result = gridToString(compose([table], { cols: 30, rows: 10 }));
@@ -465,6 +496,7 @@ describe("compose", () => {
       height: 15,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([modal], { cols: 35, rows: 20 }));
     const lines = result.split("\n");
@@ -486,6 +518,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     // Should not throw even at minimum size
     const result = compose([btn], { cols: 10, rows: 5 });
@@ -502,6 +535,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "double",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([btn], { cols: 20, rows: 5 }));
     expect(result).toContain("╔");
@@ -519,6 +553,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([prog], { cols: 25, rows: 5 }));
     expect(result).toContain("▓");
@@ -536,6 +571,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([cb], { cols: 25, rows: 5 }));
     expect(result).toContain("[✓]");
@@ -553,6 +589,7 @@ describe("compose", () => {
       borderStyle: "single",
       checked: false,
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([cb], { cols: 25, rows: 5 }));
     expect(result).toContain("[ ]");
@@ -570,6 +607,7 @@ describe("compose", () => {
       borderStyle: "single",
       checked: true,
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([cb], { cols: 25, rows: 5 }));
     expect(result).toContain("[✓]");
@@ -586,6 +624,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([radio], { cols: 25, rows: 5 }));
     expect(result).toContain("(●)");
@@ -602,6 +641,7 @@ describe("compose", () => {
       borderStyle: "single",
       checked: false,
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([radio], { cols: 25, rows: 5 }));
     expect(result).toContain("( )");
@@ -620,6 +660,7 @@ describe("compose", () => {
       borderStyle: "single",
       progress: 100,
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([prog], { cols: 25, rows: 5 }));
     // All filled at 100%
@@ -638,6 +679,7 @@ describe("compose", () => {
       borderStyle: "single",
       progress: 0,
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([prog], { cols: 25, rows: 5 }));
     expect(result).not.toContain("▓");
@@ -655,6 +697,7 @@ describe("compose", () => {
       borderStyle: "single",
       progress: 150,
       zIndex: 0,
+      layerId: "layer-1",
     };
     // Should not throw, clamps to 100
     const result = gridToString(compose([prog], { cols: 25, rows: 5 }));
@@ -673,6 +716,7 @@ describe("compose", () => {
       borderStyle: "single",
       columns: ["Name", "Age", "City"],
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([table], { cols: 35, rows: 10 }));
     const lines = result.split("\n");
@@ -696,6 +740,7 @@ describe("compose", () => {
       borderStyle: "single",
       columns: ["Only"],
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([table], { cols: 25, rows: 10 }));
     const lines = result.split("\n");
@@ -715,6 +760,7 @@ describe("compose", () => {
       borderStyle: "single",
       tabs: ["Home", "Settings"],
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([tabs], { cols: 35, rows: 5 }));
     expect(result).toContain("Home");
@@ -733,6 +779,7 @@ describe("compose", () => {
       borderStyle: "single",
       tabs: ["Only Tab"],
       zIndex: 0,
+      layerId: "layer-1",
     };
     const result = gridToString(compose([tabs], { cols: 25, rows: 5 }));
     expect(result).toContain("Only Tab");
@@ -748,6 +795,7 @@ describe("compose", () => {
       height: 3,
       borderStyle: "single",
       zIndex: 0,
+      layerId: "layer-1",
       tabs: ["Tab 1", "Tab 2", "Tab 3"],
     };
     const result = gridToString(compose([tabs], { cols: 35, rows: 5 }));
@@ -764,6 +812,7 @@ describe("compose", () => {
       position: { col: 0, row: 0 },
       endPosition: { col: 4, row: 4 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const grid = compose([line], { cols: 6, rows: 6 });
     expect(grid[0][0]).toBe("╲");
@@ -778,6 +827,7 @@ describe("compose", () => {
       position: { col: 4, row: 0 },
       endPosition: { col: 0, row: 4 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const grid = compose([line], { cols: 6, rows: 6 });
     expect(grid[0][4]).toBe("╱");
@@ -791,6 +841,7 @@ describe("compose", () => {
       position: { col: 0, row: 0 },
       endPosition: { col: 3, row: 3 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const grid = compose([arrow], { cols: 5, rows: 5 });
     // Body is diagonal
@@ -807,6 +858,7 @@ describe("compose", () => {
       position: { col: 3, row: 3 },
       endPosition: { col: 0, row: 0 },
       zIndex: 0,
+      layerId: "layer-1",
     };
     const grid = compose([arrow], { cols: 5, rows: 5 });
     expect(grid[0][0]).toBe("↖");

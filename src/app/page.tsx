@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Canvas } from "@/components/editor/canvas";
 import { ExportDialog } from "@/components/editor/export-dialog";
 import { LabelEditorOverlay } from "@/components/editor/label-editor-overlay";
+import { LayersPanel } from "@/components/editor/layers-panel";
 import { PropertiesPanel } from "@/components/editor/properties-panel";
 import { StatusBar } from "@/components/editor/status-bar";
 import { TextEditorOverlay } from "@/components/editor/text-editor-overlay";
@@ -14,11 +15,14 @@ import { decodeDocument, getShareUrl } from "@/lib/sharing";
 import { useCanvasEvents } from "@/lib/use-canvas-events";
 import { useCharMetrics } from "@/lib/use-char-metrics";
 import { useKeyboard } from "@/lib/use-keyboard";
+import type { SidebarTab } from "@/store";
 import { useEditorStore } from "@/store";
 
 export default function EditorPage() {
   const { onMouseDown, onMouseMove, onMouseUp, cursor } = useCanvasEvents();
   const objects = useEditorStore((s) => s.objects);
+  const sidebarTab = useEditorStore((s) => s.sidebarTab);
+  const setSidebarTab = useEditorStore((s) => s.setSidebarTab);
   const metrics = useCharMetrics();
   const [hoverCoord, setHoverCoord] = useState({ col: 0, row: 0 });
   const [exportOpen, setExportOpen] = useState(false);
@@ -33,11 +37,9 @@ export default function EditorPage() {
       return;
     }
     const decoded = decodeDocument(hash);
-    if (decoded && decoded.length > 0) {
+    if (decoded && decoded.objects.length > 0) {
       const store = useEditorStore.getState();
-      for (const obj of decoded) {
-        store.addObject(obj);
-      }
+      store.loadDocument(decoded.objects, decoded.layers);
       trackDocumentLoaded();
     }
   }, []);
@@ -47,7 +49,8 @@ export default function EditorPage() {
   }, []);
 
   const handleShare = useCallback(async () => {
-    const url = getShareUrl(useEditorStore.getState().objects);
+    const state = useEditorStore.getState();
+    const url = getShareUrl(state.objects, state.layers);
     const ok = await copyToClipboard(url);
     if (ok) {
       window.history.replaceState(null, "", url);
@@ -111,7 +114,32 @@ export default function EditorPage() {
           </div>
         </div>
 
-        <PropertiesPanel />
+        {/* Tabbed sidebar */}
+        <div className="flex w-52 flex-col border-border border-l bg-surface">
+          <div className="flex border-border border-b">
+            {(["properties", "layers"] as SidebarTab[]).map((tab) => (
+              <button
+                className={`flex-1 px-2 py-1.5 text-[10px] uppercase tracking-wider transition-colors ${
+                  sidebarTab === tab
+                    ? "border-accent border-b-2 text-text"
+                    : "text-text-dim hover:text-text"
+                }`}
+                key={tab}
+                onClick={() => setSidebarTab(tab)}
+                type="button"
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1 overflow-auto p-3">
+            {sidebarTab === "properties" ? (
+              <PropertiesPanel />
+            ) : (
+              <LayersPanel />
+            )}
+          </div>
+        </div>
       </div>
 
       <StatusBar hoverCol={hoverCoord.col} hoverRow={hoverCoord.row} />

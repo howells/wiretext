@@ -1,4 +1,5 @@
 export type ObjectId = string;
+export type LayerId = string;
 
 export interface GridPoint {
   col: number;
@@ -27,10 +28,18 @@ export type ComponentType =
   | "tabs"
   | "progress";
 
+export interface Layer {
+  id: LayerId;
+  name: string;
+  visible: boolean;
+  locked: boolean;
+}
+
 export interface BaseObject {
   id: ObjectId;
   position: GridPoint;
   zIndex: number;
+  layerId: LayerId;
   annotation?: string;
 }
 

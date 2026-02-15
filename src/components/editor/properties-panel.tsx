@@ -27,27 +27,21 @@ export function PropertiesPanel() {
   const selectedObjects = objects.filter((o) => selection.has(o.id));
 
   if (selectedObjects.length === 0) {
-    return (
-      <div className="flex w-52 flex-col border-border border-l bg-surface p-3">
-        <p className="text-text-dim text-xs">No selection</p>
-      </div>
-    );
+    return <p className="text-text-dim text-xs">No selection</p>;
   }
 
   if (selectedObjects.length > 1) {
     return (
-      <div className="flex w-52 flex-col border-border border-l bg-surface p-3">
-        <p className="text-text-dim text-xs">
-          {selectedObjects.length} objects selected
-        </p>
-      </div>
+      <p className="text-text-dim text-xs">
+        {selectedObjects.length} objects selected
+      </p>
     );
   }
 
   const obj = selectedObjects[0];
 
   return (
-    <div className="flex w-52 flex-col gap-3 border-border border-l bg-surface p-3">
+    <div className="flex flex-col gap-3">
       <div>
         <FieldLabel>Type</FieldLabel>
         <span className="text-text text-xs">{obj.type}</span>

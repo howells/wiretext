@@ -38,12 +38,14 @@ export const lineTool: ToolHandler = {
 
   onMouseDown(col, row) {
     dragStart = { col, row };
-    useEditorStore.getState().setDraft({
+    const state = useEditorStore.getState();
+    state.setDraft({
       id: "__draft__",
       type: "line",
       position: { col, row },
       endPosition: { col, row },
-      zIndex: useEditorStore.getState().objects.length,
+      zIndex: state.objects.length,
+      layerId: state.activeLayerId,
     } as LineObject);
   },
 
@@ -52,12 +54,14 @@ export const lineTool: ToolHandler = {
       return;
     }
     const end = snapDirection(dragStart.col, dragStart.row, col, row);
-    useEditorStore.getState().setDraft({
+    const state = useEditorStore.getState();
+    state.setDraft({
       id: "__draft__",
       type: "line",
       position: { col: dragStart.col, row: dragStart.row },
       endPosition: end,
-      zIndex: useEditorStore.getState().objects.length,
+      zIndex: state.objects.length,
+      layerId: state.activeLayerId,
     } as LineObject);
   },
 
@@ -76,6 +80,7 @@ export const lineTool: ToolHandler = {
         position: { col: dragStart.col, row: dragStart.row },
         endPosition: end,
         zIndex: state.objects.length,
+        layerId: state.activeLayerId,
       });
     }
 
