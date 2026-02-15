@@ -38,7 +38,7 @@ export const textTool: ToolHandler = {
   name: "text",
   cursor: "text",
 
-  onMouseDown(col: number, row: number, _e: ReactMouseEvent) {
+  onMouseDown(col: number, row: number, e: ReactMouseEvent) {
     // Guard against double-fire (React Strict Mode / event replay)
     if (creating) {
       return;
@@ -56,10 +56,12 @@ export const textTool: ToolHandler = {
       return;
     }
 
-    // Click on an existing text object → edit it instead of creating new
+    // Click on an existing text object → select it, double-click → edit it
     const hit = hitTestText(col, row, state.objects, state.layers);
     if (hit) {
-      state.setEditingTextId(hit.id);
+      if (e.detail >= 2) {
+        state.setEditingTextId(hit.id);
+      }
       state.selectObject(hit.id);
       return;
     }
