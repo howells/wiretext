@@ -23,6 +23,12 @@ enableMapSet();
 
 const MAX_HISTORY = 100;
 
+export interface ContextMenu {
+  x: number;
+  y: number;
+  targetObjectId: ObjectId | null;
+}
+
 export type SidebarTab = "properties" | "layers";
 
 export interface HistorySnapshot {
@@ -55,6 +61,7 @@ export interface EditorState {
     endCol: number;
     endRow: number;
   } | null;
+  contextMenu: ContextMenu | null;
 
   // Clipboard
   clipboard: WireObject[];
@@ -90,9 +97,16 @@ export interface EditorActions {
   sendToBack: (ids: ObjectId[]) => void;
   bringForward: (ids: ObjectId[]) => void;
   sendBackward: (ids: ObjectId[]) => void;
+  reorderObjectZIndex: (objectId: ObjectId, newPosition: number) => void;
+
+  // Grouping
+  groupSelection: () => void;
+  ungroupSelection: () => void;
+  selectAll: () => void;
 
   // Clipboard
   copySelection: () => void;
+  cutSelection: () => void;
   pasteClipboard: () => void;
   duplicateSelection: () => void;
 
@@ -116,6 +130,7 @@ export interface EditorActions {
       endRow: number;
     } | null
   ) => void;
+  setContextMenu: (menu: ContextMenu | null) => void;
   toggleSidebar: () => void;
   setSidebarTab: (tab: SidebarTab) => void;
 
@@ -137,6 +152,45 @@ function pushHistory(state: EditorState): {
     ],
     future: [],
   };
+}
+
+/** Given a set of object IDs, expand to include all objects sharing a groupId with any of them */
+function expandToGroups(
+  ids: Set<ObjectId>,
+  objects: WireObject[]
+): Set<ObjectId> {
+  const groupIds = new Set<string>();
+  for (const obj of objects) {
+    if (ids.has(obj.id) && obj.groupId) {
+      groupIds.add(obj.groupId);
+    }
+  }
+  if (groupIds.size === 0) {
+    return ids;
+  }
+  const expanded = new Set(ids);
+  for (const obj of objects) {
+    if (obj.groupId && groupIds.has(obj.groupId)) {
+      expanded.add(obj.id);
+    }
+  }
+  return expanded;
+}
+
+/** Remap groupId values so pasted/duplicated groups are distinct from originals */
+function remapGroupIds(objs: WireObject[]): WireObject[] {
+  const groupMap = new Map<string, string>();
+  return objs.map((obj) => {
+    if (!obj.groupId) {
+      return obj;
+    }
+    let newGroupId = groupMap.get(obj.groupId);
+    if (!newGroupId) {
+      newGroupId = nanoid();
+      groupMap.set(obj.groupId, newGroupId);
+    }
+    return { ...obj, groupId: newGroupId } as WireObject;
+  });
 }
 
 export const useEditorStore = create<EditorStore>()((set, get) => ({
@@ -162,6 +216,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   sidebarExpanded: true,
   sidebarTab: "properties" as SidebarTab,
   marquee: null,
+  contextMenu: null,
   clipboard: [],
   past: [],
   future: [],
@@ -203,11 +258,29 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     if (selection.size === 0) {
       return;
     }
-    set((state) => ({
-      ...pushHistory(state),
-      objects: state.objects.filter((obj) => !state.selection.has(obj.id)),
-      selection: new Set<ObjectId>(),
-    }));
+    set((state) => {
+      const remaining = state.objects.filter(
+        (obj) => !state.selection.has(obj.id)
+      );
+      // Clean up orphaned groups (groups with <2 members)
+      const groupCounts = new Map<string, number>();
+      for (const obj of remaining) {
+        if (obj.groupId) {
+          groupCounts.set(obj.groupId, (groupCounts.get(obj.groupId) ?? 0) + 1);
+        }
+      }
+      const cleaned = remaining.map((obj) => {
+        if (obj.groupId && (groupCounts.get(obj.groupId) ?? 0) < 2) {
+          return { ...obj, groupId: undefined } as WireObject;
+        }
+        return obj;
+      });
+      return {
+        ...pushHistory(state),
+        objects: cleaned,
+        selection: new Set<ObjectId>(),
+      };
+    });
   },
 
   moveObject: (id, deltaCol, deltaRow) => {
@@ -301,6 +374,20 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     set({ clipboard: copied });
   },
 
+  cutSelection: () => {
+    const { selection, objects } = get();
+    if (selection.size === 0) {
+      return;
+    }
+    const copied = objects.filter((obj) => selection.has(obj.id));
+    set((state) => ({
+      ...pushHistory(state),
+      clipboard: copied,
+      objects: state.objects.filter((obj) => !state.selection.has(obj.id)),
+      selection: new Set<ObjectId>(),
+    }));
+  },
+
   pasteClipboard: () => {
     const { clipboard, activeLayerId } = get();
     if (clipboard.length === 0) {
@@ -309,7 +396,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     const OFFSET_COL = 2;
     const OFFSET_ROW = 1;
     const newIds = new Set<ObjectId>();
-    const newObjects = clipboard.map((obj) => {
+    const rawObjects = clipboard.map((obj) => {
       const newId = nanoid();
       newIds.add(newId);
       const base = {
@@ -333,6 +420,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       }
       return base as WireObject;
     });
+    const newObjects = remapGroupIds(rawObjects);
 
     set((state) => ({
       ...pushHistory(state),
@@ -351,7 +439,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     const OFFSET_COL = 2;
     const OFFSET_ROW = 1;
     const newIds = new Set<ObjectId>();
-    const newObjects = copied.map((obj) => {
+    const rawObjects = copied.map((obj) => {
       const newId = nanoid();
       newIds.add(newId);
       const base = {
@@ -374,12 +462,73 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       }
       return base as WireObject;
     });
+    const newObjects = remapGroupIds(rawObjects);
 
     set((state) => ({
       ...pushHistory(state),
       objects: [...state.objects, ...newObjects],
       selection: newIds,
     }));
+  },
+
+  // Grouping
+  groupSelection: () => {
+    const { selection, objects } = get();
+    if (selection.size < 2) {
+      return;
+    }
+    // All selected objects must be on the same layer
+    const selectedObjs = objects.filter((o) => selection.has(o.id));
+    const layerIds = new Set(selectedObjs.map((o) => o.layerId));
+    if (layerIds.size !== 1) {
+      return;
+    }
+    const groupId = nanoid();
+    set((state) => ({
+      ...pushHistory(state),
+      objects: state.objects.map((obj) =>
+        state.selection.has(obj.id) ? ({ ...obj, groupId } as WireObject) : obj
+      ),
+    }));
+  },
+
+  ungroupSelection: () => {
+    const { selection, objects } = get();
+    if (selection.size === 0) {
+      return;
+    }
+    // Find all groupIds that intersect with the selection
+    const groupIds = new Set<string>();
+    for (const obj of objects) {
+      if (selection.has(obj.id) && obj.groupId) {
+        groupIds.add(obj.groupId);
+      }
+    }
+    if (groupIds.size === 0) {
+      return;
+    }
+    set((state) => ({
+      ...pushHistory(state),
+      objects: state.objects.map((obj) =>
+        obj.groupId && groupIds.has(obj.groupId)
+          ? ({ ...obj, groupId: undefined } as WireObject)
+          : obj
+      ),
+    }));
+  },
+
+  selectAll: () => {
+    set((state) => {
+      const excludedLayers = new Set(
+        state.layers.filter((l) => !l.visible || l.locked).map((l) => l.id)
+      );
+      const ids = new Set(
+        state.objects
+          .filter((o) => !excludedLayers.has(o.layerId))
+          .map((o) => o.id)
+      );
+      return { selection: ids };
+    });
   },
 
   // UI mutations
@@ -392,11 +541,24 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
 
   selectObject: (id, toggle = false) => {
     set((state) => {
+      const obj = state.objects.find((o) => o.id === id);
+      const groupMembers = obj?.groupId
+        ? state.objects
+            .filter((o) => o.groupId === obj.groupId)
+            .map((o) => o.id)
+        : [id];
+
       const next = new Set(toggle ? state.selection : []);
       if (toggle && next.has(id)) {
-        next.delete(id);
+        // Deselect entire group
+        for (const memberId of groupMembers) {
+          next.delete(memberId);
+        }
       } else {
-        next.add(id);
+        // Select entire group
+        for (const memberId of groupMembers) {
+          next.add(memberId);
+        }
       }
       return { selection: next };
     });
@@ -437,6 +599,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   setPendingComponent: (type) => set({ pendingComponent: type }),
 
   setMarquee: (marquee) => set({ marquee }),
+
+  setContextMenu: (menu) => set({ contextMenu: menu }),
 
   toggleSidebar: () =>
     set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
@@ -536,19 +700,21 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   },
 
   moveObjectsToLayer: (objectIds, layerId) => {
-    const idSet = new Set(objectIds);
-    set((state) => ({
-      ...pushHistory(state),
-      objects: state.objects.map((obj) =>
-        idSet.has(obj.id) ? { ...obj, layerId } : obj
-      ),
-    }));
+    set((state) => {
+      const idSet = expandToGroups(new Set(objectIds), state.objects);
+      return {
+        ...pushHistory(state),
+        objects: state.objects.map((obj) =>
+          idSet.has(obj.id) ? { ...obj, layerId } : obj
+        ),
+      };
+    });
   },
 
   // Z-ordering
   bringToFront: (ids) => {
-    const idSet = new Set(ids);
     set((state) => {
+      const idSet = expandToGroups(new Set(ids), state.objects);
       const targetObjs = state.objects.filter((o) => idSet.has(o.id));
       if (targetObjs.length === 0) {
         return state;
@@ -572,8 +738,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   },
 
   sendToBack: (ids) => {
-    const idSet = new Set(ids);
     set((state) => {
+      const idSet = expandToGroups(new Set(ids), state.objects);
       const targetObjs = state.objects.filter((o) => idSet.has(o.id));
       if (targetObjs.length === 0) {
         return state;
@@ -601,8 +767,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   },
 
   bringForward: (ids) => {
-    const idSet = new Set(ids);
     set((state) => {
+      const idSet = expandToGroups(new Set(ids), state.objects);
       const newObjects = [...state.objects];
       for (const obj of newObjects) {
         if (idSet.has(obj.id)) {
@@ -639,8 +805,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   },
 
   sendBackward: (ids) => {
-    const idSet = new Set(ids);
     set((state) => {
+      const idSet = expandToGroups(new Set(ids), state.objects);
       const newObjects = [...state.objects];
       for (const obj of newObjects) {
         if (idSet.has(obj.id)) {
@@ -670,6 +836,48 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       return {
         ...pushHistory(state),
         objects: newObjects,
+      };
+    });
+  },
+
+  reorderObjectZIndex: (objectId, newPosition) => {
+    set((state) => {
+      const target = state.objects.find((o) => o.id === objectId);
+      if (!target) {
+        return state;
+      }
+
+      // Get all objects in the same layer, sorted by zIndex descending
+      // (matching visual order: highest zIndex = top = index 0)
+      const layerObjs = state.objects
+        .filter((o) => o.layerId === target.layerId)
+        .sort((a, b) => b.zIndex - a.zIndex);
+
+      // Remove target from sorted list
+      const without = layerObjs.filter((o) => o.id !== objectId);
+
+      // Insert at new position (clamped)
+      const clamped = Math.max(0, Math.min(without.length, newPosition));
+      const reordered = [
+        ...without.slice(0, clamped),
+        target,
+        ...without.slice(clamped),
+      ];
+
+      // Reassign zIndex values: first in visual order gets highest zIndex
+      const zIndexMap = new Map<ObjectId, number>();
+      for (let i = 0; i < reordered.length; i++) {
+        zIndexMap.set(reordered[i].id, reordered.length - 1 - i);
+      }
+
+      return {
+        ...pushHistory(state),
+        objects: state.objects.map((obj) => {
+          const newZ = zIndexMap.get(obj.id);
+          return newZ !== undefined
+            ? ({ ...obj, zIndex: newZ } as WireObject)
+            : obj;
+        }),
       };
     });
   },

@@ -41,6 +41,7 @@ export interface BaseObject {
   zIndex: number;
   layerId: LayerId;
   annotation?: string;
+  groupId?: string;
 }
 
 export interface BoxObject extends BaseObject {

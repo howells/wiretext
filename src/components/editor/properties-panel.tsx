@@ -31,10 +31,31 @@ export function PropertiesPanel() {
   }
 
   if (selectedObjects.length > 1) {
+    // Check if selection forms a single group
+    const groupIds = new Set(
+      selectedObjects.map((o) => o.groupId).filter(Boolean)
+    );
+    const isSingleGroup =
+      groupIds.size === 1 &&
+      selectedObjects.every((o) => o.groupId === [...groupIds][0]);
+
     return (
-      <p className="text-text-dim text-xs">
-        {selectedObjects.length} objects selected
-      </p>
+      <div className="flex flex-col gap-2">
+        <p className="text-text-dim text-xs">
+          {isSingleGroup
+            ? `Group (${selectedObjects.length} objects)`
+            : `${selectedObjects.length} objects selected`}
+        </p>
+        {isSingleGroup && (
+          <button
+            className="rounded bg-surface-hover px-2 py-1 text-text-dim text-xs transition-colors hover:text-text"
+            onClick={() => useEditorStore.getState().ungroupSelection()}
+            type="button"
+          >
+            Ungroup
+          </button>
+        )}
+      </div>
     );
   }
 

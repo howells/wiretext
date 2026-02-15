@@ -37,7 +37,7 @@ const HANDLE_CURSORS: Record<ResizeHandle, string> = {
   w: "ew-resize",
 };
 
-function hitTest(
+export function hitTest(
   col: number,
   row: number,
   objects: WireObject[],
@@ -442,6 +442,33 @@ function handleEndpointMove(col: number, row: number) {
 
 // --- onMouseUp helpers ---
 
+/** Expand a set of hit object IDs to include all members of their groups */
+function expandHitsToGroups(
+  hits: WireObject[],
+  allObjects: WireObject[],
+  excluded: Set<string>
+): Set<string> {
+  const ids = new Set(hits.map((o) => o.id));
+  const groupIds = new Set<string>();
+  for (const obj of hits) {
+    if (obj.groupId) {
+      groupIds.add(obj.groupId);
+    }
+  }
+  if (groupIds.size > 0) {
+    for (const obj of allObjects) {
+      if (
+        obj.groupId &&
+        groupIds.has(obj.groupId) &&
+        !excluded.has(obj.layerId)
+      ) {
+        ids.add(obj.id);
+      }
+    }
+  }
+  return ids;
+}
+
 function finalizeMarquee() {
   const state = useEditorStore.getState();
   const m = state.marquee;
@@ -457,7 +484,7 @@ function finalizeMarquee() {
           !excluded.has(obj.layerId) &&
           objectIntersectsRect(obj, minCol, minRow, maxCol + 1, maxRow + 1)
       );
-      const ids = new Set(hits.map((o) => o.id));
+      const ids = expandHitsToGroups(hits, state.objects, excluded);
       if (marqueeShift) {
         for (const id of state.selection) {
           ids.add(id);

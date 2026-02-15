@@ -16,6 +16,7 @@ import { hasRectBounds } from "@/engine/types";
 import { gridToScreen, screenToGrid } from "@/lib/coordinates";
 import { useCharMetrics } from "@/lib/use-char-metrics";
 import { useEditorStore } from "@/store";
+import { hitTest } from "@/tools/select";
 
 interface CanvasProps {
   onMouseDown?: (col: number, row: number, e: ReactMouseEvent) => void;
@@ -365,7 +366,21 @@ export function Canvas({
       {/* Mouse overlay */}
       <div
         className="absolute inset-0"
-        onContextMenu={(e) => e.preventDefault()}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          const pt = getGridPoint(e);
+          if (!pt) {
+            return;
+          }
+          const state = useEditorStore.getState();
+          const hit = hitTest(pt.col, pt.row, state.objects, state.layers);
+          const targetObjectId = hit?.id ?? null;
+          // If right-clicked an object that's not selected, select it (+ group)
+          if (targetObjectId && !state.selection.has(targetObjectId)) {
+            state.selectObject(targetObjectId);
+          }
+          state.setContextMenu({ x: e.clientX, y: e.clientY, targetObjectId });
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

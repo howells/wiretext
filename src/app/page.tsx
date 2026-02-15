@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Canvas } from "@/components/editor/canvas";
+import { ContextMenu } from "@/components/editor/context-menu";
 import { ExportDialog } from "@/components/editor/export-dialog";
 import { LabelEditorOverlay } from "@/components/editor/label-editor-overlay";
 import { LayersPanel } from "@/components/editor/layers-panel";
@@ -144,6 +145,7 @@ export default function EditorPage() {
 
       <StatusBar hoverCol={hoverCoord.col} hoverRow={hoverCoord.row} />
       <ExportDialog onClose={() => setExportOpen(false)} open={exportOpen} />
+      <ContextMenu />
     </div>
   );
 }

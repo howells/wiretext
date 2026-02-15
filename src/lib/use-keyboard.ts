@@ -3,7 +3,11 @@
 import { useEffect } from "react";
 import { getEffectiveGridSize } from "@/engine/grid-size";
 import type { ToolType } from "@/engine/types";
-import { composeToText, copyToClipboard } from "@/lib/clipboard";
+import {
+  composeSelectionToText,
+  composeToText,
+  copyToClipboard,
+} from "@/lib/clipboard";
 import { useEditorStore } from "@/store";
 
 const TOOL_KEYS: Record<string, ToolType> = {
@@ -55,14 +59,37 @@ function handleCopy(e: KeyboardEvent, key: string): boolean {
     e.preventDefault();
     const state = useEditorStore.getState();
     if (state.selection.size > 0) {
+      // Copy selected objects to internal clipboard + system clipboard (selection only)
       state.copySelection();
+      const text = composeSelectionToText(state.objects, state.selection);
+      copyToClipboard(text);
+    } else {
+      // No selection: copy full canvas to system clipboard
+      const effectiveGridSize = getEffectiveGridSize(
+        state.objects,
+        state.gridSize
+      );
+      const text = composeToText(
+        state.objects,
+        effectiveGridSize,
+        state.layers
+      );
+      copyToClipboard(text);
     }
-    const effectiveGridSize = getEffectiveGridSize(
-      state.objects,
-      state.gridSize
-    );
-    const text = composeToText(state.objects, effectiveGridSize, state.layers);
-    copyToClipboard(text);
+    return true;
+  }
+  return false;
+}
+
+function handleCut(e: KeyboardEvent, key: string): boolean {
+  if ((e.metaKey || e.ctrlKey) && key === "x") {
+    e.preventDefault();
+    const state = useEditorStore.getState();
+    if (state.selection.size > 0) {
+      const text = composeSelectionToText(state.objects, state.selection);
+      copyToClipboard(text);
+      state.cutSelection();
+    }
     return true;
   }
   return false;
@@ -99,12 +126,44 @@ function handleExport(
   return false;
 }
 
+function handleSelectAll(e: KeyboardEvent, key: string): boolean {
+  if ((e.metaKey || e.ctrlKey) && key === "a") {
+    e.preventDefault();
+    useEditorStore.getState().selectAll();
+    return true;
+  }
+  return false;
+}
+
+function handleGroup(e: KeyboardEvent, key: string): boolean {
+  if ((e.metaKey || e.ctrlKey) && key === "g" && !e.shiftKey) {
+    e.preventDefault();
+    useEditorStore.getState().groupSelection();
+    return true;
+  }
+  return false;
+}
+
+function handleUngroup(e: KeyboardEvent, key: string): boolean {
+  if ((e.metaKey || e.ctrlKey) && key === "g" && e.shiftKey) {
+    e.preventDefault();
+    useEditorStore.getState().ungroupSelection();
+    return true;
+  }
+  return false;
+}
+
 function handleEscape(e: KeyboardEvent, key: string): boolean {
   if (key !== "escape") {
     return false;
   }
   e.preventDefault();
   const state = useEditorStore.getState();
+  // Close context menu first
+  if (state.contextMenu) {
+    state.setContextMenu(null);
+    return true;
+  }
   if (state.pendingComponent) {
     state.setPendingComponent(null);
     return true;
@@ -167,7 +226,11 @@ export function useKeyboard(onToggleExport?: () => void) {
         handleDelete(e, key) ||
         handleUndo(e, key) ||
         handleRedo(e, key) ||
+        handleSelectAll(e, key) ||
+        handleUngroup(e, key) ||
+        handleGroup(e, key) ||
         handleCopy(e, key) ||
+        handleCut(e, key) ||
         handlePaste(e, key) ||
         handleDuplicate(e, key) ||
         handleZOrder(e, key) ||
