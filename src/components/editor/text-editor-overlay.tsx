@@ -67,6 +67,15 @@ export function TextEditorOverlay({ metrics }: TextEditorOverlayProps) {
     e.stopPropagation();
   };
 
+  const lines = textObj.content.split("\n");
+  const longestLine = Math.max(...lines.map((l) => l.length), 1);
+  const charW = metrics.charWidth * viewport.zoom;
+  const lineH = metrics.lineHeight * viewport.zoom;
+  // +1 char for cursor room, minimum 2 chars wide
+  const contentWidth = Math.max(longestLine + 1, 2) * charW;
+  // +1 line so there's room to start a new line
+  const contentHeight = (lines.length + 1) * lineH;
+
   return (
     <textarea
       className="absolute z-50 resize-none border border-accent bg-bg/80 p-0 font-mono text-text outline-none"
@@ -85,8 +94,8 @@ export function TextEditorOverlay({ metrics }: TextEditorOverlayProps) {
         top: pos.y,
         fontSize: `${14 * viewport.zoom}px`,
         lineHeight: "1.5",
-        minWidth: `${metrics.charWidth * viewport.zoom * 10}px`,
-        minHeight: `${metrics.lineHeight * viewport.zoom}px`,
+        width: contentWidth,
+        height: contentHeight,
       }}
       value={textObj.content}
     />

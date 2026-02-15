@@ -61,7 +61,7 @@ function handleCopy(e: KeyboardEvent, key: string): boolean {
       state.objects,
       state.gridSize
     );
-    const text = composeToText(state.objects, effectiveGridSize);
+    const text = composeToText(state.objects, effectiveGridSize, state.layers);
     copyToClipboard(text);
     return true;
   }
@@ -116,6 +116,28 @@ function handleEscape(e: KeyboardEvent, key: string): boolean {
   return true;
 }
 
+function handleZOrder(e: KeyboardEvent, key: string): boolean {
+  if (key !== "]" && key !== "[") {
+    return false;
+  }
+  const state = useEditorStore.getState();
+  if (state.selection.size === 0) {
+    return false;
+  }
+  e.preventDefault();
+  const ids = [...state.selection];
+  if ((e.metaKey || e.ctrlKey) && key === "]") {
+    state.bringToFront(ids);
+  } else if ((e.metaKey || e.ctrlKey) && key === "[") {
+    state.sendToBack(ids);
+  } else if (key === "]") {
+    state.bringForward(ids);
+  } else {
+    state.sendBackward(ids);
+  }
+  return true;
+}
+
 function handleToggleSidebar(e: KeyboardEvent, key: string): boolean {
   if (!(e.metaKey || e.ctrlKey) && key === "p") {
     e.preventDefault();
@@ -128,8 +150,14 @@ function handleToggleSidebar(e: KeyboardEvent, key: string): boolean {
 export function useKeyboard(onToggleExport?: () => void) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") {
+      const target = e.target as HTMLElement;
+      const tag = target?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable
+      ) {
         return;
       }
 
@@ -142,6 +170,7 @@ export function useKeyboard(onToggleExport?: () => void) {
         handleCopy(e, key) ||
         handlePaste(e, key) ||
         handleDuplicate(e, key) ||
+        handleZOrder(e, key) ||
         handleExport(e, key, onToggleExport) ||
         handleEscape(e, key) ||
         handleToggleSidebar(e, key);

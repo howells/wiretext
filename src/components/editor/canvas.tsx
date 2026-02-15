@@ -32,6 +32,7 @@ export function Canvas({
 }: CanvasProps) {
   const metrics = useCharMetrics();
   const objects = useEditorStore((s) => s.objects);
+  const layers = useEditorStore((s) => s.layers);
   const draft = useEditorStore((s) => s.draft);
   const gridSize = useEditorStore((s) => s.gridSize);
   const viewport = useEditorStore((s) => s.viewport);
@@ -51,7 +52,7 @@ export function Canvas({
     () => getEffectiveGridSize(allObjects, gridSize),
     [allObjects, gridSize]
   );
-  const grid = compose(allObjects, effectiveGridSize);
+  const grid = compose(allObjects, effectiveGridSize, layers);
   const text = gridToString(grid);
 
   const getGridPoint = useCallback(
@@ -139,8 +140,14 @@ export function Canvas({
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space" && !e.repeat) {
-        const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") {
+        const target = e.target as HTMLElement;
+        const tag = target?.tagName;
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          tag === "SELECT" ||
+          target?.isContentEditable
+        ) {
           return;
         }
         spaceHeld.current = true;
