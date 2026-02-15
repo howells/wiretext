@@ -51,9 +51,9 @@ export const textTool: ToolHandler = {
     const state = useEditorStore.getState();
 
     // If already editing, exit editing first
-    if (state.editingTextId) {
+    const wasEditing = !!state.editingTextId;
+    if (wasEditing) {
       state.setEditingTextId(null);
-      return;
     }
 
     // Click on an existing text object → select it, double-click → edit it
@@ -63,6 +63,11 @@ export const textTool: ToolHandler = {
         state.setEditingTextId(hit.id);
       }
       state.selectObject(hit.id);
+      return;
+    }
+
+    // If we just exited editing, don't create new text on click-away
+    if (wasEditing) {
       return;
     }
 
