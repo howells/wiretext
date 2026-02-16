@@ -2,12 +2,14 @@ import { nanoid } from "nanoid";
 import { getObjectBounds } from "./bounds";
 import { COMPONENT_BY_TYPE } from "./components";
 import type {
+  AlertType,
   BorderStyle,
   ComponentType,
   FillStyle,
   GridPoint,
   GridSize,
   Layer,
+  ListStyle,
   WireObject,
 } from "./types";
 
@@ -61,6 +63,13 @@ export interface MinimalComponent extends MinimalBase {
   columns?: string[];
   tabs?: string[];
   navItems?: string[];
+  alertType?: AlertType;
+  items?: string[];
+  separator?: string;
+  listStyle?: ListStyle;
+  activeStep?: number;
+  value?: number;
+  maxValue?: number;
 }
 
 export type MinimalObject =
@@ -149,6 +158,13 @@ export function fillDefaults(objects: MinimalObject[]): {
           columns: obj.columns,
           tabs: obj.tabs,
           navItems: obj.navItems,
+          alertType: obj.alertType,
+          items: obj.items,
+          separator: obj.separator,
+          listStyle: obj.listStyle,
+          activeStep: obj.activeStep,
+          value: obj.value,
+          maxValue: obj.maxValue,
         });
         break;
       }

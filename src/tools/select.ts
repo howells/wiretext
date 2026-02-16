@@ -1,6 +1,7 @@
 import type { MouseEvent as ReactMouseEvent } from "react";
 import type {
   ArrowObject,
+  ComponentType,
   Layer,
   LineObject,
   WireObject,
@@ -8,6 +9,27 @@ import type {
 import { getResizeConstraint, hasRectBounds } from "@/engine/types";
 import { useEditorStore } from "@/store";
 import type { ToolHandler } from "./types";
+
+const BORDERLESS_COMPONENTS: ReadonlySet<ComponentType> = new Set([
+  "icon",
+  "divider",
+  "toggle",
+  "breadcrumb",
+  "list",
+  "stepper",
+  "rating",
+  "skeleton",
+]);
+
+function getMinSize(obj: WireObject): { minW: number; minH: number } {
+  if (
+    obj.type === "component" &&
+    BORDERLESS_COMPONENTS.has(obj.componentType)
+  ) {
+    return { minW: 1, minH: 1 };
+  }
+  return { minW: 3, minH: 3 };
+}
 
 /** Get the set of layer IDs that should be excluded from interaction */
 function getExcludedLayerIds(layers: Layer[]): Set<string> {
@@ -407,23 +429,24 @@ function handleResizeMove(col: number, row: number) {
   let newW = originalSize.width;
   let newH = originalSize.height;
 
+  const state = useEditorStore.getState();
+  const obj = state.objects.find((o) => o.id === dragTarget);
+  const { minW, minH } = obj ? getMinSize(obj) : { minW: 3, minH: 3 };
+
   if (resizeHandle?.includes("e")) {
-    newW = Math.max(3, originalSize.width + deltaCol);
+    newW = Math.max(minW, originalSize.width + deltaCol);
   }
   if (resizeHandle?.includes("w")) {
-    newW = Math.max(3, originalSize.width - deltaCol);
+    newW = Math.max(minW, originalSize.width - deltaCol);
     newCol = originalPosition.col + (originalSize.width - newW);
   }
   if (resizeHandle?.includes("s")) {
-    newH = Math.max(3, originalSize.height + deltaRow);
+    newH = Math.max(minH, originalSize.height + deltaRow);
   }
   if (resizeHandle?.includes("n")) {
-    newH = Math.max(3, originalSize.height - deltaRow);
+    newH = Math.max(minH, originalSize.height - deltaRow);
     newRow = originalPosition.row + (originalSize.height - newH);
   }
-
-  const state = useEditorStore.getState();
-  const obj = state.objects.find((o) => o.id === dragTarget);
   if (obj && hasRectBounds(obj)) {
     // Fixed-height components keep their original height
     if (getResizeConstraint(obj) === "horizontal") {

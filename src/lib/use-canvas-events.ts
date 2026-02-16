@@ -49,6 +49,18 @@ export function useCanvasEvents() {
             navItems: ["Home", "About", "Contact"],
           }),
           ...(pending === "table" && { columns: ["Col A", "Col B"] }),
+          ...(pending === "stepper" && {
+            items: ["Step 1", "Step 2", "Step 3"],
+            activeStep: 0,
+          }),
+          ...(pending === "breadcrumb" && {
+            items: ["Home", "Page", "Current"],
+          }),
+          ...(pending === "list" && {
+            items: ["Item 1", "Item 2", "Item 3"],
+            height: 3,
+          }),
+          ...(pending === "rating" && { value: 3, maxValue: 5 }),
         });
         state.setPendingComponent(null);
         state.setActiveTool("select");

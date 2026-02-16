@@ -10,15 +10,15 @@
   ],
   "scripts": {
     "build": "tsup",
-    "dev": "tsup && node dist/index.js"
+    "dev": "tsup --watch"
   },
   "dependencies": {
     "lz-string": "^1.5.0",
-    "nanoid": "^5.1.0"
+    "nanoid": "^5.1.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
-    "tsx": "^4.0.0",
     "typescript": "^5.7.0"
   },
   "pnpm": {

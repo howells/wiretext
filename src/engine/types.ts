@@ -27,7 +27,20 @@ export type ComponentType =
   | "navbar"
   | "tabs"
   | "progress"
-  | "icon";
+  | "icon"
+  | "image"
+  | "divider"
+  | "toggle"
+  | "alert"
+  | "breadcrumb"
+  | "avatar"
+  | "list"
+  | "stepper"
+  | "rating"
+  | "skeleton";
+
+export type AlertType = "info" | "warning" | "error" | "success";
+export type ListStyle = "bullet" | "number" | "dash";
 
 export interface Layer {
   id: LayerId;
@@ -86,6 +99,13 @@ export interface ComponentObject extends BaseObject {
   columns?: string[];
   tabs?: string[];
   navItems?: string[];
+  alertType?: AlertType;
+  items?: string[];
+  separator?: string;
+  listStyle?: ListStyle;
+  activeStep?: number;
+  value?: number;
+  maxValue?: number;
 }
 
 export type WireObject =
@@ -113,10 +133,19 @@ export function hasRectBounds(
 export type ResizeConstraint = "both" | "horizontal" | "none";
 
 const FIXED_HEIGHT_COMPONENTS = new Set([
+  "button",
   "input",
   "select",
   "checkbox",
   "radio",
+  "navbar",
+  "progress",
+  "divider",
+  "toggle",
+  "breadcrumb",
+  "rating",
+  "stepper",
+  "avatar",
 ]);
 
 /** Determine what resize axes are allowed for an object */

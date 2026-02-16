@@ -4,12 +4,24 @@ import type {
   BorderStyle,
   BoxObject,
   ComponentObject,
+  ComponentType,
   GridSize,
   Layer,
   LineObject,
   TextObject,
   WireObject,
 } from "./types";
+
+const BORDERLESS_COMPONENTS: ReadonlySet<ComponentType> = new Set([
+  "icon",
+  "divider",
+  "toggle",
+  "breadcrumb",
+  "list",
+  "stepper",
+  "rating",
+  "skeleton",
+]);
 
 export function createGrid(size: GridSize): string[][] {
   const grid: string[][] = [];
@@ -442,6 +454,206 @@ function stampComponentIcon(
   setChar(grid, midCol, midRow, obj.icon ?? "★");
 }
 
+function stampComponentImage(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  // Fill interior with ░
+  for (let r = 1; r < obj.height - 1; r++) {
+    for (let c = 1; c < obj.width - 1; c++) {
+      forceSetChar(grid, col + c, row + r, "░");
+    }
+  }
+  // Centered label or icon — use forceSetChar so spaces overwrite ░
+  const text = obj.label ?? obj.icon;
+  if (text) {
+    const maxLabelLen = obj.width - 4;
+    const trimmed =
+      text.length > maxLabelLen ? `${text.slice(0, maxLabelLen - 1)}…` : text;
+    const labelRow = row + Math.floor(obj.height / 2);
+    const labelCol = col + Math.floor((obj.width - trimmed.length) / 2);
+    for (let i = 0; i < trimmed.length; i++) {
+      forceSetChar(grid, labelCol + i, labelRow, trimmed[i]);
+    }
+  }
+}
+
+function stampComponentDivider(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const label = obj.label;
+  if (label && obj.width > label.length + 4) {
+    // ── Label ──────
+    const leftLen = 2;
+    for (let c = 0; c < leftLen; c++) {
+      setChar(grid, col + c, row, "─");
+    }
+    setChar(grid, col + leftLen, row, " ");
+    stampText(grid, col + leftLen + 1, row, label);
+    const afterLabel = leftLen + 1 + label.length;
+    setChar(grid, col + afterLabel, row, " ");
+    for (let c = afterLabel + 1; c < obj.width; c++) {
+      setChar(grid, col + c, row, "─");
+    }
+  } else {
+    for (let c = 0; c < obj.width; c++) {
+      setChar(grid, col + c, row, "─");
+    }
+  }
+}
+
+function stampComponentToggleSwitch(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const on = obj.checked === true;
+  const toggle = on ? "[●━━]" : "[━━●]";
+  stampText(grid, col, row, toggle);
+  if (obj.label) {
+    stampText(grid, col + 6, row, obj.label);
+  }
+}
+
+function stampComponentAlert(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const icons: Record<string, string> = {
+    info: "ℹ",
+    warning: "⚠",
+    error: "✖",
+    success: "✓",
+  };
+  const icon = icons[obj.alertType ?? "info"] ?? "ℹ";
+  const label = obj.label ?? "Alert";
+  // Title line at row+1 (inside border)
+  stampText(grid, col + 2, row + 1, `${icon} ${label}`);
+}
+
+function stampComponentBreadcrumb(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const items = obj.items ?? [];
+  const sep = obj.separator ?? " > ";
+  const text = items.join(sep);
+  stampText(grid, col, row, text.slice(0, obj.width));
+}
+
+function stampComponentAvatar(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const label = obj.label ?? "";
+  const innerW = obj.width - 2;
+  const initials = label.slice(0, innerW);
+  const midRow = row + Math.floor(obj.height / 2);
+  const startCol = col + 1 + Math.floor((innerW - initials.length) / 2);
+  stampText(grid, startCol, midRow, initials);
+}
+
+function stampComponentList(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const items = obj.items ?? [];
+  const style = obj.listStyle ?? "bullet";
+  for (let i = 0; i < items.length && i < obj.height; i++) {
+    let prefix: string;
+    switch (style) {
+      case "number":
+        prefix = `${i + 1}. `;
+        break;
+      case "dash":
+        prefix = "- ";
+        break;
+      default:
+        prefix = "• ";
+        break;
+    }
+    const line = `${prefix}${items[i]}`;
+    stampText(grid, col, row + i, line.slice(0, obj.width));
+  }
+}
+
+function stampComponentStepper(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const items = obj.items ?? [];
+  const active = obj.activeStep ?? 0;
+  let c = col;
+  for (let i = 0; i < items.length; i++) {
+    const dot = i <= active ? "●" : "○";
+    setChar(grid, c, row, dot);
+    c += 1;
+    if (items[i]) {
+      setChar(grid, c, row, " ");
+      c += 1;
+      stampText(grid, c, row, items[i]);
+      c += items[i].length;
+    }
+    if (i < items.length - 1) {
+      setChar(grid, c, row, " ");
+      c += 1;
+      setChar(grid, c, row, "─");
+      c += 1;
+      setChar(grid, c, row, " ");
+      c += 1;
+    }
+  }
+}
+
+function stampComponentRating(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const value = Math.max(0, obj.value ?? 0);
+  const max = Math.max(1, obj.maxValue ?? 5);
+  let c = col;
+  for (let i = 0; i < max; i++) {
+    setChar(grid, c, row, i < value ? "★" : "☆");
+    c += 1;
+  }
+  if (obj.label) {
+    setChar(grid, c, row, " ");
+    c += 1;
+    stampText(grid, c, row, obj.label);
+  }
+}
+
+function stampComponentSkeleton(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  for (let r = 0; r < obj.height; r++) {
+    for (let c = 0; c < obj.width; c++) {
+      setChar(grid, col + c, row + r, "░");
+    }
+  }
+}
+
 function stampComponentContent(
   grid: string[][],
   obj: ComponentObject,
@@ -461,7 +673,7 @@ function stampComponentContent(
         obj,
         col,
         row,
-        obj.checked !== false ? "[✓]" : "[ ]",
+        obj.checked === true ? "[✓]" : "[ ]",
         "Checkbox"
       );
     case "radio":
@@ -470,7 +682,7 @@ function stampComponentContent(
         obj,
         col,
         row,
-        obj.checked !== false ? "(●)" : "( )",
+        obj.checked === true ? "(●)" : "( )",
         "Radio"
       );
     case "table":
@@ -503,6 +715,26 @@ function stampComponentContent(
       return stampComponentProgress(grid, obj, col, row);
     case "icon":
       return stampComponentIcon(grid, obj, col, row);
+    case "image":
+      return stampComponentImage(grid, obj, col, row);
+    case "divider":
+      return stampComponentDivider(grid, obj, col, row);
+    case "toggle":
+      return stampComponentToggleSwitch(grid, obj, col, row);
+    case "alert":
+      return stampComponentAlert(grid, obj, col, row);
+    case "breadcrumb":
+      return stampComponentBreadcrumb(grid, obj, col, row);
+    case "avatar":
+      return stampComponentAvatar(grid, obj, col, row);
+    case "list":
+      return stampComponentList(grid, obj, col, row);
+    case "stepper":
+      return stampComponentStepper(grid, obj, col, row);
+    case "rating":
+      return stampComponentRating(grid, obj, col, row);
+    case "skeleton":
+      return stampComponentSkeleton(grid, obj, col, row);
     default:
       break;
   }
@@ -511,8 +743,8 @@ function stampComponentContent(
 function stampComponent(grid: string[][], obj: ComponentObject) {
   const { col, row } = obj.position;
 
-  // Icon components render without border or fill
-  if (obj.componentType === "icon") {
+  // Borderless components render without border or fill
+  if (BORDERLESS_COMPONENTS.has(obj.componentType)) {
     stampComponentContent(grid, obj, col, row);
     return;
   }

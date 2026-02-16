@@ -36,6 +36,11 @@ export function StatusBar({ hoverCol, hoverRow }: StatusBarProps) {
       )}
       <span className="ml-auto flex items-center gap-2">
         <span className="text-text-dim/50">v{version}</span>
+        <span className="text-text-dim/30">·</span>
+        <a className="text-text-dim/50 hover:text-text" href="/mcp">
+          MCP
+        </a>
+        <span className="text-text-dim/30">·</span>
         <span>
           by{" "}
           <a

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "wiretext": {
+      "command": "node",
+      "args": ["/Users/danielhowells/Sites/wiretext/mcp/dist/server.js"]
+    }
+  }
+}
