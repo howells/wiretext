@@ -4,7 +4,11 @@ import type { ToolHandler } from "./types";
 
 let dragStart: { col: number; row: number } | null = null;
 
-/** Snap to horizontal, vertical, or 45° diagonal */
+/**
+ * Snap to horizontal, vertical, or visual diagonal.
+ * Monospace chars are ~2x taller than wide, so a visual 45° diagonal
+ * needs a 2:1 col:row ratio to look correct on screen.
+ */
 function snapDirection(
   startCol: number,
   startRow: number,
@@ -16,19 +20,19 @@ function snapDirection(
   const adx = Math.abs(dx);
   const ady = Math.abs(dy);
 
-  // If mostly horizontal (angle < ~22.5°) → snap to horizontal
-  if (adx > ady * 2) {
+  // If mostly horizontal → snap to horizontal
+  if (adx > ady * 3) {
     return { col: endCol, row: startRow };
   }
-  // If mostly vertical (angle > ~67.5°) → snap to vertical
-  if (ady > adx * 2) {
+  // If mostly vertical → snap to vertical
+  if (ady * 2 > adx * 3) {
     return { col: startCol, row: endRow };
   }
-  // Otherwise snap to 45° diagonal
-  const dist = Math.min(adx, ady);
+  // Diagonal: 2 cols per 1 row for visual 45°
+  const rowDist = Math.min(Math.floor(adx / 2), ady);
   return {
-    col: startCol + dist * Math.sign(dx),
-    row: startRow + dist * Math.sign(dy),
+    col: startCol + rowDist * 2 * Math.sign(dx),
+    row: startRow + rowDist * Math.sign(dy),
   };
 }
 

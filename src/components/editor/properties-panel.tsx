@@ -1,6 +1,7 @@
 "use client";
 
 import { COMPONENT_BY_TYPE } from "@/engine/components";
+import { WIRE_ICONS } from "@/engine/icons";
 import type { BorderStyle, WireObject } from "@/engine/types";
 import { useEditorStore } from "@/store";
 
@@ -77,6 +78,7 @@ export function PropertiesPanel() {
 
       {obj.type === "box" && <BoxProperties obj={obj} />}
       {obj.type === "text" && <TextProperties obj={obj} />}
+      {obj.type === "arrow" && <ArrowProperties obj={obj} />}
       {obj.type === "component" && <ComponentProperties obj={obj} />}
 
       <AnnotationField obj={obj} />
@@ -186,6 +188,67 @@ function TextProperties({
   );
 }
 
+function ArrowProperties({
+  obj,
+}: {
+  obj: Extract<WireObject, { type: "arrow" }>;
+}) {
+  const updateObject = useEditorStore((s) => s.updateObject);
+  const startHead = obj.startHead === true;
+  const endHead = obj.endHead !== false;
+
+  // Toggling a head off forces the other one on
+  const toggleStart = () => {
+    const newStart = !startHead;
+    const patch: Partial<WireObject> = { startHead: newStart };
+    if (!(newStart || endHead)) {
+      patch.endHead = true;
+    }
+    updateObject(obj.id, patch);
+  };
+
+  const toggleEnd = () => {
+    const newEnd = !endHead;
+    const patch: Partial<WireObject> = { endHead: newEnd };
+    if (!(newEnd || startHead)) {
+      patch.startHead = true;
+    }
+    updateObject(obj.id, patch);
+  };
+
+  return (
+    <div>
+      <FieldLabel>Heads</FieldLabel>
+      <div className="flex gap-1">
+        <button
+          className={`rounded px-2 py-0.5 font-mono text-xs transition-colors ${
+            startHead
+              ? "bg-accent text-bg"
+              : "bg-surface-hover text-text-dim hover:text-text"
+          }`}
+          onClick={toggleStart}
+          title="Start head"
+          type="button"
+        >
+          {startHead ? "◂─" : "──"}
+        </button>
+        <button
+          className={`rounded px-2 py-0.5 font-mono text-xs transition-colors ${
+            endHead
+              ? "bg-accent text-bg"
+              : "bg-surface-hover text-text-dim hover:text-text"
+          }`}
+          onClick={toggleEnd}
+          title="End head"
+          type="button"
+        >
+          {endHead ? "─▸" : "──"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ComponentProperties({
   obj,
 }: {
@@ -256,6 +319,52 @@ function ComponentProperties({
           ))}
         </div>
       </div>
+
+      {/* Icon picker for input and icon components */}
+      {(obj.componentType === "input" || obj.componentType === "icon") && (
+        <div>
+          <FieldLabel>Icon</FieldLabel>
+          <div className="grid grid-cols-6 gap-0.5">
+            {obj.componentType === "input" && (
+              <button
+                className={`rounded px-1 py-0.5 font-mono text-sm transition-colors ${
+                  obj.icon
+                    ? "bg-surface-hover text-text-dim hover:text-text"
+                    : "bg-accent text-bg"
+                }`}
+                onClick={() =>
+                  updateObject(obj.id, {
+                    icon: undefined,
+                  } as Partial<WireObject>)
+                }
+                title="None"
+                type="button"
+              >
+                ∅
+              </button>
+            )}
+            {WIRE_ICONS.map((icon) => (
+              <button
+                className={`rounded px-1 py-0.5 font-mono text-sm transition-colors ${
+                  obj.icon === icon.char
+                    ? "bg-accent text-bg"
+                    : "bg-surface-hover text-text-dim hover:text-text"
+                }`}
+                key={icon.char}
+                onClick={() =>
+                  updateObject(obj.id, {
+                    icon: icon.char,
+                  } as Partial<WireObject>)
+                }
+                title={icon.label}
+                type="button"
+              >
+                {icon.char}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Checkbox: checked toggle */}
       {obj.componentType === "checkbox" && (

@@ -26,7 +26,8 @@ export type ComponentType =
   | "card"
   | "navbar"
   | "tabs"
-  | "progress";
+  | "progress"
+  | "icon";
 
 export interface Layer {
   id: LayerId;
@@ -40,6 +41,7 @@ export interface BaseObject {
   position: GridPoint;
   zIndex: number;
   layerId: LayerId;
+  name?: string;
   annotation?: string;
   groupId?: string;
 }
@@ -66,6 +68,8 @@ export interface LineObject extends BaseObject {
 export interface ArrowObject extends BaseObject {
   type: "arrow";
   endPosition: GridPoint;
+  startHead?: boolean;
+  endHead?: boolean;
 }
 
 export interface ComponentObject extends BaseObject {
@@ -76,6 +80,7 @@ export interface ComponentObject extends BaseObject {
   borderStyle: BorderStyle;
   fill?: FillStyle;
   label?: string;
+  icon?: string;
   checked?: boolean;
   progress?: number;
   columns?: string[];
@@ -103,6 +108,29 @@ export function hasRectBounds(
   obj: WireObject
 ): obj is BoxObject | ComponentObject {
   return obj.type === "box" || obj.type === "component";
+}
+
+export type ResizeConstraint = "both" | "horizontal" | "none";
+
+const FIXED_HEIGHT_COMPONENTS = new Set([
+  "input",
+  "select",
+  "checkbox",
+  "radio",
+]);
+
+/** Determine what resize axes are allowed for an object */
+export function getResizeConstraint(obj: WireObject): ResizeConstraint {
+  if (obj.type !== "component") {
+    return "both";
+  }
+  if (obj.componentType === "icon") {
+    return "none";
+  }
+  if (FIXED_HEIGHT_COMPONENTS.has(obj.componentType)) {
+    return "horizontal";
+  }
+  return "both";
 }
 
 export type ToolType = "select" | "box" | "text" | "line" | "arrow";

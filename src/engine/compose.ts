@@ -206,34 +206,56 @@ function stampLine(grid: string[][], obj: LineObject) {
   }
 }
 
+/** Stamp arrow heads at the start/end of a line segment */
+function stampArrowHeads(
+  grid: string[][],
+  c1: number,
+  r1: number,
+  c2: number,
+  r2: number,
+  showStart: boolean,
+  showEnd: boolean
+) {
+  const dc = c2 - c1;
+  const dr = r2 - r1;
+  if (showEnd) {
+    setChar(grid, c2, r2, getArrowHeadChar(dc, dr));
+  }
+  if (showStart) {
+    setChar(grid, c1, r1, getArrowHeadChar(-dc, -dr));
+  }
+}
+
 function stampArrow(grid: string[][], obj: ArrowObject) {
   const { col: c1, row: r1 } = obj.position;
   const { col: c2, row: r2 } = obj.endPosition;
+  const showStart = obj.startHead === true;
+  const showEnd = obj.endHead !== false; // default true
 
+  // Draw the line body (same as stampLine)
   if (r1 === r2) {
     const minC = Math.min(c1, c2);
     const maxC = Math.max(c1, c2);
     for (let c = minC; c <= maxC; c++) {
       setChar(grid, c, r1, LINE_CHARS.horizontal);
     }
-    setChar(grid, c2, r2, c2 > c1 ? ARROW_CHARS.right : ARROW_CHARS.left);
   } else if (c1 === c2) {
     const minR = Math.min(r1, r2);
     const maxR = Math.max(r1, r2);
     for (let r = minR; r <= maxR; r++) {
       setChar(grid, c1, r, LINE_CHARS.vertical);
     }
-    setChar(grid, c2, r2, r2 > r1 ? ARROW_CHARS.down : ARROW_CHARS.up);
   } else {
-    // Diagonal
     const dc = c2 - c1;
     const dr = r2 - r1;
     const ch = getDiagonalChar(dc, dr);
     for (const pt of walkLine(c1, r1, c2, r2)) {
       setChar(grid, pt.col, pt.row, ch);
     }
-    setChar(grid, c2, r2, getArrowHeadChar(dc, dr));
   }
+
+  // Overlay heads
+  stampArrowHeads(grid, c1, r1, c2, r2, showStart, showEnd);
 }
 
 function stampHLine(grid: string[][], col: number, row: number, width: number) {
@@ -264,12 +286,13 @@ function stampComponentInput(
   col: number,
   row: number
 ) {
-  stampText(
-    grid,
-    col + 2,
-    row + Math.floor(obj.height / 2),
-    obj.label ?? "Input"
-  );
+  const mid = row + Math.floor(obj.height / 2);
+  let textCol = col + 2;
+  if (obj.icon) {
+    setChar(grid, textCol, mid, obj.icon);
+    textCol += 2;
+  }
+  stampText(grid, textCol, mid, obj.label ?? "Input");
 }
 
 function stampComponentSelect(
@@ -408,6 +431,17 @@ function stampComponentProgress(
   stampText(grid, col + 2, mid, bar);
 }
 
+function stampComponentIcon(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  const midCol = col + Math.floor(obj.width / 2);
+  const midRow = row + Math.floor(obj.height / 2);
+  setChar(grid, midCol, midRow, obj.icon ?? "★");
+}
+
 function stampComponentContent(
   grid: string[][],
   obj: ComponentObject,
@@ -467,6 +501,8 @@ function stampComponentContent(
       return stampComponentTabs(grid, obj, col, row);
     case "progress":
       return stampComponentProgress(grid, obj, col, row);
+    case "icon":
+      return stampComponentIcon(grid, obj, col, row);
     default:
       break;
   }
@@ -474,6 +510,12 @@ function stampComponentContent(
 
 function stampComponent(grid: string[][], obj: ComponentObject) {
   const { col, row } = obj.position;
+
+  // Icon components render without border or fill
+  if (obj.componentType === "icon") {
+    stampComponentContent(grid, obj, col, row);
+    return;
+  }
 
   if (obj.fill !== "transparent") {
     stampFill(grid, col, row, obj.width, obj.height);
