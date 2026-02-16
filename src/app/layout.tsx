@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { PostHogProvider } from "@/components/posthog-provider";
@@ -67,6 +68,7 @@ export default function RootLayout({
           type="application/ld+json"
         />
         <PostHogProvider>{children}</PostHogProvider>
+        <Analytics />
       </body>
     </html>
   );
