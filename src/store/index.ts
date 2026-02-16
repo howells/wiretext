@@ -29,8 +29,6 @@ export interface ContextMenu {
   targetObjectId: ObjectId | null;
 }
 
-export type SidebarTab = "properties" | "layers";
-
 export interface HistorySnapshot {
   objects: WireObject[];
   layers: Layer[];
@@ -54,7 +52,6 @@ export interface EditorState {
   editingLabelId: ObjectId | null;
   pendingComponent: ComponentType | null;
   sidebarExpanded: boolean;
-  sidebarTab: SidebarTab;
   marquee: {
     startCol: number;
     startRow: number;
@@ -132,7 +129,6 @@ export interface EditorActions {
   ) => void;
   setContextMenu: (menu: ContextMenu | null) => void;
   toggleSidebar: () => void;
-  setSidebarTab: (tab: SidebarTab) => void;
 
   // History
   undo: () => void;
@@ -214,7 +210,6 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   editingLabelId: null,
   pendingComponent: null,
   sidebarExpanded: true,
-  sidebarTab: "properties" as SidebarTab,
   marquee: null,
   contextMenu: null,
   clipboard: [],
@@ -604,8 +599,6 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
 
   toggleSidebar: () =>
     set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
-
-  setSidebarTab: (tab) => set({ sidebarTab: tab }),
 
   setActiveLayer: (id) => set({ activeLayerId: id }),
 

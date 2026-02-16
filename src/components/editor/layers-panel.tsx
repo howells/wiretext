@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { Layer, WireObject } from "@/engine/types";
 import { useEditorStore } from "@/store";
 
@@ -58,7 +58,7 @@ function getObjectIcon(obj: WireObject): string {
   }
 }
 
-function getObjectLabel(obj: WireObject): string {
+function getDefaultLabel(obj: WireObject): string {
   switch (obj.type) {
     case "box":
       return obj.label || "Box";
@@ -75,6 +75,10 @@ function getObjectLabel(obj: WireObject): string {
   }
 }
 
+function getObjectLabel(obj: WireObject): string {
+  return obj.name || getDefaultLabel(obj);
+}
+
 // ── Sortable object row ─────────────────────────────────────────────
 function SortableObjectRow({
   obj,
@@ -86,7 +90,12 @@ function SortableObjectRow({
   isLocked: boolean;
 }) {
   const selectObject = useEditorStore((s) => s.selectObject);
+  const updateObject = useEditorStore((s) => s.updateObject);
   const dragId = objDragId(obj.id);
+
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const {
     attributes,
@@ -98,22 +107,48 @@ function SortableObjectRow({
   } = useSortable({ id: dragId, disabled: isLocked });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setEditName(obj.name || getDefaultLabel(obj));
+      setEditing(true);
+    },
+    [obj]
+  );
+
+  const handleRenameSubmit = useCallback(() => {
+    const trimmed = editName.trim();
+    // Clear name if it matches the default label (revert to auto-name)
+    if (trimmed === "" || trimmed === getDefaultLabel(obj)) {
+      if (obj.name) {
+        updateObject(obj.id, { name: undefined });
+      }
+    } else if (trimmed !== obj.name) {
+      updateObject(obj.id, { name: trimmed });
+    }
+    setEditing(false);
+  }, [editName, obj, updateObject]);
+
+  const label = obj.groupId ? `⫘ ${getObjectLabel(obj)}` : getObjectLabel(obj);
+
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: object row needs click-to-select without full button semantics
     <div
-      className={`flex items-center gap-1 rounded py-0.5 pr-1 pl-5 text-[11px] ${
+      className={`flex h-6 items-center gap-1 rounded pr-1 pl-5 text-[11px] ${
         isSelected
           ? "bg-accent/20 text-text"
           : "text-text-dim hover:bg-surface-hover hover:text-text"
       }`}
       onClick={(e) => {
         e.stopPropagation();
-        selectObject(obj.id, e.metaKey || e.ctrlKey || e.shiftKey);
+        if (!editing) {
+          selectObject(obj.id, e.metaKey || e.ctrlKey || e.shiftKey);
+        }
       }}
       ref={setNodeRef}
       style={style}
@@ -122,6 +157,7 @@ function SortableObjectRow({
       {!isLocked && (
         <span
           className="cursor-grab text-text-dim/50 hover:text-text-dim"
+          suppressHydrationWarning
           {...attributes}
           {...listeners}
         >
@@ -131,9 +167,34 @@ function SortableObjectRow({
       <span className="shrink-0 font-mono text-text-dim">
         {getObjectIcon(obj)}
       </span>
-      <span className="min-w-0 flex-1 truncate">
-        {obj.groupId ? `⫘ ${getObjectLabel(obj)}` : getObjectLabel(obj)}
-      </span>
+      {editing ? (
+        <input
+          autoFocus
+          className="min-w-0 flex-1 rounded border border-accent bg-bg px-1 py-0 text-[11px] text-text outline-none"
+          onBlur={handleRenameSubmit}
+          onChange={(e) => setEditName(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "Enter") {
+              handleRenameSubmit();
+            }
+            if (e.key === "Escape") {
+              setEditing(false);
+            }
+          }}
+          ref={inputRef}
+          value={editName}
+        />
+      ) : (
+        // biome-ignore lint/a11y/noStaticElementInteractions: double-click-to-rename is standard Figma-style UX
+        <span
+          className={`min-w-0 flex-1 truncate ${obj.name ? "text-text" : ""}`}
+          onDoubleClick={handleDoubleClick}
+        >
+          {label}
+        </span>
+      )}
     </div>
   );
 }
@@ -224,7 +285,7 @@ function SortableLayerRow({
   } = useSortable({ id: dragId });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
@@ -246,7 +307,7 @@ function SortableLayerRow({
     <div ref={setNodeRef} style={style}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: can't use <button> because it contains child <button> elements */}
       <div
-        className={`group flex w-full cursor-pointer items-center gap-1 rounded px-1.5 py-1 text-left text-xs transition-colors ${
+        className={`group flex h-7 w-full cursor-pointer items-center gap-1 rounded px-1.5 text-left text-xs transition-colors ${
           isActive
             ? "bg-surface-hover text-text"
             : "text-text-dim hover:bg-surface-hover hover:text-text"
@@ -256,6 +317,7 @@ function SortableLayerRow({
         {/* Drag handle */}
         <span
           className="shrink-0 cursor-grab text-text-dim/50 hover:text-text-dim"
+          suppressHydrationWarning
           {...attributes}
           {...listeners}
         >
@@ -482,28 +544,30 @@ export function LayersPanel() {
       onDragEnd={handleDragEnd}
       sensors={sensors}
     >
-      <div className="flex flex-col gap-2">
-        {/* Layer list (reversed so top layer appears first visually) */}
-        <SortableContext
-          items={sortableLayerIds}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="flex flex-col gap-0.5">
-            {reversedLayers.map((layer) => (
-              <SortableLayerRow
-                isExpanded={
-                  expandedLayers.has(layer.id) || layer.id === activeLayerId
-                }
-                key={layer.id}
-                layer={layer}
-                onToggleExpand={() => toggleExpand(layer.id)}
-              />
-            ))}
-          </div>
-        </SortableContext>
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        {/* Scrollable layer list */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <SortableContext
+            items={sortableLayerIds}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="flex flex-col gap-0.5">
+              {reversedLayers.map((layer) => (
+                <SortableLayerRow
+                  isExpanded={
+                    expandedLayers.has(layer.id) || layer.id === activeLayerId
+                  }
+                  key={layer.id}
+                  layer={layer}
+                  onToggleExpand={() => toggleExpand(layer.id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </div>
 
-        {/* Actions */}
-        <div className="flex gap-1">
+        {/* Actions (anchored at bottom) */}
+        <div className="flex shrink-0 gap-1">
           <button
             className="flex-1 rounded bg-surface-hover px-2 py-1 text-text-dim text-xs transition-colors hover:text-text"
             onClick={() => addLayer()}

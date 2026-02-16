@@ -5,7 +5,6 @@ import { Canvas } from "@/components/editor/canvas";
 import { ContextMenu } from "@/components/editor/context-menu";
 import { ExportDialog } from "@/components/editor/export-dialog";
 import { LabelEditorOverlay } from "@/components/editor/label-editor-overlay";
-import { LayersPanel } from "@/components/editor/layers-panel";
 import { PropertiesPanel } from "@/components/editor/properties-panel";
 import { StatusBar } from "@/components/editor/status-bar";
 import { TextEditorOverlay } from "@/components/editor/text-editor-overlay";
@@ -16,14 +15,11 @@ import { decodeDocument, getShareUrl } from "@/lib/sharing";
 import { useCanvasEvents } from "@/lib/use-canvas-events";
 import { useCharMetrics } from "@/lib/use-char-metrics";
 import { useKeyboard } from "@/lib/use-keyboard";
-import type { SidebarTab } from "@/store";
 import { useEditorStore } from "@/store";
 
 export default function EditorPage() {
   const { onMouseDown, onMouseMove, onMouseUp, cursor } = useCanvasEvents();
   const objects = useEditorStore((s) => s.objects);
-  const sidebarTab = useEditorStore((s) => s.sidebarTab);
-  const setSidebarTab = useEditorStore((s) => s.setSidebarTab);
   const metrics = useCharMetrics();
   const [hoverCoord, setHoverCoord] = useState({ col: 0, row: 0 });
   const [exportOpen, setExportOpen] = useState(false);
@@ -115,30 +111,15 @@ export default function EditorPage() {
           </div>
         </div>
 
-        {/* Tabbed sidebar */}
+        {/* Inspector sidebar */}
         <div className="flex w-52 flex-col border-border border-l bg-surface">
-          <div className="flex border-border border-b">
-            {(["properties", "layers"] as SidebarTab[]).map((tab) => (
-              <button
-                className={`flex-1 px-2 py-1.5 text-[10px] uppercase tracking-wider transition-colors ${
-                  sidebarTab === tab
-                    ? "border-accent border-b-2 text-text"
-                    : "text-text-dim hover:text-text"
-                }`}
-                key={tab}
-                onClick={() => setSidebarTab(tab)}
-                type="button"
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="flex items-center border-border border-b px-3 py-2">
+            <span className="text-[10px] text-text-dim uppercase tracking-wider">
+              Inspector
+            </span>
           </div>
           <div className="flex-1 overflow-auto p-3">
-            {sidebarTab === "properties" ? (
-              <PropertiesPanel />
-            ) : (
-              <LayersPanel />
-            )}
+            <PropertiesPanel />
           </div>
         </div>
       </div>

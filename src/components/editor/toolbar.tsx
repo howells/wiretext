@@ -8,6 +8,8 @@ import {
 } from "@/engine/components";
 import type { ComponentType, ToolType } from "@/engine/types";
 import { useEditorStore } from "@/store";
+import { AboutDialog } from "./about-dialog";
+import { LayersPanel } from "./layers-panel";
 
 const drawTools: {
   type: ToolType;
@@ -34,10 +36,22 @@ export function Toolbar() {
   const toggleSidebar = useEditorStore((s) => s.toggleSidebar);
   const pendingComponent = useEditorStore((s) => s.pendingComponent);
   const setPendingComponent = useEditorStore((s) => s.setPendingComponent);
+  const [layersOpen, setLayersOpen] = useState(true);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   if (!expanded) {
     return (
       <div className="flex w-10 flex-col items-center gap-1 border-border border-r bg-surface py-2">
+        {/* Expand */}
+        <button
+          className="flex h-8 w-8 items-center justify-center rounded text-text-dim text-xs hover:bg-surface-hover hover:text-text"
+          onClick={toggleSidebar}
+          title="Expand sidebar (P)"
+          type="button"
+        >
+          &rsaquo;
+        </button>
+        <div className="mx-2 my-1 h-px w-6 bg-border" />
         <button
           className={`flex h-8 w-8 items-center justify-center rounded text-xs transition-colors ${
             activeTool === "select"
@@ -68,28 +82,22 @@ export function Toolbar() {
             {tool.shortcut}
           </button>
         ))}
-
-        <div className="mx-2 my-1 h-px w-6 bg-border" />
-
-        <button
-          className="flex h-8 w-8 items-center justify-center rounded text-text-dim text-xs hover:bg-surface-hover hover:text-text"
-          onClick={toggleSidebar}
-          title="Expand sidebar (P)"
-          type="button"
-        >
-          &rsaquo;
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="flex w-44 flex-col border-border border-r bg-surface">
-      {/* Header */}
+    <div className="flex w-52 flex-col border-border border-r bg-surface">
+      {/* Logo header */}
       <div className="flex items-center justify-between border-border border-b px-3 py-2">
-        <span className="text-[10px] text-text-dim uppercase tracking-wider">
-          Tools
-        </span>
+        <button
+          className="font-mono text-text text-xs transition-colors hover:text-accent"
+          onClick={() => setAboutOpen(true)}
+          title="About Wiretext"
+          type="button"
+        >
+          ┌─ Wiretext ─┐
+        </button>
         <button
           className="text-text-dim text-xs hover:text-text"
           onClick={toggleSidebar}
@@ -100,6 +108,28 @@ export function Toolbar() {
         </button>
       </div>
 
+      {/* Layers section (collapsible) */}
+      <div className="border-border border-b">
+        <div className="flex items-center justify-between px-3 py-2">
+          <button
+            className="flex items-center gap-1 text-[10px] text-text-dim uppercase tracking-wider hover:text-text"
+            onClick={() => setLayersOpen((v) => !v)}
+            type="button"
+          >
+            <span className="w-3 text-center text-[9px]">
+              {layersOpen ? "▾" : "▸"}
+            </span>
+            Layers
+          </button>
+        </div>
+        {layersOpen && (
+          <div className="flex max-h-[50vh] flex-col px-2 pb-2">
+            <LayersPanel />
+          </div>
+        )}
+      </div>
+
+      {/* Tools section */}
       <div className="flex-1 overflow-y-auto">
         {/* Select tool — standalone */}
         <div className="p-2">
@@ -147,6 +177,7 @@ export function Toolbar() {
           ))}
         </div>
       </div>
+      <AboutDialog onClose={() => setAboutOpen(false)} open={aboutOpen} />
     </div>
   );
 }
