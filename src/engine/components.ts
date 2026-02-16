@@ -111,6 +111,14 @@ export const COMPONENT_DEFS: ComponentDef[] = [
     defaultWidth: 20,
     defaultHeight: 3,
   },
+  {
+    type: "icon",
+    name: "Icon",
+    preview: "★    ",
+    category: "display",
+    defaultWidth: 3,
+    defaultHeight: 3,
+  },
 ];
 
 export const COMPONENT_BY_TYPE: Record<ComponentType, ComponentDef> =

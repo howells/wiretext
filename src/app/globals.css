@@ -31,5 +31,6 @@ body {
 }
 
 ::selection {
-  background: var(--color-selection);
+  background: var(--color-accent);
+  color: var(--color-bg);
 }

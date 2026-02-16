@@ -11,8 +11,8 @@ import {
 import { getObjectBounds } from "@/engine/bounds";
 import { compose, gridToString } from "@/engine/compose";
 import { getEffectiveGridSize } from "@/engine/grid-size";
-import type { WireObject } from "@/engine/types";
-import { hasRectBounds } from "@/engine/types";
+import type { ResizeConstraint, WireObject } from "@/engine/types";
+import { getResizeConstraint, hasRectBounds } from "@/engine/types";
 import { gridToScreen, screenToGrid } from "@/lib/coordinates";
 import { useCharMetrics } from "@/lib/use-char-metrics";
 import { useEditorStore } from "@/store";
@@ -193,7 +193,9 @@ export function Canvas({
       y: topLeft.y - PAD,
       w,
       h,
-      resizable: hasRectBounds(obj),
+      resize: hasRectBounds(obj)
+        ? getResizeConstraint(obj)
+        : ("none" as ResizeConstraint),
     };
   });
 
@@ -266,7 +268,7 @@ export function Canvas({
             background: "var(--color-selection)",
           }}
         >
-          {rect.resizable &&
+          {rect.resize !== "none" &&
             [
               // Corners (inset inside the bounding box)
               { key: "nw", left: INSET, top: INSET },
@@ -294,21 +296,29 @@ export function Canvas({
                 left: rect.w - INSET - HANDLE_SIZE,
                 top: rect.h / 2 - HALF,
               },
-            ].map((h) => (
-              <div
-                key={h.key}
-                style={{
-                  position: "absolute",
-                  left: h.left,
-                  top: h.top,
-                  width: HANDLE_SIZE,
-                  height: HANDLE_SIZE,
-                  background: "var(--color-accent)",
-                  border: "1px solid var(--color-bg)",
-                  borderRadius: "50%",
-                }}
-              />
-            ))}
+            ]
+              .filter((h) => {
+                if (rect.resize === "both") {
+                  return true;
+                }
+                // horizontal-only: show only e/w handles
+                return h.key === "e" || h.key === "w";
+              })
+              .map((h) => (
+                <div
+                  key={h.key}
+                  style={{
+                    position: "absolute",
+                    left: h.left,
+                    top: h.top,
+                    width: HANDLE_SIZE,
+                    height: HANDLE_SIZE,
+                    background: "var(--color-accent)",
+                    border: "1px solid var(--color-bg)",
+                    borderRadius: "50%",
+                  }}
+                />
+              ))}
         </div>
       ))}
 

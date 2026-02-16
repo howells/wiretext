@@ -5,7 +5,7 @@ import type {
   LineObject,
   WireObject,
 } from "@/engine/types";
-import { hasRectBounds } from "@/engine/types";
+import { getResizeConstraint, hasRectBounds } from "@/engine/types";
 import { useEditorStore } from "@/store";
 import type { ToolHandler } from "./types";
 
@@ -169,6 +169,10 @@ export function getResizeHandle(
   if (!hasRectBounds(obj)) {
     return null;
   }
+  const constraint = getResizeConstraint(obj);
+  if (constraint === "none") {
+    return null;
+  }
   const { col: bCol, row: bRow } = obj.position;
   const flags = computeEdgeFlags(
     col,
@@ -178,7 +182,25 @@ export function getResizeHandle(
     bCol + obj.width - 1,
     bRow + obj.height - 1
   );
-  return resolveCorner(flags) ?? resolveEdge(flags);
+  const handle = resolveCorner(flags) ?? resolveEdge(flags);
+  if (!handle) {
+    return null;
+  }
+  // Fixed-height components only allow horizontal resize
+  if (constraint === "horizontal") {
+    const vertical = handle.includes("n") || handle.includes("s");
+    if (vertical && !handle.includes("e") && !handle.includes("w")) {
+      return null;
+    }
+    // Convert corner handles to horizontal-only
+    if (handle === "ne" || handle === "se") {
+      return "e";
+    }
+    if (handle === "nw" || handle === "sw") {
+      return "w";
+    }
+  }
+  return handle;
 }
 
 export function getResizeCursor(handle: ResizeHandle): string {
@@ -403,6 +425,11 @@ function handleResizeMove(col: number, row: number) {
   const state = useEditorStore.getState();
   const obj = state.objects.find((o) => o.id === dragTarget);
   if (obj && hasRectBounds(obj)) {
+    // Fixed-height components keep their original height
+    if (getResizeConstraint(obj) === "horizontal") {
+      newH = originalSize.height;
+      newRow = originalPosition.row;
+    }
     state.setDraft({
       ...obj,
       position: { col: newCol, row: newRow },
