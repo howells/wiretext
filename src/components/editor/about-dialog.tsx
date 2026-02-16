@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { version } from "@/../package.json";
 
 interface AboutDialogProps {
   open: boolean;
@@ -112,7 +113,9 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-border border-t px-5 py-3">
-          <span className="font-mono text-[10px] text-text-dim">v0.1.0</span>
+          <span className="font-mono text-[10px] text-text-dim">
+            v{version}
+          </span>
           <span className="font-mono text-[10px] text-text-dim">
             └────────────────┘
           </span>

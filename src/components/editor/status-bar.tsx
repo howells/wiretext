@@ -1,5 +1,6 @@
 "use client";
 
+import { version } from "@/../package.json";
 import { COMPONENT_BY_TYPE } from "@/engine/components";
 import { useEditorStore } from "@/store";
 
@@ -33,16 +34,19 @@ export function StatusBar({ hoverCol, hoverRow }: StatusBarProps) {
           Place {COMPONENT_BY_TYPE[pendingComponent].name}
         </span>
       )}
-      <span className="ml-auto">
-        by{" "}
-        <a
-          className="text-text-dim underline hover:text-text"
-          href="https://danielhowells.com"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          Howells
-        </a>
+      <span className="ml-auto flex items-center gap-2">
+        <span className="text-text-dim/50">v{version}</span>
+        <span>
+          by{" "}
+          <a
+            className="text-text-dim underline hover:text-text"
+            href="https://danielhowells.com"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Howells
+          </a>
+        </span>
       </span>
     </div>
   );
