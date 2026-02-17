@@ -9,6 +9,13 @@
   "files": {
     "includes": ["src/**/*.ts", "src/**/*.tsx"]
   },
+  "overrides": [
+    {
+      "includes": ["scripts/**"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false }
+    }
+  ],
   "linter": {
     "rules": {
       "suspicious": {
