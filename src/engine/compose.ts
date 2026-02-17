@@ -1,3 +1,4 @@
+import { charWidth, displayWidth, isWide, SHADOW } from "./char-width";
 import { ARROW_CHARS, getBoxChars, LINE_CHARS } from "./characters";
 import type {
   ArrowObject,
@@ -39,7 +40,29 @@ function setChar(grid: string[][], col: number, row: number, char: string) {
     col < grid[0].length &&
     (char !== " " || grid[row][col] === " ")
   ) {
+    const maxCol = grid[0].length;
+
+    // If placing a wide char, its shadow must fit in the grid
+    if (isWide(char) && col + 1 >= maxCol) {
+      return;
+    }
+
+    // Clean up if overwriting a wide char (clear its shadow)
+    if (isWide(grid[row][col]) && col + 1 < maxCol) {
+      grid[row][col + 1] = " ";
+    }
+
+    // Clean up if overwriting a shadow (clear the wide char that owns it)
+    if (grid[row][col] === SHADOW && col - 1 >= 0) {
+      grid[row][col - 1] = " ";
+    }
+
     grid[row][col] = char;
+
+    // Place shadow for wide char
+    if (isWide(char) && col + 1 < maxCol) {
+      grid[row][col + 1] = SHADOW;
+    }
   }
 }
 
@@ -50,7 +73,29 @@ function forceSetChar(
   char: string
 ) {
   if (row >= 0 && row < grid.length && col >= 0 && col < grid[0].length) {
+    const maxCol = grid[0].length;
+
+    // If placing a wide char, its shadow must fit in the grid
+    if (isWide(char) && col + 1 >= maxCol) {
+      return;
+    }
+
+    // Clean up if overwriting a wide char (clear its shadow)
+    if (isWide(grid[row][col]) && col + 1 < maxCol) {
+      grid[row][col + 1] = " ";
+    }
+
+    // Clean up if overwriting a shadow (clear the wide char that owns it)
+    if (grid[row][col] === SHADOW && col - 1 >= 0) {
+      grid[row][col - 1] = " ";
+    }
+
     grid[row][col] = char;
+
+    // Place shadow for wide char
+    if (isWide(char) && col + 1 < maxCol) {
+      grid[row][col + 1] = SHADOW;
+    }
   }
 }
 
@@ -69,8 +114,10 @@ function stampFill(
 }
 
 function stampText(grid: string[][], col: number, row: number, text: string) {
-  for (let i = 0; i < text.length; i++) {
-    setChar(grid, col + i, row, text[i]);
+  let offset = 0;
+  for (const ch of text) {
+    setChar(grid, col + offset, row, ch);
+    offset += charWidth(ch);
   }
 }
 
@@ -103,6 +150,30 @@ function stampBorder(
   }
 }
 
+/** Truncate text to maxWidth display columns, adding … when it overflows. */
+function truncate(text: string, maxWidth: number): string {
+  if (maxWidth <= 0) {
+    return "";
+  }
+  if (displayWidth(text) <= maxWidth) {
+    return text;
+  }
+  if (maxWidth === 1) {
+    return "…";
+  }
+  let result = "";
+  let width = 0;
+  for (const ch of text) {
+    const cw = charWidth(ch);
+    if (width + cw + 1 > maxWidth) {
+      break; // +1 for ellipsis
+    }
+    result += ch;
+    width += cw;
+  }
+  return `${result}…`;
+}
+
 function stampCenteredLabel(
   grid: string[][],
   col: number,
@@ -113,9 +184,8 @@ function stampCenteredLabel(
 ) {
   const labelRow = row + Math.floor(height / 2);
   const maxLabelLen = width - 4;
-  const trimmed =
-    label.length > maxLabelLen ? `${label.slice(0, maxLabelLen - 1)}…` : label;
-  const labelCol = col + Math.floor((width - trimmed.length) / 2);
+  const trimmed = truncate(label, maxLabelLen);
+  const labelCol = col + Math.floor((width - displayWidth(trimmed)) / 2);
   stampText(grid, labelCol, labelRow, trimmed);
 }
 
@@ -136,8 +206,10 @@ function stampBox(grid: string[][], obj: BoxObject) {
 function stampTextObj(grid: string[][], obj: TextObject) {
   const lines = obj.content.split("\n");
   for (let r = 0; r < lines.length; r++) {
-    for (let c = 0; c < lines[r].length; c++) {
-      setChar(grid, obj.position.col + c, obj.position.row + r, lines[r][c]);
+    let offset = 0;
+    for (const ch of lines[r]) {
+      setChar(grid, obj.position.col + offset, obj.position.row + r, ch);
+      offset += charWidth(ch);
     }
   }
 }
@@ -282,14 +354,46 @@ function stampComponentButton(
   col: number,
   row: number
 ) {
-  stampCenteredLabel(
-    grid,
-    col,
-    row,
-    obj.width,
-    obj.height,
-    obj.label ?? "Button"
-  );
+  const label = obj.label ?? "Button";
+  const icon = obj.icon;
+  const iconRight = obj.iconPosition === "right";
+  const mid = row + Math.floor(obj.height / 2);
+  const innerW = obj.width - 4; // 2 border + 2 padding
+
+  if (icon) {
+    // Icon + label: icon takes charWidth + 1 space
+    const iconW = charWidth(icon);
+    const maxLabel = innerW - iconW - 1;
+    const trimmed = truncate(label, maxLabel);
+    if (iconRight) {
+      const content = `${trimmed} ${icon}`;
+      if (obj.align === "left") {
+        stampText(grid, col + 2, mid, content);
+      } else {
+        const startCol =
+          col + Math.floor((obj.width - displayWidth(content)) / 2);
+        stampText(grid, startCol, mid, content);
+      }
+    } else {
+      const content = `${icon} ${trimmed}`;
+      if (obj.align === "left") {
+        stampText(grid, col + 2, mid, content);
+      } else {
+        const startCol =
+          col + Math.floor((obj.width - displayWidth(content)) / 2);
+        stampText(grid, startCol, mid, content);
+      }
+    }
+  } else {
+    const trimmed = truncate(label, innerW);
+    if (obj.align === "left") {
+      stampText(grid, col + 2, mid, trimmed);
+    } else {
+      const startCol =
+        col + Math.floor((obj.width - displayWidth(trimmed)) / 2);
+      stampText(grid, startCol, mid, trimmed);
+    }
+  }
 }
 
 function stampComponentInput(
@@ -302,9 +406,10 @@ function stampComponentInput(
   let textCol = col + 2;
   if (obj.icon) {
     setChar(grid, textCol, mid, obj.icon);
-    textCol += 2;
+    textCol += charWidth(obj.icon) + 1;
   }
-  stampText(grid, textCol, mid, obj.label ?? "Input");
+  const maxLen = col + obj.width - 2 - textCol;
+  stampText(grid, textCol, mid, truncate(obj.label ?? "Input", maxLen));
 }
 
 function stampComponentSelect(
@@ -314,7 +419,8 @@ function stampComponentSelect(
   row: number
 ) {
   const mid = row + Math.floor(obj.height / 2);
-  stampText(grid, col + 2, mid, obj.label ?? "Select");
+  const maxLen = obj.width - 6;
+  stampText(grid, col + 2, mid, truncate(obj.label ?? "Select", maxLen));
   setChar(grid, col + obj.width - 3, mid, "▾");
 }
 
@@ -328,9 +434,11 @@ function stampComponentToggle(
 ) {
   const mid = row + Math.floor(obj.height / 2);
   stampText(grid, col + 2, mid, indicator);
-  stampText(grid, col + 6, mid, obj.label ?? defaultLabel);
+  const maxLen = obj.width - 8;
+  stampText(grid, col + 6, mid, truncate(obj.label ?? defaultLabel, maxLen));
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential rendering logic reads best as a single function
 function stampComponentTable(
   grid: string[][],
   obj: ComponentObject,
@@ -341,14 +449,29 @@ function stampComponentTable(
     return;
   }
   const cols = obj.columns ?? [];
+  const numCols = cols.length;
+  if (numCols === 0) {
+    return;
+  }
   const innerW = obj.width - 2;
-  const colW = Math.floor(innerW / cols.length);
+  const colW = Math.floor(innerW / numCols);
 
+  // Header separator line
   stampHLine(grid, col + 1, row + 2, innerW);
 
-  for (let i = 0; i < cols.length; i++) {
+  // Column headers + vertical separators
+  for (let i = 0; i < numCols; i++) {
     const headerCol = col + 1 + i * colW;
-    stampText(grid, headerCol + 1, row + 1, cols[i].slice(0, colW - 2));
+    const filterSpace = obj.filterable ? 3 : 0;
+    stampText(
+      grid,
+      headerCol + 1,
+      row + 1,
+      truncate(cols[i], colW - 3 - filterSpace)
+    );
+    if (obj.filterable) {
+      setChar(grid, headerCol + colW - 3, row + 1, "▾");
+    }
 
     if (i > 0) {
       const sepCol = col + i * colW;
@@ -358,6 +481,23 @@ function stampComponentTable(
       setChar(grid, sepCol, row, "┬");
       setChar(grid, sepCol, row + 2, "┼");
       setChar(grid, sepCol, row + obj.height - 1, "┴");
+    }
+  }
+
+  // Data rows
+  const dataRows = obj.rows ?? [];
+  const maxVisibleRows = obj.height - 4;
+  const visibleCount = Math.min(dataRows.length, maxVisibleRows);
+  for (let r = 0; r < visibleCount; r++) {
+    const gridRow = row + 3 + r;
+    const dataRow = dataRows[r];
+    for (let c = 0; c < numCols; c++) {
+      const cellValue = c < dataRow.length ? dataRow[c] : "";
+      if (cellValue.length === 0) {
+        continue;
+      }
+      const cellCol = col + 1 + c * colW;
+      stampText(grid, cellCol + 1, gridRow, truncate(cellValue, colW - 3));
     }
   }
 }
@@ -380,7 +520,8 @@ function stampComponentTitleBar(
   if (showClose) {
     setChar(grid, col + obj.width - 3, row + 1, "×");
   }
-  stampText(grid, col + 2, row + 1, title);
+  const maxLen = showClose ? obj.width - 6 : obj.width - 4;
+  stampText(grid, col + 2, row + 1, truncate(title, maxLen));
 }
 
 function stampComponentBrowser(
@@ -396,12 +537,13 @@ function stampComponentBrowser(
   stampHLine(grid, col + 1, row + 2, obj.width - 2);
   forceSetChar(grid, col, row + 2, chars.teeRight);
   forceSetChar(grid, col + obj.width - 1, row + 2, chars.teeLeft);
-  stampText(grid, col + 2, row + 1, "◄ ► ⟳");
+  stampText(grid, col + 2, row + 1, "< > O");
   const url = obj.label ?? "https://";
   const barStart = col + 10;
   const barEnd = col + obj.width - 2;
-  if (barEnd > barStart) {
-    stampText(grid, barStart, row + 1, url.slice(0, barEnd - barStart));
+  const barMaxLen = barEnd - barStart;
+  if (barMaxLen > 0) {
+    stampText(grid, barStart, row + 1, truncate(url, barMaxLen));
   }
 }
 
@@ -412,8 +554,10 @@ function stampComponentNavbar(
   row: number
 ) {
   const mid = row + Math.floor(obj.height / 2);
-  stampText(grid, col + 2, mid, "≡");
-  stampText(grid, col + 5, mid, (obj.navItems ?? []).join("  "));
+  stampText(grid, col + 2, mid, "=");
+  const text = (obj.navItems ?? []).join("  ");
+  const maxLen = obj.width - 7;
+  stampText(grid, col + 5, mid, truncate(text, maxLen));
 }
 
 function stampComponentTabs(
@@ -423,7 +567,9 @@ function stampComponentTabs(
   row: number
 ) {
   const mid = row + Math.floor(obj.height / 2);
-  stampText(grid, col + 2, mid, (obj.tabs ?? []).join(" │ "));
+  const text = (obj.tabs ?? []).join(" │ ");
+  const maxLen = obj.width - 4;
+  stampText(grid, col + 2, mid, truncate(text, maxLen));
 }
 
 function stampComponentProgress(
@@ -451,7 +597,7 @@ function stampComponentIcon(
 ) {
   const midCol = col + Math.floor(obj.width / 2);
   const midRow = row + Math.floor(obj.height / 2);
-  setChar(grid, midCol, midRow, obj.icon ?? "★");
+  setChar(grid, midCol, midRow, obj.icon ?? "*");
 }
 
 function stampComponentImage(
@@ -470,12 +616,13 @@ function stampComponentImage(
   const text = obj.label ?? obj.icon;
   if (text) {
     const maxLabelLen = obj.width - 4;
-    const trimmed =
-      text.length > maxLabelLen ? `${text.slice(0, maxLabelLen - 1)}…` : text;
+    const trimmed = truncate(text, maxLabelLen);
     const labelRow = row + Math.floor(obj.height / 2);
-    const labelCol = col + Math.floor((obj.width - trimmed.length) / 2);
-    for (let i = 0; i < trimmed.length; i++) {
-      forceSetChar(grid, labelCol + i, labelRow, trimmed[i]);
+    const labelCol = col + Math.floor((obj.width - displayWidth(trimmed)) / 2);
+    let offset = 0;
+    for (const ch of trimmed) {
+      forceSetChar(grid, labelCol + offset, labelRow, ch);
+      offset += charWidth(ch);
     }
   }
 }
@@ -487,15 +634,17 @@ function stampComponentDivider(
   row: number
 ) {
   const label = obj.label;
-  if (label && obj.width > label.length + 4) {
-    // ── Label ──────
+  // Need at least 5 chars for "── L ─" pattern (2 dashes + space + 1 char + space)
+  if (label && obj.width >= 5) {
+    const maxLabelLen = obj.width - 4;
+    const trimmed = truncate(label, maxLabelLen);
     const leftLen = 2;
     for (let c = 0; c < leftLen; c++) {
       setChar(grid, col + c, row, "─");
     }
     setChar(grid, col + leftLen, row, " ");
-    stampText(grid, col + leftLen + 1, row, label);
-    const afterLabel = leftLen + 1 + label.length;
+    stampText(grid, col + leftLen + 1, row, trimmed);
+    const afterLabel = leftLen + 1 + displayWidth(trimmed);
     setChar(grid, col + afterLabel, row, " ");
     for (let c = afterLabel + 1; c < obj.width; c++) {
       setChar(grid, col + c, row, "─");
@@ -514,10 +663,11 @@ function stampComponentToggleSwitch(
   row: number
 ) {
   const on = obj.checked === true;
-  const toggle = on ? "[●━━]" : "[━━●]";
+  const toggle = on ? "[●──]" : "[──●]";
   stampText(grid, col, row, toggle);
   if (obj.label) {
-    stampText(grid, col + 6, row, obj.label);
+    const maxLen = obj.width - 6;
+    stampText(grid, col + 6, row, truncate(obj.label, maxLen));
   }
 }
 
@@ -528,15 +678,16 @@ function stampComponentAlert(
   row: number
 ) {
   const icons: Record<string, string> = {
-    info: "ℹ",
-    warning: "⚠",
-    error: "✖",
+    info: "i",
+    warning: "!",
+    error: "x",
     success: "✓",
   };
-  const icon = icons[obj.alertType ?? "info"] ?? "ℹ";
+  const icon = icons[obj.alertType ?? "info"] ?? "i";
   const label = obj.label ?? "Alert";
+  const maxLen = obj.width - 3;
   // Title line at row+1 (inside border)
-  stampText(grid, col + 2, row + 1, `${icon} ${label}`);
+  stampText(grid, col + 2, row + 1, truncate(`${icon} ${label}`, maxLen));
 }
 
 function stampComponentBreadcrumb(
@@ -548,7 +699,7 @@ function stampComponentBreadcrumb(
   const items = obj.items ?? [];
   const sep = obj.separator ?? " > ";
   const text = items.join(sep);
-  stampText(grid, col, row, text.slice(0, obj.width));
+  stampText(grid, col, row, truncate(text, obj.width));
 }
 
 function stampComponentAvatar(
@@ -557,12 +708,30 @@ function stampComponentAvatar(
   col: number,
   row: number
 ) {
-  const label = obj.label ?? "";
   const innerW = obj.width - 2;
-  const initials = label.slice(0, innerW);
   const midRow = row + Math.floor(obj.height / 2);
-  const startCol = col + 1 + Math.floor((innerW - initials.length) / 2);
-  stampText(grid, startCol, midRow, initials);
+
+  // Icon mode: render a single character centered (e.g. smiley face)
+  if (obj.icon) {
+    const iconW = charWidth(obj.icon);
+    const iconCol = col + 1 + Math.floor((innerW - iconW) / 2);
+    setChar(grid, iconCol, midRow, obj.icon);
+    return;
+  }
+
+  // Initials mode: space-separate characters (e.g. "DH" → "D H")
+  const label = obj.label ?? "";
+  if (label.length === 0) {
+    const iconW = charWidth("⍥");
+    const iconCol = col + 1 + Math.floor((innerW - iconW) / 2);
+    setChar(grid, iconCol, midRow, "⍥");
+    return;
+  }
+  const chars = label.slice(0, Math.ceil(innerW / 2));
+  const spaced = chars.split("").join(" ");
+  const display = truncate(spaced, innerW);
+  const startCol = col + 1 + Math.floor((innerW - displayWidth(display)) / 2);
+  stampText(grid, startCol, midRow, display);
 }
 
 function stampComponentList(
@@ -587,7 +756,7 @@ function stampComponentList(
         break;
     }
     const line = `${prefix}${items[i]}`;
-    stampText(grid, col, row + i, line.slice(0, obj.width));
+    stampText(grid, col, row + i, truncate(line, obj.width));
   }
 }
 
@@ -599,26 +768,37 @@ function stampComponentStepper(
 ) {
   const items = obj.items ?? [];
   const active = obj.activeStep ?? 0;
-  let c = col;
-  for (let i = 0; i < items.length; i++) {
-    const dot = i <= active ? "●" : "○";
-    setChar(grid, c, row, dot);
-    c += 1;
-    if (items[i]) {
-      setChar(grid, c, row, " ");
-      c += 1;
-      stampText(grid, c, row, items[i]);
-      c += items[i].length;
-    }
-    if (i < items.length - 1) {
-      setChar(grid, c, row, " ");
-      c += 1;
-      setChar(grid, c, row, "─");
-      c += 1;
-      setChar(grid, c, row, " ");
-      c += 1;
+  const numSeps = items.length - 1;
+
+  // Calculate fixed width: dots + labels
+  let fixedWidth = 0;
+  for (const item of items) {
+    fixedWidth += 1; // dot
+    if (item) {
+      fixedWidth += 1 + displayWidth(item); // space + label
     }
   }
+
+  // Distribute remaining width evenly across separators (min 3: " ─ ")
+  let sepWidth = 3;
+  if (numSeps > 0) {
+    sepWidth = Math.max(3, Math.floor((obj.width - fixedWidth) / numSeps));
+  }
+  const dashes = "─".repeat(sepWidth - 2);
+  const sep = ` ${dashes} `;
+
+  let text = "";
+  for (let i = 0; i < items.length; i++) {
+    const dot = i <= active ? "●" : "○";
+    text += dot;
+    if (items[i]) {
+      text += ` ${items[i]}`;
+    }
+    if (i < items.length - 1) {
+      text += sep;
+    }
+  }
+  stampText(grid, col, row, truncate(text, obj.width));
 }
 
 function stampComponentRating(
@@ -629,16 +809,14 @@ function stampComponentRating(
 ) {
   const value = Math.max(0, obj.value ?? 0);
   const max = Math.max(1, obj.maxValue ?? 5);
-  let c = col;
+  let text = "";
   for (let i = 0; i < max; i++) {
-    setChar(grid, c, row, i < value ? "★" : "☆");
-    c += 1;
+    text += i < value ? "●" : "○";
   }
   if (obj.label) {
-    setChar(grid, c, row, " ");
-    c += 1;
-    stampText(grid, c, row, obj.label);
+    text += ` ${obj.label}`;
   }
+  stampText(grid, col, row, truncate(text, obj.width));
 }
 
 function stampComponentSkeleton(
@@ -821,12 +999,19 @@ export function compose(
 export function gridToString(grid: string[][]): string {
   return grid
     .map((row) => {
-      // Trim trailing spaces
+      // Trim trailing spaces and shadows
       let end = row.length - 1;
-      while (end >= 0 && row[end] === " ") {
+      while (end >= 0 && (row[end] === " " || row[end] === SHADOW)) {
         end--;
       }
-      return row.slice(0, end + 1).join("");
+      // Build string, skipping shadow cells
+      let line = "";
+      for (let c = 0; c <= end; c++) {
+        if (row[c] !== SHADOW) {
+          line += row[c];
+        }
+      }
+      return line;
     })
     .join("\n");
 }

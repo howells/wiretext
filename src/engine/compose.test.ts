@@ -561,7 +561,7 @@ describe("compose", () => {
   });
 
   // Checkbox checked/unchecked
-  it("checkbox renders checked by default", () => {
+  it("checkbox renders unchecked by default (checked=undefined)", () => {
     const cb: ComponentObject = {
       id: "1",
       type: "component",
@@ -574,7 +574,7 @@ describe("compose", () => {
       layerId: "layer-1",
     };
     const result = gridToString(compose([cb], { cols: 25, rows: 5 }));
-    expect(result).toContain("[✓]");
+    expect(result).toContain("[ ]");
     expect(result).toContain("Checkbox");
   });
 
@@ -614,7 +614,7 @@ describe("compose", () => {
   });
 
   // Radio button state
-  it("radio renders selected by default", () => {
+  it("radio renders unselected by default (checked=undefined)", () => {
     const radio: ComponentObject = {
       id: "1",
       type: "component",
@@ -627,7 +627,7 @@ describe("compose", () => {
       layerId: "layer-1",
     };
     const result = gridToString(compose([radio], { cols: 25, rows: 5 }));
-    expect(result).toContain("(●)");
+    expect(result).toContain("( )");
   });
 
   it("radio renders unselected when checked=false", () => {
@@ -748,6 +748,142 @@ describe("compose", () => {
     expect(lines[0]).not.toContain("┬");
   });
 
+  it("table renders filter buttons when filterable=true", () => {
+    const table: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "table",
+      position: { col: 0, row: 0 },
+      width: 24,
+      height: 8,
+      borderStyle: "single",
+      columns: ["Name", "Age"],
+      filterable: true,
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([table], { cols: 30, rows: 10 }));
+    const lines = result.split("\n");
+    // Each column header should have a v filter button
+    const headerRow = lines[1];
+    // v should appear with a space before and after
+    expect(headerRow).toContain("Name");
+    // Count filter arrows — one per column
+    const vCount = [...headerRow].filter((c) => c === "▾").length;
+    expect(vCount).toBe(2);
+  });
+
+  it("table does not render filter buttons when filterable is not set", () => {
+    const table: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "table",
+      position: { col: 0, row: 0 },
+      width: 24,
+      height: 8,
+      borderStyle: "single",
+      columns: ["Name", "Age"],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([table], { cols: 30, rows: 10 }));
+    const lines = result.split("\n");
+    const headerRow = lines[1];
+    expect(headerRow).not.toContain("▾");
+  });
+
+  // Table data rows
+  it("table renders data rows below header", () => {
+    const table: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "table",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 8,
+      borderStyle: "single",
+      columns: ["Name", "Age", "City"],
+      rows: [
+        ["Alice", "30", "NYC"],
+        ["Bob", "25", "LA"],
+      ],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([table], { cols: 35, rows: 10 }));
+    const lines = result.split("\n");
+    // Row 0: top border, Row 1: headers, Row 2: separator, Row 3+: data
+    expect(lines[3]).toContain("Alice");
+    expect(lines[3]).toContain("30");
+    expect(lines[3]).toContain("NYC");
+    expect(lines[4]).toContain("Bob");
+    expect(lines[4]).toContain("25");
+    expect(lines[4]).toContain("LA");
+  });
+
+  it("table clips rows that exceed available height", () => {
+    const table: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "table",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 6,
+      borderStyle: "single",
+      columns: ["Name"],
+      rows: [["Alice"], ["Bob"], ["Carol"], ["Dave"]],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([table], { cols: 25, rows: 8 }));
+    // height=6 → maxVisibleRows = 6-4 = 2, so only Alice and Bob visible
+    expect(result).toContain("Alice");
+    expect(result).toContain("Bob");
+    expect(result).not.toContain("Carol");
+    expect(result).not.toContain("Dave");
+  });
+
+  it("table truncates long cell values to fit column width", () => {
+    const table: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "table",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 7,
+      borderStyle: "single",
+      columns: ["Name", "Info"],
+      rows: [["VeryLongNameHere", "OK"]],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([table], { cols: 25, rows: 9 }));
+    // colW = 18/2 = 9, maxCellLen = 9-3 = 6 → "Very…" (truncated)
+    expect(result).toContain("…");
+    expect(result).toContain("OK");
+  });
+
+  it("table renders with no rows when rows is empty", () => {
+    const table: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "table",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 7,
+      borderStyle: "single",
+      columns: ["Name"],
+      rows: [],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([table], { cols: 25, rows: 9 }));
+    expect(result).toContain("Name");
+    // Data area should be empty
+    const lines = result.split("\n");
+    expect(lines[3].trim()).toBe("│                  │");
+  });
+
   // Tabs with custom tab names
   it("tabs renders custom tab names", () => {
     const tabs: ComponentObject = {
@@ -862,5 +998,1257 @@ describe("compose", () => {
     };
     const grid = compose([arrow], { cols: 5, rows: 5 });
     expect(grid[0][0]).toBe("↖");
+  });
+
+  // input
+  it("input renders default label and border", () => {
+    const input: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "input",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 3,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([input], { cols: 25, rows: 5 }));
+    expect(result).toContain("┌");
+    expect(result).toContain("Input");
+  });
+
+  it("input renders custom label at col+2 on the middle row", () => {
+    const input: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "input",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 3,
+      borderStyle: "single",
+      label: "Email",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([input], { cols: 25, rows: 5 }));
+    const lines = result.split("\n");
+    // Middle row (row index 1) should contain the label starting at col 2
+    expect(lines[1]).toContain("Email");
+    expect(lines[1].indexOf("Email")).toBe(2);
+  });
+
+  it("input with icon shifts label to col+4", () => {
+    const input: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "input",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 3,
+      borderStyle: "single",
+      icon: "@",
+      label: "Search",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([input], { cols: 25, rows: 5 }));
+    const lines = result.split("\n");
+    // Icon at col+2, label starts at col+4
+    expect(lines[1]).toContain("Search");
+    expect(lines[1].indexOf("Search")).toBe(4);
+  });
+
+  // select
+  it("select renders default label and dropdown arrow", () => {
+    const select: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "select",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 3,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([select], { cols: 25, rows: 5 }));
+    expect(result).toContain("Select");
+    expect(result).toContain("▾");
+  });
+
+  it("select renders custom label with dropdown arrow at col+width-3", () => {
+    const select: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "select",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 3,
+      borderStyle: "single",
+      label: "Country",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([select], { cols: 25, rows: 5 }));
+    const lines = result.split("\n");
+    expect(lines[1]).toContain("Country");
+    // Arrow is at col+width-3 = 0+20-3 = 17
+    expect(lines[1][17]).toBe("▾");
+  });
+
+  // navbar
+  it("navbar renders hamburger icon and default empty nav items", () => {
+    const navbar: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "navbar",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 3,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([navbar], { cols: 35, rows: 5 }));
+    expect(result).toContain("=");
+  });
+
+  it("navbar renders nav items joined by double spaces", () => {
+    const navbar: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "navbar",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 3,
+      borderStyle: "single",
+      navItems: ["Home", "About", "Contact"],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([navbar], { cols: 35, rows: 5 }));
+    expect(result).toContain("Home  About  Contact");
+  });
+
+  it("navbar with no navItems renders only the hamburger icon", () => {
+    const navbar: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "navbar",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 3,
+      borderStyle: "single",
+      navItems: [],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([navbar], { cols: 25, rows: 5 }));
+    const lines = result.split("\n");
+    expect(lines[1]).toContain("=");
+    // No item text after the hamburger — between col+3 and right border there are only spaces
+    // lines[1] = "│ =               │", right border is the last char
+    const innerContent = lines[1].slice(3, -1);
+    expect(innerContent.trim()).toBe("");
+  });
+
+  // browser
+  it("browser renders navigation controls and separator", () => {
+    const browser: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "browser",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 6,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([browser], { cols: 35, rows: 10 }));
+    const lines = result.split("\n");
+    expect(lines[1]).toContain("< > O");
+    // Separator at row+2
+    expect(lines[2]).toContain("─");
+  });
+
+  it("browser renders custom URL label in the toolbar row", () => {
+    const browser: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "browser",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 6,
+      borderStyle: "single",
+      label: "https://example.com",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const grid = compose([browser], { cols: 35, rows: 10 });
+    // URL label is stamped at col+10 = 10
+    expect(grid[1][10]).toBe("h");
+    expect(grid[1][11]).toBe("t");
+    expect(grid[1][12]).toBe("t");
+  });
+
+  it("browser skips rendering content when height < 5", () => {
+    const browser: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "browser",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 4,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([browser], { cols: 25, rows: 8 }));
+    // Border is still drawn but no nav controls
+    expect(result).not.toContain("<");
+  });
+
+  // card
+  it("card renders default title and separator", () => {
+    const card: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "card",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 8,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([card], { cols: 25, rows: 12 }));
+    const lines = result.split("\n");
+    expect(lines[1]).toContain("Card");
+    expect(lines[2]).toContain("─");
+  });
+
+  it("card renders custom label and has no close button", () => {
+    const card: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "card",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 8,
+      borderStyle: "single",
+      label: "User Profile",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([card], { cols: 25, rows: 12 }));
+    const lines = result.split("\n");
+    expect(lines[1]).toContain("User Profile");
+    expect(result).not.toContain("×");
+  });
+
+  // icon (borderless)
+  it("icon renders default star centered without border", () => {
+    const icon: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "icon",
+      position: { col: 0, row: 0 },
+      width: 3,
+      height: 3,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([icon], { cols: 8, rows: 5 }));
+    // Borderless — no box corners
+    expect(result).not.toContain("┌");
+    expect(result).toContain("*");
+  });
+
+  it("icon renders custom icon character at center position", () => {
+    const icon: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "icon",
+      position: { col: 0, row: 0 },
+      width: 5,
+      height: 3,
+      borderStyle: "single",
+      icon: "♥",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const grid = compose([icon], { cols: 8, rows: 5 });
+    // midCol = Math.floor(5/2) = 2, midRow = Math.floor(3/2) = 1
+    expect(grid[1][2]).toBe("♥");
+  });
+
+  // image (bordered)
+  it("image renders interior filled with ░ and border", () => {
+    const image: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "image",
+      position: { col: 0, row: 0 },
+      width: 10,
+      height: 5,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([image], { cols: 15, rows: 8 }));
+    expect(result).toContain("┌");
+    expect(result).toContain("░");
+  });
+
+  it("image renders label centered over ░ fill", () => {
+    const image: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "image",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 6,
+      borderStyle: "single",
+      label: "Photo",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([image], { cols: 25, rows: 10 }));
+    // Label overwrites ░ in the middle row
+    expect(result).toContain("Photo");
+    expect(result).toContain("░");
+  });
+
+  // divider (borderless)
+  it("divider renders a full horizontal line without border", () => {
+    const divider: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "divider",
+      position: { col: 0, row: 0 },
+      width: 10,
+      height: 1,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([divider], { cols: 15, rows: 3 }));
+    expect(result).not.toContain("┌");
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("──────────");
+  });
+
+  it("divider with label renders labeled separator", () => {
+    const divider: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "divider",
+      position: { col: 0, row: 0 },
+      width: 16,
+      height: 1,
+      borderStyle: "single",
+      label: "OR",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([divider], { cols: 20, rows: 3 }));
+    const lines = result.split("\n");
+    // "── OR ──────────" pattern
+    expect(lines[0]).toContain("── OR");
+    expect(lines[0]).toContain("─");
+  });
+
+  it("divider with label that exactly fits renders label", () => {
+    const divider: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "divider",
+      position: { col: 0, row: 0 },
+      width: 6,
+      height: 1,
+      borderStyle: "single",
+      label: "OR",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([divider], { cols: 10, rows: 3 }));
+    const lines = result.split("\n");
+    // width=6, label="OR" (2 chars), maxLabelLen=2 — label fits exactly
+    expect(lines[0]).toBe("── OR");
+  });
+
+  it("divider with width too small for label renders plain line", () => {
+    const divider: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "divider",
+      position: { col: 0, row: 0 },
+      width: 4,
+      height: 1,
+      borderStyle: "single",
+      label: "OR",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([divider], { cols: 10, rows: 3 }));
+    const lines = result.split("\n");
+    // width=4, too small for "── X ─" pattern — falls back to plain line
+    expect(lines[0]).toBe("────");
+  });
+
+  // toggle (borderless)
+  it("toggle renders off state by default", () => {
+    const toggle: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "toggle",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 1,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([toggle], { cols: 25, rows: 3 }));
+    expect(result).not.toContain("┌");
+    expect(result).toContain("[──●]");
+  });
+
+  it("toggle renders on state when checked=true", () => {
+    const toggle: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "toggle",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 1,
+      borderStyle: "single",
+      checked: true,
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([toggle], { cols: 25, rows: 3 }));
+    expect(result).toContain("[●──]");
+  });
+
+  it("toggle renders label after the switch indicator", () => {
+    const toggle: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "toggle",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 1,
+      borderStyle: "single",
+      label: "Dark mode",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([toggle], { cols: 25, rows: 3 }));
+    const lines = result.split("\n");
+    expect(lines[0]).toContain("Dark mode");
+    // Label starts at col+6
+    expect(lines[0].indexOf("Dark mode")).toBe(6);
+  });
+
+  // alert (bordered)
+  it("alert renders default info icon and label", () => {
+    const alert: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "alert",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 5,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([alert], { cols: 35, rows: 8 }));
+    const lines = result.split("\n");
+    expect(lines[1]).toContain("i");
+    expect(lines[1]).toContain("Alert");
+  });
+
+  it("alert renders warning icon for alertType=warning", () => {
+    const alert: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "alert",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 5,
+      borderStyle: "single",
+      alertType: "warning",
+      label: "Check input",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([alert], { cols: 35, rows: 8 }));
+    const lines = result.split("\n");
+    expect(lines[1]).toContain("!");
+    expect(lines[1]).toContain("Check input");
+  });
+
+  it("alert renders correct icons for error and success types", () => {
+    const makeAlert = (alertType: "error" | "success"): ComponentObject => ({
+      id: "1",
+      type: "component",
+      componentType: "alert",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 5,
+      borderStyle: "single",
+      alertType,
+      zIndex: 0,
+      layerId: "layer-1",
+    });
+
+    const errorResult = gridToString(
+      compose([makeAlert("error")], { cols: 35, rows: 8 })
+    );
+    expect(errorResult.split("\n")[1]).toContain("x");
+
+    const successResult = gridToString(
+      compose([makeAlert("success")], { cols: 35, rows: 8 })
+    );
+    expect(successResult.split("\n")[1]).toContain("✓");
+  });
+
+  // breadcrumb (borderless)
+  it("breadcrumb renders items joined by default separator", () => {
+    const breadcrumb: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "breadcrumb",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 1,
+      borderStyle: "single",
+      items: ["Home", "Products", "Details"],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([breadcrumb], { cols: 35, rows: 3 }));
+    expect(result).not.toContain("┌");
+    expect(result).toContain("Home > Products > Details");
+  });
+
+  it("breadcrumb renders items with custom separator", () => {
+    const breadcrumb: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "breadcrumb",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 1,
+      borderStyle: "single",
+      items: ["A", "B", "C"],
+      separator: " / ",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([breadcrumb], { cols: 35, rows: 3 }));
+    expect(result).toContain("A / B / C");
+  });
+
+  it("breadcrumb truncates to obj.width", () => {
+    const breadcrumb: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "breadcrumb",
+      position: { col: 0, row: 0 },
+      width: 10,
+      height: 1,
+      borderStyle: "single",
+      items: ["Home", "Very Long Section Name"],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([breadcrumb], { cols: 35, rows: 3 }));
+    const lines = result.split("\n");
+    expect(lines[0].length).toBeLessThanOrEqual(10);
+  });
+
+  // avatar (bordered)
+  it("avatar renders spaced initials from label centered inside border", () => {
+    const avatar: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "avatar",
+      position: { col: 0, row: 0 },
+      width: 5,
+      height: 3,
+      borderStyle: "single",
+      label: "JD",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([avatar], { cols: 10, rows: 5 }));
+    expect(result).toContain("┌");
+    expect(result).toContain("J D");
+  });
+
+  it("avatar with empty label renders border with empty interior", () => {
+    const avatar: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "avatar",
+      position: { col: 0, row: 0 },
+      width: 5,
+      height: 3,
+      borderStyle: "single",
+      label: "",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([avatar], { cols: 10, rows: 5 }));
+    expect(result).toContain("┌───┐");
+    const lines = result.split("\n");
+    // ⍥ is 1 display column, centered in innerW=3: pad=floor((3-1)/2)=1
+    expect(lines[1]).toBe("│ ⍥ │");
+  });
+
+  it("avatar clips spaced initials to innerWidth (width-2)", () => {
+    const avatar: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "avatar",
+      position: { col: 0, row: 0 },
+      width: 5,
+      height: 3,
+      borderStyle: "single",
+      label: "ABCDEF",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([avatar], { cols: 10, rows: 5 }));
+    // innerW = 3, ceil(3/2) = 2 chars → "A B" (spaced)
+    expect(result).toContain("A B");
+    expect(result).not.toContain("ABCDEF");
+  });
+
+  it("avatar renders icon centered when icon prop is set", () => {
+    const avatar: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "avatar",
+      position: { col: 0, row: 0 },
+      width: 5,
+      height: 3,
+      borderStyle: "single",
+      icon: ":",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const grid = compose([avatar], { cols: 10, rows: 5 });
+    // midCol = 0 + 1 + floor((3-1)/2) = 2, midRow = floor(3/2) = 1
+    expect(grid[1][2]).toBe(":");
+  });
+
+  // list (borderless)
+  it("list renders items with bullet prefix by default", () => {
+    const list: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "list",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 4,
+      borderStyle: "single",
+      items: ["Apple", "Banana", "Cherry"],
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([list], { cols: 25, rows: 6 }));
+    expect(result).not.toContain("┌");
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("• Apple");
+    expect(lines[1]).toBe("• Banana");
+    expect(lines[2]).toBe("• Cherry");
+  });
+
+  it("list renders items with number prefix when listStyle=number", () => {
+    const list: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "list",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 3,
+      borderStyle: "single",
+      items: ["First", "Second", "Third"],
+      listStyle: "number",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([list], { cols: 25, rows: 5 }));
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("1. First");
+    expect(lines[1]).toBe("2. Second");
+    expect(lines[2]).toBe("3. Third");
+  });
+
+  it("list renders items with dash prefix when listStyle=dash", () => {
+    const list: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "list",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 2,
+      borderStyle: "single",
+      items: ["Item A", "Item B"],
+      listStyle: "dash",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([list], { cols: 25, rows: 5 }));
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("- Item A");
+    expect(lines[1]).toBe("- Item B");
+  });
+
+  // stepper (borderless)
+  it("stepper renders active step with filled dot and inactive with empty dot", () => {
+    const stepper: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "stepper",
+      position: { col: 0, row: 0 },
+      width: 40,
+      height: 1,
+      borderStyle: "single",
+      items: ["Step 1", "Step 2", "Step 3"],
+      activeStep: 0,
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([stepper], { cols: 50, rows: 3 }));
+    expect(result).not.toContain("┌");
+    expect(result).toContain("●");
+    expect(result).toContain("○");
+  });
+
+  it("stepper with activeStep=2 marks all three steps active", () => {
+    const stepper: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "stepper",
+      position: { col: 0, row: 0 },
+      width: 40,
+      height: 1,
+      borderStyle: "single",
+      items: ["A", "B", "C"],
+      activeStep: 2,
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([stepper], { cols: 50, rows: 3 }));
+    // All steps <= activeStep(2) are filled
+    expect(result).not.toContain("o");
+  });
+
+  it("stepper renders step connector dashes between steps", () => {
+    const stepper: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "stepper",
+      position: { col: 0, row: 0 },
+      width: 30,
+      height: 1,
+      borderStyle: "single",
+      items: ["Go", "Stop"],
+      activeStep: 0,
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([stepper], { cols: 35, rows: 3 }));
+    expect(result).toContain("─");
+  });
+
+  // rating (borderless)
+  it("rating renders all empty stars when value=0", () => {
+    const rating: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "rating",
+      position: { col: 0, row: 0 },
+      width: 10,
+      height: 1,
+      borderStyle: "single",
+      value: 0,
+      maxValue: 5,
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([rating], { cols: 15, rows: 3 }));
+    expect(result).not.toContain("┌");
+    expect(result).not.toContain("●");
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("○○○○○");
+  });
+
+  it("rating renders filled and empty stars based on value", () => {
+    const rating: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "rating",
+      position: { col: 0, row: 0 },
+      width: 10,
+      height: 1,
+      borderStyle: "single",
+      value: 3,
+      maxValue: 5,
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([rating], { cols: 15, rows: 3 }));
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("●●●○○");
+  });
+
+  it("rating renders optional label after stars", () => {
+    const rating: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "rating",
+      position: { col: 0, row: 0 },
+      width: 20,
+      height: 1,
+      borderStyle: "single",
+      value: 4,
+      maxValue: 5,
+      label: "4/5",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([rating], { cols: 25, rows: 3 }));
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("●●●●○ 4/5");
+  });
+
+  // skeleton (borderless)
+  it("skeleton fills entire area with ░ without border", () => {
+    const skeleton: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "skeleton",
+      position: { col: 0, row: 0 },
+      width: 5,
+      height: 2,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const result = gridToString(compose([skeleton], { cols: 10, rows: 4 }));
+    expect(result).not.toContain("┌");
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("░░░░░");
+    expect(lines[1]).toBe("░░░░░");
+  });
+
+  it("skeleton fills a multi-row area entirely", () => {
+    const skeleton: ComponentObject = {
+      id: "1",
+      type: "component",
+      componentType: "skeleton",
+      position: { col: 2, row: 1 },
+      width: 4,
+      height: 3,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+    };
+    const grid = compose([skeleton], { cols: 10, rows: 6 });
+    // All cells in the skeleton region should be ░
+    for (let r = 1; r <= 3; r++) {
+      for (let c = 2; c <= 5; c++) {
+        expect(grid[r][c]).toBe("░");
+      }
+    }
+  });
+
+  // ─── Overflow truncation with ellipsis ──────────────────────────────
+  describe("text overflow truncation", () => {
+    const makeComponent = (
+      componentType: ComponentObject["componentType"],
+      width: number,
+      height: number,
+      overrides: Partial<ComponentObject> = {}
+    ): ComponentObject => ({
+      id: "1",
+      type: "component",
+      componentType,
+      position: { col: 0, row: 0 },
+      width,
+      height,
+      borderStyle: "single",
+      zIndex: 0,
+      layerId: "layer-1",
+      ...overrides,
+    });
+
+    it("input truncates long label with ellipsis", () => {
+      const input = makeComponent("input", 10, 3, {
+        label: "Very Long Placeholder",
+      });
+      const result = gridToString(compose([input], { cols: 15, rows: 5 }));
+      const lines = result.split("\n");
+      // Inner row should contain … and NOT overflow past border
+      expect(lines[1]).toContain("…");
+      expect(lines[1]).toContain("│");
+    });
+
+    it("select truncates long label with ellipsis", () => {
+      const select = makeComponent("select", 10, 3, {
+        label: "Very Long Option",
+      });
+      const result = gridToString(compose([select], { cols: 15, rows: 5 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("…");
+      expect(lines[1]).toContain("▾");
+    });
+
+    it("checkbox truncates long label with ellipsis", () => {
+      const checkbox = makeComponent("checkbox", 12, 3, {
+        label: "Accept all terms and conditions",
+      });
+      const result = gridToString(compose([checkbox], { cols: 15, rows: 5 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("…");
+      expect(lines[1]).toContain("[ ]");
+    });
+
+    it("radio truncates long label with ellipsis", () => {
+      const radio = makeComponent("radio", 12, 3, {
+        label: "First option in a very long list",
+      });
+      const result = gridToString(compose([radio], { cols: 15, rows: 5 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("…");
+      expect(lines[1]).toContain("( )");
+    });
+
+    it("card truncates long title with ellipsis", () => {
+      const card = makeComponent("card", 10, 5, {
+        label: "Very Long Card Title",
+      });
+      const result = gridToString(compose([card], { cols: 15, rows: 8 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("…");
+    });
+
+    it("modal truncates long title with ellipsis", () => {
+      const modal = makeComponent("modal", 10, 5, {
+        label: "Very Long Modal Title",
+      });
+      const result = gridToString(compose([modal], { cols: 15, rows: 8 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("…");
+      expect(lines[1]).toContain("×");
+    });
+
+    it("alert truncates long label with ellipsis", () => {
+      const alert = makeComponent("alert", 10, 5, {
+        label: "Something went terribly wrong here",
+      });
+      const result = gridToString(compose([alert], { cols: 15, rows: 8 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("…");
+    });
+
+    it("navbar truncates long nav items with ellipsis", () => {
+      const navbar = makeComponent("navbar", 15, 3, {
+        navItems: ["Home", "About", "Contact", "Services"],
+      });
+      const result = gridToString(compose([navbar], { cols: 20, rows: 5 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("…");
+      expect(lines[1]).toContain("=");
+    });
+
+    it("tabs truncates long tab list with ellipsis", () => {
+      const tabs = makeComponent("tabs", 12, 3, {
+        tabs: ["Overview", "Settings", "Advanced"],
+      });
+      const result = gridToString(compose([tabs], { cols: 15, rows: 5 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("…");
+    });
+
+    it("toggle truncates long label with ellipsis", () => {
+      const toggle = makeComponent("toggle", 12, 1, {
+        label: "Enable all notifications for this account",
+      });
+      const result = gridToString(compose([toggle], { cols: 15, rows: 3 }));
+      const lines = result.split("\n");
+      expect(lines[0]).toContain("…");
+      expect(lines[0]).toContain("[");
+    });
+
+    it("breadcrumb truncates long path with ellipsis", () => {
+      const breadcrumb = makeComponent("breadcrumb", 15, 1, {
+        items: ["Home", "Category", "Subcategory", "Item"],
+      });
+      const result = gridToString(compose([breadcrumb], { cols: 20, rows: 3 }));
+      const lines = result.split("\n");
+      expect(lines[0]).toContain("…");
+    });
+
+    it("list truncates long items with ellipsis", () => {
+      const list = makeComponent("list", 10, 3, {
+        items: ["A very long list item that overflows"],
+      });
+      const result = gridToString(compose([list], { cols: 15, rows: 5 }));
+      const lines = result.split("\n");
+      expect(lines[0]).toContain("…");
+    });
+
+    it("stepper truncates when steps overflow width", () => {
+      const stepper = makeComponent("stepper", 10, 1, {
+        items: ["First Step", "Second Step", "Third Step"],
+      });
+      const result = gridToString(compose([stepper], { cols: 15, rows: 3 }));
+      const lines = result.split("\n");
+      expect(lines[0]).toContain("…");
+    });
+
+    it("rating truncates long label with ellipsis", () => {
+      const rating = makeComponent("rating", 8, 1, {
+        label: "Rating label that is way too long",
+        maxValue: 5,
+      });
+      const result = gridToString(compose([rating], { cols: 12, rows: 3 }));
+      const lines = result.split("\n");
+      expect(lines[0]).toContain("…");
+    });
+
+    it("divider truncates long label with ellipsis", () => {
+      const divider = makeComponent("divider", 10, 1, {
+        label: "Section Header That Is Way Too Long",
+      });
+      const result = gridToString(compose([divider], { cols: 15, rows: 3 }));
+      const lines = result.split("\n");
+      expect(lines[0]).toContain("…");
+      expect(lines[0]).toContain("──");
+    });
+
+    it("text within border does not overwrite border chars", () => {
+      // Verify that truncated text stays inside the border
+      const input = makeComponent("input", 8, 3, {
+        label: "Overflowing text",
+      });
+      const grid = compose([input], { cols: 12, rows: 5 });
+      // Right border should still be │
+      expect(grid[1][7]).toBe("│");
+    });
+  });
+
+  // ─── Double-width Unicode character support ──────────────────────────
+  // Only CJK / fullwidth / emoji chars are genuinely 2x wide.
+  // All icon chars (⍥ ★ ◉ etc.) are 1x in Geist Mono.
+  describe("wide character support", () => {
+    it("CJK char gets shadow cell after it", () => {
+      const text: TextObject = {
+        id: "1",
+        type: "text",
+        position: { col: 0, row: 0 },
+        content: "中B",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const grid = compose([text], { cols: 10, rows: 1 });
+      expect(grid[0][0]).toBe("中");
+      expect(grid[0][1]).toBe("\x00"); // shadow
+      expect(grid[0][2]).toBe("B");
+    });
+
+    it("gridToString skips shadow cells from CJK chars", () => {
+      const text: TextObject = {
+        id: "1",
+        type: "text",
+        position: { col: 0, row: 0 },
+        content: "A中B",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([text], { cols: 10, rows: 1 }));
+      expect(result).toBe("A中B");
+      expect(result).not.toContain("\x00");
+    });
+
+    it("CJK char at grid edge is skipped (no half-char)", () => {
+      const text: TextObject = {
+        id: "1",
+        type: "text",
+        position: { col: 2, row: 0 },
+        content: "中",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      // Grid is 3 cols wide, placing at col 2 means shadow at col 3 = out of bounds
+      const grid = compose([text], { cols: 3, rows: 1 });
+      expect(grid[0][2]).toBe(" "); // wide char should not be placed
+    });
+
+    it("overwriting a CJK char cleans up its shadow", () => {
+      const text1: TextObject = {
+        id: "1",
+        type: "text",
+        position: { col: 0, row: 0 },
+        content: "中",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const text2: TextObject = {
+        id: "2",
+        type: "text",
+        position: { col: 0, row: 0 },
+        content: "AB",
+        zIndex: 1,
+        layerId: "layer-1",
+      };
+      const grid = compose([text1, text2], { cols: 10, rows: 1 });
+      expect(grid[0][0]).toBe("A");
+      expect(grid[0][1]).toBe("B");
+      // No orphaned shadow
+      expect(grid[0][2]).toBe(" ");
+    });
+
+    it("⍥ ★ ◉ are all single-width (no shadow cells)", () => {
+      const text: TextObject = {
+        id: "1",
+        type: "text",
+        position: { col: 0, row: 0 },
+        content: "⍥★◉",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const grid = compose([text], { cols: 10, rows: 1 });
+      // Each char occupies exactly 1 cell, no shadows
+      expect(grid[0][0]).toBe("⍥");
+      expect(grid[0][1]).toBe("★");
+      expect(grid[0][2]).toBe("◉");
+      expect(grid[0][3]).toBe(" ");
+    });
+
+    it("icon component with ⍥ renders without breaking borders", () => {
+      const makeComponent = (
+        componentType: ComponentObject["componentType"],
+        width: number,
+        height: number,
+        overrides: Partial<ComponentObject> = {}
+      ): ComponentObject => ({
+        id: "1",
+        type: "component",
+        componentType,
+        position: { col: 0, row: 0 },
+        width,
+        height,
+        borderStyle: "single",
+        zIndex: 0,
+        layerId: "layer-1",
+        ...overrides,
+      });
+
+      const icon = makeComponent("icon", 5, 3, { icon: "⍥" });
+      const grid = compose([icon], { cols: 10, rows: 5 });
+      const result = gridToString(grid);
+      expect(result).toContain("⍥");
+      expect(result).not.toContain("\x00");
+    });
+
+    it("multiline text with icon chars aligns correctly", () => {
+      const text: TextObject = {
+        id: "1",
+        type: "text",
+        position: { col: 0, row: 0 },
+        content: "⍥A\nB★",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([text], { cols: 10, rows: 2 }));
+      const lines = result.split("\n");
+      expect(lines[0]).toBe("⍥A");
+      expect(lines[1]).toBe("B★");
+    });
+
+    it("box with CJK label centers correctly with shadow", () => {
+      const box: BoxObject = {
+        id: "1",
+        type: "box",
+        position: { col: 0, row: 0 },
+        width: 10,
+        height: 3,
+        borderStyle: "single",
+        label: "中",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([box], { cols: 15, rows: 5 }));
+      expect(result).toContain("中");
+      expect(result).not.toContain("\x00");
+      expect(result).toContain("┌────────┐");
+      expect(result).toContain("└────────┘");
+    });
+
+    it("divider with ★ label renders correctly", () => {
+      const makeComponent = (
+        componentType: ComponentObject["componentType"],
+        width: number,
+        height: number,
+        overrides: Partial<ComponentObject> = {}
+      ): ComponentObject => ({
+        id: "1",
+        type: "component",
+        componentType,
+        position: { col: 0, row: 0 },
+        width,
+        height,
+        borderStyle: "single",
+        zIndex: 0,
+        layerId: "layer-1",
+        ...overrides,
+      });
+
+      const divider = makeComponent("divider", 12, 1, { label: "★" });
+      const result = gridToString(compose([divider], { cols: 15, rows: 1 }));
+      // ★ is 1 display col: "──── ★ ─────"
+      expect(result).toContain("★");
+      expect(result).not.toContain("\x00");
+      expect(result.startsWith("──")).toBe(true);
+    });
+
+    it("avatar default ⍥ renders within borders", () => {
+      const makeComponent = (
+        componentType: ComponentObject["componentType"],
+        width: number,
+        height: number,
+        overrides: Partial<ComponentObject> = {}
+      ): ComponentObject => ({
+        id: "1",
+        type: "component",
+        componentType,
+        position: { col: 0, row: 0 },
+        width,
+        height,
+        borderStyle: "single",
+        zIndex: 0,
+        layerId: "layer-1",
+        ...overrides,
+      });
+
+      const avatar = makeComponent("avatar", 5, 3);
+      const grid = compose([avatar], { cols: 10, rows: 5 });
+      const result = gridToString(grid);
+      expect(result).toContain("⍥");
+      expect(result).not.toContain("\x00");
+      expect(result).toContain("┐");
+      expect(result).toContain("┘");
+    });
   });
 });
