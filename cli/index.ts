@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { z } from "zod";
 import { compose, gridToString } from "../src/engine/compose";
 import { computeRenderGridSize, fillDefaults } from "../src/engine/defaults";
+import { validateContentWidth } from "../src/engine/validate";
 import { encodeDocument } from "../src/lib/sharing";
 
 const DEFAULT_BASE_URL = "https://wiretext.app";
@@ -97,9 +98,13 @@ const componentSchema = z.object({
   fill: fillStyleSchema,
   label: z.string().optional(),
   icon: z.string().optional(),
+  align: z.enum(["center", "left"]).optional(),
+  iconPosition: z.enum(["left", "right"]).optional(),
   checked: z.boolean().optional(),
   progress: z.number().min(0).max(100).optional(),
+  filterable: z.boolean().optional(),
   columns: z.array(z.string()).optional(),
+  rows: z.array(z.array(z.string())).optional(),
   tabs: z.array(z.string()).optional(),
   navItems: z.array(z.string()).optional(),
   alertType: alertTypeSchema.optional(),
@@ -119,7 +124,17 @@ const wireObjectSchema = z.discriminatedUnion("type", [
   componentSchema,
 ]);
 
-const objectsArraySchema = z.array(wireObjectSchema);
+const objectsArraySchema = z.array(wireObjectSchema).superRefine((arr, ctx) => {
+  for (let i = 0; i < arr.length; i++) {
+    for (const err of validateContentWidth(arr[i])) {
+      ctx.addIssue({
+        code: "custom",
+        path: [i, ...err.path],
+        message: err.message,
+      });
+    }
+  }
+});
 
 function readInput(filePath?: string): string {
   if (filePath && filePath !== "-") {

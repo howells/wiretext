@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { compose, gridToString } from "../src/engine/compose";
 import { computeRenderGridSize, fillDefaults } from "../src/engine/defaults";
+import { validateContentWidth } from "../src/engine/validate";
 import { encodeDocument } from "../src/lib/sharing";
 
 const BASE_URL = "https://wiretext.app";
@@ -226,13 +227,23 @@ const componentSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Component label text. For button: centered. For input/select: left-aligned. For card/modal: title bar. For browser: URL bar. For divider: centered in line. For toggle/rating: suffix text. For avatar: first 1-2 chars used as initials."
+      "Component label text. For button: centered (or left with align). For input/select: left-aligned. For card/modal: title bar. For browser: URL bar. For divider: centered in line. For toggle/rating: suffix text. For avatar: first 1-2 chars used as initials."
     ),
   icon: z
     .string()
     .optional()
     .describe(
-      "Single character icon (for icon component, input prefix, or image placeholder)"
+      "Single character icon (for icon component, input prefix, button icon, or image placeholder). Use Unicode symbols like ← → ✓ ✕ ⌕ ✉ ★ ♡ ● ▶ etc."
+    ),
+  align: z
+    .enum(["center", "left"])
+    .optional()
+    .describe("Label alignment for button. Default: center."),
+  iconPosition: z
+    .enum(["left", "right"])
+    .optional()
+    .describe(
+      "Icon placement for button: left or right of label. Default: left."
     ),
   checked: z
     .boolean()
@@ -246,11 +257,23 @@ const componentSchema = z.object({
     .max(100)
     .optional()
     .describe("Progress percentage 0-100. Bar renders inside the border."),
+  filterable: z
+    .boolean()
+    .optional()
+    .describe(
+      "Show filter dropdown arrows (▾) in table column headers. Default: false."
+    ),
   columns: z
     .array(z.string())
     .optional()
     .describe(
       "Table column headers. Table width should be >= (sum of header lengths + separators). Each column gets width/numColumns cells."
+    ),
+  rows: z
+    .array(z.array(z.string()))
+    .optional()
+    .describe(
+      "Table data rows. Each row is an array of cell strings matching the columns order. Rows render below the header separator. Excess rows beyond available height are clipped."
     ),
   tabs: z
     .array(z.string())
@@ -317,6 +340,20 @@ const wireObjectSchema = z.discriminatedUnion("type", [
   componentSchema,
 ]);
 
+const validatedObjectsSchema = z
+  .array(wireObjectSchema)
+  .superRefine((arr, ctx) => {
+    for (let i = 0; i < arr.length; i++) {
+      for (const err of validateContentWidth(arr[i])) {
+        ctx.addIssue({
+          code: "custom",
+          path: [i, ...err.path],
+          message: err.message,
+        });
+      }
+    }
+  });
+
 const server = new McpServer({
   name: "wiretext",
   version: "0.1.0",
@@ -332,9 +369,7 @@ Most fields have sensible defaults — only 'type' is required for a box.
 
 ${LAYOUT_GUIDE}`,
   {
-    objects: z
-      .array(wireObjectSchema)
-      .describe("Array of wire objects to render"),
+    objects: validatedObjectsSchema.describe("Array of wire objects to render"),
     baseUrl: z
       .string()
       .optional()
@@ -366,9 +401,7 @@ server.tool(
 
 ${LAYOUT_GUIDE}`,
   {
-    objects: z
-      .array(wireObjectSchema)
-      .describe("Array of wire objects to render"),
+    objects: validatedObjectsSchema.describe("Array of wire objects to render"),
   },
   ({ objects }) => {
     try {
