@@ -2,7 +2,6 @@
 
 import {
   type MouseEvent as ReactMouseEvent,
-  type WheelEvent as ReactWheelEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -125,9 +124,9 @@ export function Canvas({
   );
 
   const handleWheel = useCallback(
-    (e: ReactWheelEvent) => {
+    (e: WheelEvent) => {
+      e.preventDefault();
       if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
         zoomViewport(delta, e.clientX, e.clientY);
       } else {
@@ -136,6 +135,16 @@ export function Canvas({
     },
     [panViewport, zoomViewport]
   );
+
+  // Attach wheel handler as non-passive so preventDefault() works
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) {
+      return;
+    }
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
 
   // Track space key for pan mode
   useEffect(() => {
@@ -394,7 +403,6 @@ export function Canvas({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onWheel={handleWheel}
         ref={overlayRef}
         role="application"
       />
