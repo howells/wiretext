@@ -285,13 +285,23 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
         if (obj.id !== id) {
           return obj;
         }
-        return {
+        const moved = {
           ...obj,
           position: {
             col: obj.position.col + deltaCol,
             row: obj.position.row + deltaRow,
           },
-        } as WireObject;
+        };
+        if ("endPosition" in obj) {
+          return {
+            ...moved,
+            endPosition: {
+              col: obj.endPosition.col + deltaCol,
+              row: obj.endPosition.row + deltaRow,
+            },
+          } as WireObject;
+        }
+        return moved as WireObject;
       }),
     }));
   },
@@ -307,13 +317,24 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
         if (!state.selection.has(obj.id)) {
           return obj;
         }
-        return {
+        const moved = {
           ...obj,
           position: {
             col: obj.position.col + deltaCol,
             row: obj.position.row + deltaRow,
           },
-        } as WireObject;
+        };
+        // Also move endPosition for lines/arrows
+        if ("endPosition" in obj) {
+          return {
+            ...moved,
+            endPosition: {
+              col: obj.endPosition.col + deltaCol,
+              row: obj.endPosition.row + deltaRow,
+            },
+          } as WireObject;
+        }
+        return moved as WireObject;
       }),
     }));
   },

@@ -34,6 +34,10 @@ let marqueeShift = false;
 let originalPosition: { col: number; row: number } | null = null;
 let originalEndPosition: { col: number; row: number } | null = null;
 let originalSize: { width: number; height: number } | null = null;
+/** True when the user clicked an already-selected object (without Shift) */
+let deferredDeselect: string | null = null;
+/** True when the mouse moved during a drag (used to decide deferred deselect) */
+let didDrag = false;
 
 export type ResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
 
@@ -581,6 +585,8 @@ function resetDragState() {
   originalPosition = null;
   originalEndPosition = null;
   originalSize = null;
+  deferredDeselect = null;
+  didDrag = false;
 }
 
 // --- Tool handler ---
@@ -607,8 +613,22 @@ export const selectTool: ToolHandler = {
       return;
     }
 
-    state.selectObject(hit.id, e.shiftKey);
+    const alreadySelected = state.selection.has(hit.id);
+
+    if (e.shiftKey) {
+      // Shift+click always toggles immediately
+      state.selectObject(hit.id, true);
+    } else if (alreadySelected) {
+      // Clicking an already-selected object: preserve multi-selection for drag.
+      // If the user doesn't drag, we'll narrow to this object on mouseUp.
+      deferredDeselect = hit.id;
+    } else {
+      // Clicking an unselected object: select it (replacing selection)
+      state.selectObject(hit.id);
+    }
+
     state.setEditingLabelId(null);
+    didDrag = false;
     dragStart = { col, row };
     dragTarget = hit.id;
     resizeHandle = null;
@@ -649,6 +669,8 @@ export const selectTool: ToolHandler = {
       return;
     }
 
+    didDrag = true;
+    deferredDeselect = null;
     dragStart = { col, row };
     useEditorStore.getState().moveSelection(deltaCol, deltaRow);
   },
@@ -665,6 +687,12 @@ export const selectTool: ToolHandler = {
 
     if (endpointHandle && dragTarget) {
       finalizeEndpoint();
+    }
+
+    // Deferred deselect: clicked an already-selected object without dragging,
+    // so now narrow the selection down to just that object.
+    if (deferredDeselect && !didDrag) {
+      useEditorStore.getState().selectObject(deferredDeselect);
     }
 
     resetDragState();

@@ -13,7 +13,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "wiretext": {
       "command": "npx",
-      "args": ["@wiretext/mcp"]
+      "args": ["-y", "@wiretext/mcp"]
     }
   }
 }
@@ -22,7 +22,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ### Claude Code
 
 ```bash
-claude mcp add wiretext -- npx @wiretext/mcp
+claude mcp add wiretext -- npx -y @wiretext/mcp
 ```
 
 ### Cursor
@@ -34,10 +34,20 @@ Add to `.cursor/mcp.json`:
   "mcpServers": {
     "wiretext": {
       "command": "npx",
-      "args": ["@wiretext/mcp"]
+      "args": ["-y", "@wiretext/mcp"]
     }
   }
 }
+```
+
+### Codex
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.wiretext]
+command = "npx"
+args = ["-y", "@wiretext/mcp"]
 ```
 
 ## Tools
@@ -64,13 +74,13 @@ Render wire objects as ASCII art. Useful for previewing layouts inline.
 
 | Type | Description | Key Props |
 |------|-------------|-----------|
-| `button` | Clickable button | `label` |
+| `button` | Clickable button | `label`, `icon`, `align` |
 | `input` | Text input field | `label`, `icon` |
 | `select` | Dropdown select | `label` |
 | `checkbox` | Checkbox with label | `label`, `checked` |
 | `radio` | Radio button with label | `label`, `checked` |
 | `toggle` | On/off switch | `label`, `checked` |
-| `table` | Data table | `columns` |
+| `table` | Data table | `columns`, `rows`, `filterable` |
 | `modal` | Modal dialog | `label` |
 | `browser` | Browser window | `label` (URL) |
 | `card` | Content card | `label` (title) |
@@ -80,12 +90,12 @@ Render wire objects as ASCII art. Useful for previewing layouts inline.
 | `icon` | Single icon character | `icon` |
 | `image` | Image placeholder | `label`, `icon` |
 | `alert` | Alert banner | `label`, `alertType` |
-| `avatar` | User avatar | `label` (initials) |
+| `avatar` | User avatar | `label` (initials), `icon` |
 | `divider` | Horizontal rule | `label` |
 | `breadcrumb` | Breadcrumb nav | `items`, `separator` |
 | `list` | Bulleted/numbered list | `items`, `listStyle` |
 | `stepper` | Step indicator | `items`, `activeStep` |
-| `rating` | Star rating | `value`, `maxValue` |
+| `rating` | Dot rating | `value`, `maxValue` |
 | `skeleton` | Loading placeholder | width, height |
 
 ## Example

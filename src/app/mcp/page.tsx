@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Wiretext MCP Server — AI Wireframe Generation",
   description:
-    "An MCP server that lets AI assistants generate wireframes programmatically. Works with Claude Desktop, Claude Code, and Cursor.",
+    "An MCP server that lets AI assistants generate wireframes programmatically. Works with Claude Desktop, Claude Code, Cursor, and Codex.",
 };
 
 const installConfigs = [
@@ -14,7 +14,7 @@ const installConfigs = [
   "mcpServers": {
     "wiretext": {
       "command": "npx",
-      "args": ["@wiretext/mcp"]
+      "args": ["-y", "@wiretext/mcp"]
     }
   }
 }`,
@@ -26,21 +26,28 @@ const installConfigs = [
   "mcpServers": {
     "wiretext": {
       "command": "npx",
-      "args": ["@wiretext/mcp"]
+      "args": ["-y", "@wiretext/mcp"]
     }
   }
 }`,
   },
+  {
+    name: "Codex",
+    path: "~/.codex/config.toml",
+    config: `[mcp_servers.wiretext]
+command = "npx"
+args = ["-y", "@wiretext/mcp"]`,
+  },
 ];
 
 const components = [
-  { type: "button", desc: "Clickable button", props: "label" },
+  { type: "button", desc: "Clickable button", props: "label, icon, align" },
   { type: "input", desc: "Text input field", props: "label, icon" },
   { type: "select", desc: "Dropdown select", props: "label" },
   { type: "checkbox", desc: "Checkbox with label", props: "label, checked" },
   { type: "radio", desc: "Radio button", props: "label, checked" },
   { type: "toggle", desc: "On/off switch", props: "label, checked" },
-  { type: "table", desc: "Data table", props: "columns" },
+  { type: "table", desc: "Data table", props: "columns, rows, filterable" },
   { type: "modal", desc: "Modal dialog", props: "label" },
   { type: "browser", desc: "Browser window", props: "label (URL)" },
   { type: "card", desc: "Content card", props: "label (title)" },
@@ -50,12 +57,12 @@ const components = [
   { type: "icon", desc: "Single icon character", props: "icon" },
   { type: "image", desc: "Image placeholder", props: "label, icon" },
   { type: "alert", desc: "Alert banner", props: "label, alertType" },
-  { type: "avatar", desc: "User avatar", props: "label (initials)" },
+  { type: "avatar", desc: "User avatar", props: "label (initials), icon" },
   { type: "divider", desc: "Horizontal rule", props: "label" },
   { type: "breadcrumb", desc: "Breadcrumb nav", props: "items, separator" },
   { type: "list", desc: "Bulleted/numbered list", props: "items, listStyle" },
   { type: "stepper", desc: "Step indicator", props: "items, activeStep" },
-  { type: "rating", desc: "Star rating", props: "value, maxValue" },
+  { type: "rating", desc: "Dot rating", props: "value, maxValue" },
   { type: "skeleton", desc: "Loading placeholder", props: "width, height" },
 ];
 
@@ -116,7 +123,7 @@ export default function McpPage() {
 
         <h3 className="mt-6 font-mono text-accent text-sm">Claude Code</h3>
         <pre className="mt-2 overflow-x-auto rounded border border-border bg-surface p-4 text-sm">
-          claude mcp add wiretext -- npx @wiretext/mcp
+          claude mcp add wiretext -- npx -y @wiretext/mcp
         </pre>
 
         {/* Other clients */}

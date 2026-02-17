@@ -52,13 +52,13 @@ COMPONENT SIZES:
 - navbar: height 3
 - image: default 20×10, bordered with ░ fill and centered label/icon
 - divider: height 1, borderless ─── line (optional centered label)
-- toggle: height 1, borderless [●━━] or [━━●] + label, uses checked field
-- alert: default 40×5, bordered with icon prefix (ℹ⚠✖✓) per alertType
+- toggle: height 1, borderless [●──] or [──●] + label, uses checked field
+- alert: default 40×5, bordered with icon prefix (i ! x ✓) per alertType
 - breadcrumb: height 1, borderless items joined by separator
-- avatar: default 5×3, bordered with 1-2 char initials from label
+- avatar: default 5×3, bordered with 1-2 char initials from label or single icon char
 - list: height = items.length, borderless rows with bullet/number/dash prefix
 - stepper: height 1, borderless ● Step ─ ○ Step chain, uses activeStep
-- rating: height 1, borderless ★★★☆☆ stars based on value/maxValue
+- rating: height 1, borderless ●●●○○ dots based on value/maxValue
 - skeleton: height 1, borderless ░ fill block
 
 TABS COMPONENT WARNING:
@@ -249,7 +249,7 @@ const componentSchema = z.object({
     .boolean()
     .optional()
     .describe(
-      "For checkbox ([✓]/[ ]), radio ((●)/( )), and toggle ([●━━]/[━━●]). Default: true."
+      "For checkbox ([✓]/[ ]), radio ((●)/( )), and toggle ([●──]/[──●]). Default: true."
     ),
   progress: z
     .number()
@@ -288,7 +288,7 @@ const componentSchema = z.object({
   alertType: alertTypeSchema
     .optional()
     .describe(
-      "Alert variant: info (ℹ), warning (⚠), error (✖), success (✓). Controls icon prefix in title bar. Default: info."
+      "Alert variant: info (i), warning (!), error (x), success (✓). Controls icon prefix in title bar. Default: info."
     ),
   items: z
     .array(z.string())
@@ -320,7 +320,7 @@ const componentSchema = z.object({
     .min(0)
     .optional()
     .describe(
-      "Current value for rating component (number of filled ★ stars). Default: 0."
+      "Current value for rating component (number of filled ● dots). Default: 0."
     ),
   maxValue: z
     .number()
