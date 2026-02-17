@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wiretext Showcase — 10 UI Layouts</title>
+    <style>
+    @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap");
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "JetBrains Mono", monospace;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #222;
+    }
+
+    .card-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .card-header a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .card-header a:hover {
+      color: #60a5fa;
+      text-decoration: underline;
+    }
+
+    .card-body {
+      padding: 12px 20px 16px;
+    }
+
+    .description {
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .preview-wrapper {
+      overflow-x: auto;
+      border: 1px solid #1a1a1a;
+      border-radius: 4px;
+      background: #050505;
+    }
+
+    .preview {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      line-height: 1.35;
+      padding: 12px;
+      color: #c8c8c8;
+      white-space: pre;
+      margin: 0;
+    }
+
+    .counter {
+      display: inline-block;
+      background: #222;
+      color: #888;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 8px;
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid #222;
+      text-align: center;
+      color: #444;
+      font-size: 12px;
+    }
+
+    footer a {
+      color: #3b82f6;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+    </style>
+  </head>
+  <body>
+    <h1>Wiretext Showcase</h1>
+    <p class="subtitle">
+      10 ambitious UI layouts rendered as ASCII/Unicode wireframes. Click "Open
+      in Editor" to customize.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">1</span>SaaS Analytics Dashboard</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmuALIByAtgO4DqAtCQIr4cAnAEMADkhpIAQgGUAjgEkQ2UQnglEKVKCIIANmgAM2KAjZGAvtgBeCiRAAeR7HuEBPaArqocADgASAPokAK4A8mFMAKoMAIwA7ABqMgAiDCQAzABaUMogJG6iEPS6LKpIEEgkeaXllSQAKoXFPrimbDDQeWy0JAAWaL4ALNh9EHAA5n3VqACsWCC4CFA00DIFei0g8EgTm3muuBAGPmKiAHTCRCwQ54gA9DTCMH1LwisgVtTeILFucLgQg0AGxyADiYK4elEeiiUFEUSYiV4eVU6k0aB0+jQsRMZjQGSsIFs9icqFxIFcHigXnoCACwXCkRiCWSaUyOTyBSKJQQZWQ9RqfLqVSaPJ8SGEYFw726vQGqF8CzGk2mBOwSxWaw2Wx2e2K2ElYAUJAgLHIqAoIEAhkQAAgAgtcDSAUs9Xgh3nRsPbJXo3BoiORsAAlCCqKBkPKALjIQABdL4gWj0ORDABSgiQhjkE0CgSgAFFUwAFMBsJAAGV8en8qLUcA0yExIF0JwyePMqHiRJJqzJCypnh+9KCoQi0TiSVS6WyuWw3K2poc1Wwuiqgp8rpebxWtrCkCgYDgEHMCaTPhIvhg-ikTAcCkCvESWUEWQaAGEuP4AGI0Di19GNtozbYqgwK+O2aBdjYdi9uqlLuIOdIMqOzITmy06cnOzT0Iuy7AWuVT0OWzwkLaGSGLaTxuOQp4-BA+aCOgohsCEIQkAAGlIADWEwTGwADSSBDMG1hyP+9YYkBLZoAs7RoII3YwY4aAjPB1K0j4w6MmOLKTuyM5cthPi1AKhErsKpmNEZzaenKND9DigijOMUwzOBizLKsUDrG4+w+Hq+wuMIRwnCAoaQEgITFLR9C8IE7GpvEKQOA4+YhIYRZeF+9JRMGb6BOJDZaFiJyqXJ5LoIppJoLMQXqUOyFMuOrJThys75NZJkVGZwH8t1Vniomq52Q5qBtiAKquXBmpeT5fnbHAuyBUNgEgAAJJ8mDfPQbj4DIsQhGwbBcVk+BMLMiRhCwEwcAwgRuLghWSSVgwQeShLQdVoF1YhmmNTpaGtQZWGDbhQoETM62xEMWCzL4hibdtPhcF+LBuFIegXqIwJgBw-F6OWcCCBwND5kMT2AS9qBlfi5JDFVsGdj9NINSOTW6ehbWGaDjh4aupqET4gCJhLasToOcswAKSI4mPyBHYbARLgwJcMCKwpF+GRyDAIQXdYFPFcBJzoLJtMKZ9jPuQOLNIWzAMtfpmEdYNXWCuZfX1GKWxELZ2A9PZCqxE5E0uWqioap52q+bqi36gcwXHPQUSdLAMtniAEDsSkehwEwUgMEQUjAggKSiIIEDxIYX4OG4BtNtJGA0x2YsM8pqDB9bGl+HbqEOxh7XzryHs9a7orWXAw1+-KcGTWH40zVH80Bc6E+rTGMU+Px-gTPgXHxKGQwAJpuA0HBSDQeixGCYQhMGddSSB6DueVsQfcSSlkrExhqb93fab3el+7cwXLzcGAtIZP0wEMQQGQ04-HzDQXwbB-BEHQAAM34kWIgh94iSkEHuEgXA3z3ypugJuOJ6YWzbrECkndWb-2aoArmIMQFLjAeuEAItfDnHQNLDeIAiyJHYm+IgSB+KGAgAgYMwYvx53wPEQI+AUiphIUbFSpsOzm3fl9MWzMu5aRQowzmwNnbewsv1IUw8Bre19iAf2o0g7OVVG5COWpvI6noMveOIV6BhDcTRLast6BwDYFwOQRAoATAgAoYM+YZCpnNG+MIXFD4yDCKohuQxyEVVbp-cadDbYMI5kDJ2g9jLmLdr1EU1jgmTzsdPMaTipqNI8m4uaMclor2Gj4QAk6RwPoA0WI+ZcBoL6FwGQYI0FIB4iwIgDBgTBhYDIfAGSQJDGfrTV+uSKF6PoYY4pjsB7WTBuZCG9BcQw0EP0nweNfBfjkPxeIN8YCGBoIENBYQuD8SYLEGAXFVmlWydDbZ5Jao-xtn9HuRiSlHJ5mw054D6CAHTCW0sxzjxD4YE9OsRAgOHwCIL8DQ+i+DCLMLibB0BwAUGg-AaC-wqDrEVeuIFgQaPkiC2IwJdmFP2YDQ5wCh7VMsdUr2JRbH2MDsHWeLjWmzQ8f5WOy1DiJx8PaMAExdxuOuYsMAwYpAQC4GghAb5aDBiiFEDI6AGhyC4v4dJDKAKGwbsCIFlUqGf3iNyyFRS+VAJYYKyywrLKip8KvFAU8A4z1DjMeekd3HR08Yqrpq1ACgZNqtBuASBQAaCEKAUykCJFiBAKIsQuJ3IcHIKIAK0BgTels91OIrYIQhX-XlfdmGmJwqAhFHC1rAniDwhG-CoiZ2BEwJJMBUwZHzNDBwb40HBnQGkcNIA0QSUpmo0CQLKHaMZo48F+j-oAOMaU453b8KIp8IAZMJbTi1iJipGIB4h6BgLMKIgRRCPMCEQHGgQGAcGBGgw+UgUjVowHW3wIL0DfwKd6ttTCTFlKqYG92IrOrioabMT1IdnE4i5bKxeHS45BR8T4cKlQoq7n3LaBocAbjapILMDIIQJhcC4hACYTAuBDDQVxKQQz8y8DcFch166nUgTBeVE2UHaHNsPVCg5frO3nnPfzDhQxDBcVtIAElJtWxAQKmfMh8lHpTfFkNBWRDAODAPxNBiQGDtTXUyh+JxJO03QG-HsbcTZetbezX1HakMnIvRw8iWntO2ki1F6LgBbUkAACkCXAB2pNq-i-EIBoNmMCCAV10DsVwIkYEGQNOxAYHvMDbmOxkKg-kuTez-PtsQ2e+FIXBYgGg+F2LCW4uJZi4Ae1IouAAdSRLUX4sJe1TIGQIR7RcQUBwIYfQwBfiyNA-iwYHAcAmKmGsonnNUwqzJWYUHVKwb8-bBDp64V82QJe34mmdOjbi-1yLA2nuDa6717VRB4hcF4PEVMRB+IcAaKmQ1iIOAZAyIfBo23V2Muepu-bGBgRQbBSdgx9XzuwtYVds5PhbQUVtIAFFIusk9J2T0n2rbUiT6PEKA5ZTAkykFwMECgJhFkPrMME5W3pPyg-htHR7oX8v9Sp5ranWvRdTMIJAkWvwQFwJFhg7xIv2lEFARX7hIuphCCgfhb5gRZC-F+XA1gixoMCLMGADh7RcHcGW6sYHgTfxfpBhtGBsMC4UwFxrLsKkjz9zU4yGHI0YGVNGvDri5UJoVZ07xKqQANAQKIW0b4+jS4qC+7Vqtyz8XQFIQwWQIA0FTAgdiDR2LoDFikIsXBHdsowLEKDTb6o8oxyerHAaLGoeDdZHOMA8ISpkt-aVNVI+EcTbH7A9YzQWitCkOAUBiCkUizDaW2A-ETGlxPSLT818gBkAgIgcBhB6Ci7EXwe-QxoOgFAE-oteFxhcHAfv7T6CAj0Jsao-C3DCECNCfMcAXEB0UgwY-gHAvARYucycteO28Ozq9e6AyObu6AHctWreZ27eAq5SViQa-UIaIANAcAh4XkI0gc7kI+5IY+8aS8Sa2qUQZ06AiQOe-EbAWQ6AZmggQwNA-EYIDgEwVasBG6zq40Umruu6bc5Evm6OGBMKWB+Qqm12HCieJAJ+qAtowwmAHmQ6WKPwhgYA5Y1gN8-EheLAGQ-gOcHyiQJ81gd8gh4mxsb0GQh2buGQsmLecGbeshIuyGXePhnsxywUy0g+iow+4eoKVBr+MexGRsIQLASAs+IAb4IQ-efIXQ2ARYrgK6DA0ieQ6wwgoQQYIAxE-eDopARBxQsY2AaCcAmM0AgRLQWaUUFglR4Ks+j60hx6XhIAko9GPgxE1IoseQh48AuAfkjREALgh+7G3gaCJ+nQzRFgQAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Full dashboard with metric cards, ASCII revenue chart, channel
+            breakdown sidebar, and a filterable data table
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌──────────────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   app.acme.io/dashboard                                                    │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│┌────────────────────────────────────────────────────────────────────────────────┐│
+││ =  ≡ Acme  Dashboard  Analytics  Reports  ☺                                    ││
+│└────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                  │
+│  Dashboard Overview                                               Last 30 days   │
+│                                                                                  │
+│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐  │
+│ │ Revenue         │ │ Users           │ │ Orders          │ │ Avg Order       │  │
+│ ├─────────────────┤ ├─────────────────┤ ├─────────────────┤ ├─────────────────┤  │
+│ │                 │ │                 │ │                 │ │                 │  │
+│ │  $  $142,580    │ │  ☺  28,493      │ │  ◉  1,429       │ │  ★  $67.20      │  │
+│ │ ↑ 12.5%         │ │ ↑ 8.2%          │ │ ↗ 5.7%          │ │ ↓ 2.1%          │  │
+│ │                 │ │                 │ │                 │ │                 │  │
+│ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘  │
+│                                                                                  │
+│ ┌───────────────────────────────────────────────────────┐ ┌────────────────────┐ │
+│ │ Revenue Over Time                                     │ │ Top Channels       │ │
+│ ├───────────────────────────────────────────────────────┤ ├────────────────────┤ │
+│ │                                                       │ │ • Direct   42%     │ │
+│ │  40k ┤                                                │ │ • Organic  28%     │ │
+│ │  30k ┤          ╭───╮                                 │ │ • Social   18%     │ │
+│ │  20k ┤    ╭───╮╭╯   ╰╮   ╭───                         │ │ • Referral 12%     │ │
+│ │  10k ┤╭───╯   ╰╯     ╰───╯                            │ │                    │ │
+│ │   0  └───────────────────────                         │ │ ────────────────── │ │
+│ │                                                       │ │                    │ │
+│ │      Jan  Feb  Mar  Apr  May  Jun                     │ │  Total: 84,230     │ │
+│ │                                                       │ │                    │ │
+│ │                                                       │ │                    │ │
+│ │                                                       │ │                    │ │
+│ │                                                       │ │                    │ │
+│ └───────────────────────────────────────────────────────┘ └────────────────────┘ │
+│                                                                                  │
+│ ┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────────┐ │
+│ │ Customer   ▾ │ Plan       ▾ │ MRR        ▾ │ Status     ▾ │ Last Act…  ▾     │ │
+│ │──────────────┼──────────────┼──────────────┼──────────────┼──────────────────│ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ │              │              │              │              │                  │ │
+│ └──────────────┴──────────────┴──────────────┴──────────────┴──────────────────┘ │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">2</span>E-commerce Product Page</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmiAMoCeAwgFoCcAKgDJcAOAdgDmAMQQtcuCADUADEzAhs-BPBKIUqUEQQAbNHOxQEAd0MBfbAC8AkkhoQAHoex6Ahk2i26qEIIBGAClRAAkuAGZBAAsAQQBrAHFROUFYpAAWEhIIZRASJn5cv10AW1UkCCQSPLKKqpIuQuKQXBNTGGg801oSaLQADgzsaIg4YWia1ABWADZsXAQoRygGAr0W+CRhDbyPaQM-GGiEfgA6Z3dyjbOygHp+ExoAV1IYO-c4KABaUvcnb6PBAgKzUXwgACi+BgABFvgBZADS30Eszk0wQpQAigB9IIAIXxwg4eVU6k0aB0+jQAWMZjQESsIDsDmcNLcnm84MCIXCUTiSRSaUy2Vy2AKRXodWQDVqmPq1Sakr8SHcYFw7ig3V6-VQAywIFG40mDIWSxWayYuyOcG2u2wqrAthypXIqAoIEAoGQAAgYJ34LGB2AAchBTN77Hl4VU8gB1TEx7AMdz2kCAVGIQABdUEgWj0XAZMCzLgAR3wRBkESxUCCcEEAHkAiX4npvqS1HANMhKSBdIcInTzKhBEyWY4XBgOV4oD56DywpEYglkql0lkcnkJS1pZVqnLyjLFc181AIO4aEQoM9SrhtTQ+gyjIaxhMprTWuboJbrSAtjsxbmLpuh6oQJnkfoIBA5DYAASs8SBILawh5LEXzevC-zegACiYWbYJ0-Cau4JBLPQ3oAHzeiCmBgvQXCmIiohEPWJYOKE6CzOgML4CmSAyAAZqE7bkt22i9tSk4gO0aAcKO9jjqaIAeNOs5+POfJLoKq4ihu4rHiU8qHjU2A7g0SotHAfzCABPT3rqEQDCML4mhgT6LMsX7rJsSGpvsECHCAOEIC8pDYScJF5HAuhaCAgDjpNRtF+PwRABNE6C2DiYBsEgACqOW2LGLCxlhQTxOgACawmdhSYl9mgGQGtJqABHIcmshOwxKZyM7csEC78suQprqKm76fkzjGeJ1Syn4qFQOhmE5XoJBQO42EmN66ByBxCW5uCnz4GA-D4KEwjTKUegABpBAE-D8DIRCJO40xVV2WhUocDWDjS6BtQpMxTlyc59RpAorsK64AVuUqGbuk2mUeypScRSF3g+APPsab5mh5qxefQf6+e4Bz0AAFAE6ADAAlHkYAps8xSdX8TgyPTxTTDmeZ+AgPDROVCChGw5WIrEwjWLM+JEJdHD8SwoRaioHZvT2dWoF9Un0s1GR-WyqDzF1Km9byi5g0NOlQ2NOROPDyA5HufgACQBAMHBnBwJKc+CQTuKEuAyIi8TWLGMLxDIXAws8TC2B0WIvYrInveJn2NZrASzDrE6CIDPXA8bA1aRDI16UjCM2wecPmfQNBwGAtBdNgtnow5TlY+yH649+3l2rknv0GwthOKYsaCPiJDWBEpj8c8wi4E4iR6HAAyTWS1WiR99Up0OzsZ4M2eqf4IMm4N2mQ6NSNWzb032yAgZ6KRvd+PgPAZPEJZYtPswwdMDBsAw3wQuVKA8QaClFejVdeatN40lkjYeSusOB7yNv1TS4Nhq6XyGNUu+4FSNDGqtauQYQCN11FtFur5FLuQtPjG03c9jE38vQeEtBEKvm9PiPQDNaijCIPECAvgVoMwfiAUI1goCInHvCBAGR7AwCxKEdibBBChHiM8MBa8k4b2+hgX6sD2o0ifMpIGalD751QebM+25YayhMlYxGLR8GIDRiQp8RpyGoAHO3KhVou7-joSTWaUBSBRW9LGaInYAJEG4bw3w-EUydCEQwGELBgyXX4IiGCYBQwZG+FUOAzw4CxCYJVeOq9E6q3Vk1dAHNdH-QCO+QxOdjF5xQWbU+xcWgXzlFfKYjA4DWB7jRPa9AID1gQNYGCJYoAliEAgOQcBTD4FsPWGCcBvg4jUWUiSFTNYcR3s1A0DT97qSPgXNBFsS62LLjgyuRx-LEEmsQtApDMZuI8ZQzy3iCY+QAn5AKOUGDehartLmIASxcHKgMCeMF3AZHcN8LEwgWBYXxBkUwph3Awg2SrLZUD3GtRqbrAIHjDlINBsfQu6DoYGXLtY8SNK7H5meNkbsDcdQMkci8lybzPx40+X4UYaomB+IYbNGgNBvQkW9CwTUk0oqiRAIAVKJgXgh4DwRIYAOBwCCKUAY8IsLlR4E4UQ+AAgwW+LGIVJTla1RxVoiIjICUTgCJ1EludkGmxPkXDBFz6VXKMjc1oTKSIoFZXZdlZCuU4y8T+QmPz6EBXxJHb0wZ6RCMuhACEiR4QBDgDiCEtgIRQGEAMUwsRvg1liArEAK9rUQNxVEPZARpiILdWS055j2kw19dg-1Y1q61xWE4wYLjnLY08R8mN3zhUBRYM8GAJFSjQG9DBCAtcwzkCEe4aITgsL1j0FwGCPBng8AhGAGgswYD4AQEsUQWKbWHHrTA5kcCnX61dU0915KzkWK7TgntFdMGajoKGpuCDOVvjcjyzuXzaEcn8SAWIfxrBIW9CWZ4KZOxMAAITKr7jiJg+J6zuDkEQfA-F+L8CCN8c9sY4A8Fo3eiBnUmoNUbVnA2RiD7NI9RS85lju02N9QGtUxFNRDoxq4yN47eWTtg11eDQRMVCM7KUQQoh8RQEEDCeEOVYzwj0KUCEegkBsHcFhRjGjmpPhYw659ejmocvfVxz97a2neo6RNLpdsene0qN6GEkFcN+ACBCAIiJ8C0FELGMAsZ4hyCwt8eI-AkCzBLOZq14DLPMc1hkapdnalgac8c0xrSvVUrpX+wT1y8Eo22OJ5t4G27vJkz41MdMOHs2wMzVmHW0DVMSv4UocgeAsBYEwUwEJYjoAYKEOCxMWABFDhZ8pWiMjp0dU8gx3UjkmJaZ6ylltPM2O6fQfEUESDeivAhFDxxIIwAjAAckgN6MwlQaBnCC4FDgPBbA8HKvxUQQR+CmGmLEMAOUAhsAQBwGgghlu2o1kOCIT6xy63QPU7bpKTlmLc+VrBVXe0lyA+J5HEaINRona1uN8GGD6FoN6Ggnw9BMEu-BSoWohHWEEPwLE6QBgjdmAMawAQsLTFEEwZ4uB6Lw8+tlocrGNvaJbR+ttOOyuYMuf+syY0RMkDEyB3UDXJNTG5R3ahv4p1wZFSAeEDBPvTHwKILE4vLpnueNYdATB+IBBYKYaWiQZAy769ZnLtnUcTnQMSzHrbselYO+fI7U1vOMM1PEX0pROz9CERAXAqXbAsBoFiWRwYAiiESKHWY9YxcsCD2rOX9U8vh6eS66PKvY-7b47+oyWuGV+FWhoOrBu+tk6a1B83sbaZs3ql1-4PXOEzCETiHEMAYB6GELMDIMJQjPHhFiIgEJ8ROlCLMOO1alaZfKfXtW638to4a0V3bPHv2dr8J047ye-CBlKPxJYevcAbG9HcAcG9GEGvXFTvgQHiCQg+yERoHhHxAYBoH4C4HIy4GEAyGsGiFwFCHPEEDYHQFr1xWmHxVvwjzfVb2c1Vzj072pUqwq0JxaBTGgAeTZT1BHVbncQpxaxg18StwClEFPAgG9GODgDuhQ2QBe1xnuwQEgHmidjkDkDyCYKgFwSRltB-xBEzGzmAgG2Kz214zyFVEXXoB4G6kBVpjgHgH-2KAEQgDcAQB4T4TQFiT0HiWzCAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Product page with hero image, pricing, color radios, size selector,
+            add-to-cart, and user review cards with ratings
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌──────────────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   shop.example.com/products/air-max-pro                                    │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│┌────────────────────────────────────────────────────────────────────────────────┐│
+││ =  ★ ShopCo  New In  Men  Women  Sale  ⌕                                       ││
+│└────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                  │
+│  Home &gt; Shoes &gt; Running &gt; Air …                                                  │
+│                                                                                  │
+│ ┌────────────────────────────────────┐                                           │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  Air Max Ultra Pro 2026                   │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│                                           │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  ●●●●…                                    │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│                                           │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  $189.99                                  │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│                                           │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  ──────────────────────────────────────   │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│                                           │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  Color                                    │
+│ │░░░░░░░░░░░Product Photo░░░░░░░░░░░░│  ┌──────────────────┐                     │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  │ (●) Midnight Bl… │                     │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  └──────────────────┘                     │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  ┌──────────────────┐                     │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  │ ( ) Arctic White │                     │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  └──────────────────┘                     │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  Size                                     │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  ┌──────────────────┐                     │
+│ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  │ US 10          ▾ │                     │
+│ └────────────────────────────────────┘  └──────────────────┘                     │
+│                                                                                  │
+│                                         ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│                                         ┃           ⊕ Add to Cart            ┃   │
+│                                         ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                         ┌────────────────────────────────────┐   │
+│                                         │              Buy Now               │   │
+│                                         └────────────────────────────────────┘   │
+│                                                                                  │
+│ ── Customer Reviews ──────────────────────────────────────────────────────────── │
+│                                                                                  │
+│ ┌─────────────────────────────────────┐ ┌─────────────────────────────────────┐  │
+│ │ Amazing quality!                    │ │ Solid daily runner                  │  │
+│ ├─────────────────────────────────────┤ ├─────────────────────────────────────┤  │
+│ │ ┌───┐                               │ │ ┌───┐                               │  │
+│ │ │J D│ Jane Doe                      │ │ │M S│ Mark Smith                    │  │
+│ │ └───┘                               │ │ └───┘                               │  │
+│ │ ●●●●●                               │ │ ●●●●○                               │  │
+│ │ Best running shoes I've owned.      │ │ Comfortable and good looking.       │  │
+│ │                                     │ │                                     │  │
+│ └─────────────────────────────────────┘ └─────────────────────────────────────┘  │
+│                                                                                  │
+│ ┌──────────────────────────────────────────────────────────────────────────────┐ │
+│ │ i Free shipping on orders over $100                                          │ │
+│ └──────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                  │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">3</span>Email Client</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmiABYCOAHAGwAOAQmCwNZsAYkgDqABgDMADwByMpugCSIbBwTwSiFKlBEEAGzRjsUBAHcjAX2wAvRUhoQpR7PoCGAT2iK6qEAGkARQB9AFU+AE0ALSj-BAAWKRsAdlwAJTAABTN4lGwSDw4Iej0AWzUkCCQSFRAyiqqSABVC4r9cUzMYaFqzWhIGNBZ47AYIOABzBhrUeJGQXAQoRygAZQL9NpB4JAnN2vdcCEM-Urc4fQA6JzdyzcuygHo4JEXna2pfEAAJAFE2KR8GhMb4cADiEz4NjYLBIAFkADI0ADyYNqag0WjQugMaAAjCZzGgJNYQHYHE58a5PN4vkEwpEYnFEil0lkcnkQAUiiUEOVkI1avUBdUWjy-Eg3GBcG4oL1+oNUCwsIxxlMZhJsItltB1h59n4dntithJWBFCQIKVyKgKCBAJDkAAI4edDNh7G9aqtBdgACJQNwAMzItUAqMQgAC6HxAtHomQ4bARWQAtBMAKx8NIeGyZJgRM6hIgTdHqOCaZDYuq41AEkCdNBsUnkxzODDUrxQHz0enhaKxBJJVIZbK5WrcrbCyrVIV8hqi1olWV0bB9GgDNDoYyqybTYlsLVLFZ6g3bF7Gg5uI4nECCAwrcjR2N+RQAKVC3ySDAAgqEEAA1fwvyQMA+AADTMWQxBLTEKx0KsTk1OsiVQABOJt7BbYl21pbsQl7JkB1ZYcOTHBc-EnH0q35KdmjIkB9DgGAahXBUNy3MYdxmNMDx1NYNi2I19mwMsrRtO0PQQKRHQACjxdAAEovRIWUoAgZcQG9ac-QDYMYBkiRFOwJoAxgQZsFWDhbkjVxGJIY8tlwABXfRNhqR8vkCfRfTheIXzAX08TEGxAgAYTAYIJHwUC-niaCyyxOC9AQwkLBrRtbAwylZmwzs6Twxl+xZId2VHfI6IorSqLnWjxRAGg4DAWgehYtdFTxfdt3VKkFkPXV+PoQSTXoy9jnoBERv0B9ME+ehAjTEgX1A+JFGCfQX38BE0ygLhQgYMR4DRVRS3LbQcWSpDUrxFh0IpVtuOGjsuz8HsCuZQc2RHTlx15ajKIqmqtgYpj5VatjRjVXdUHu7Uj36w0zyEmNLWtSgQBEJY+FqTJoBgZA3DdG8XjcJAiCG4ypVGiMbKY+z6BoNxTJAdz6CYJgSEUQIwHQNgIDAKQX1+QNcEDKRHMRYI4pOysko3Wt61QdKyUy1sOvcR68oZPs3qIkqvvK2cRWYqrDbFCclxB9cMBYcHOL3HjYf1ASEaGw5Rr8OEIBgGA3AmT2memmMvhoBEWDxGh-EyPBHPwOEZBIQIODSZE4EECRJYSs6N0Q+W0Iy260GSHKnoCfKtcI4rPtI2r-pnX751ql4OEco3V0t9B5g4rrUEQmG+sdgbnYvK96G9WUiAYR0zguS4Z9qOA9G0EBw2Zvw0hoQIaBCr8+CIL8YCIfwzAYIgOCkERAwmYsjpg074KzlL8RJPPMKVIuNfwwr3uI0quToy0pCNgvS004-CAHnSR0X4GKk0dAiCAxQV4aVAiwZIvxSjvmTKEYIyYRBwARCFX0UQzBsExtfeKsFM4YGzshPE8QbovxQm-XCmsCJFQ+iRMqtV-6AOQMAmYIBHSOgslAF4JBHSqUahAMwjokAIEtFNGaEoOhwDxAiMwoJ-BwhChBDwKEzAcG+NtdO5C76UIfjWNMdCsqBUYc9UuLCv66yrhOA2NFa7VVNnTBqTU5QtTbh3CGMxay9z4v3eGux9gIIRBEfQaYwTMCkLgEgTAICs2RIEFgEB8CBCIEY2+MtTEXXxMkSxrY8S1jVjhWxzDP460rhwrYXCZzVEFGAx0XA8COn8HAUo-sFGMCQHwMEqw+TJjgBEaOXAuD+BoIGBEvw0woVydLas6AqGXWus-KxKoKm5SYR-bWFd2G-04U4bhzSQH8MdL6CAHB9AIA8I6Lmlx4iOhIAgR0HBTB0AQd8eImR9C-D4IIMAYhfhQAkMmBgEQaDxF9IoUCJCQAYjIXklZaz8S5yVvnGsiEdnFxemXVh389bVxcX9Ml9ctj1UaisC2ip242y7kE3qISTyDV6YHeg+gzASGSGmGAoQ0w0D4AgTI8Q3CCH0MkZEaZvhNCWYlNFZj0B4hKfieYeL36vXLmwn+30-CNOwEAlplyQqygMIIxyKAEEoVCCLNgIUXxEDYPob4eIuCJgQDIX4CIog+KRcdDOJjVnKvQGq8xNiS7VIObqklDTTlNN4fQARgRHKyktFAfQDzVJqCgG5AOT4yShFwBMXAUh-DIjhH+QQNh+QTD-DANIUg-wKooSGwplDw3tUjQS+xtSjn6uNq4o1FKAaeJpc1EArd6X+NtjWe2fc2WDwQcEP8YImDJiaLtGIqwvzxBYGYRQEg+AwGRDYVtwb0UYAsZs0phcHqVKjfsnVxKnH0ENVWc5fCBG+gpo6TIspMYIP8ItCYXBkgsDgFAP8HhAjJjhOgYFoEwQsHUsiqWiqTjtvltzLt1sH27Kqc+oljj6nvoTSOr9yaIGZEUI6PgEBs2yLcFLBBggm1wDhL8MQf59BfmSGIJAyZ8AwDhCQGQNA06kIw22q96Bim3oxT2uxNTDl6v1nXbhmmPF+Gpd4ulG5Z1MoXayp24T4EFq+PECAyIZAiGSAgNwZhfhwn8PgMwIgS3+DSL6Ft0mg35Ow8hdAmLmxZU3Mp6NL7SPHPjQAxNJqBG-EgI6KIDBibFgQfoJoXAmhwhgIEX0mRkghQRDICQL4pDe1PRYfzxjAtXokGIcNKrIvEYcXU2L5H4uUaTX4H9ntJhIDEbzOAkjHQvEapaDlhaJBpH0EQfAcAGA8yaF+MwYgxB4iQKUTI1z-AXvyfEBhHbFZhdbOgbZNJCNPu1SRzrg6a4ju0+Vc2vjFQSCM5DCQHVgm0zCeeakw8-BCJESNiRUiZFyJm18c+lbcAyBfL6dAak-x4mxikPEf5MhSYDTfZZJw0xy2QqF5W98CP4pUzG19ZHyKjrcSbOiUoWOygM1DRl32TP-dPOZoebsQBfgRDD+gbAuOKAmOgXAvouCBG46UfweIsiZC-PgMAh3qxpnvfLQKLWNXXcp1F+7A6-4Uc-X1gXUCIAwLgcLvwmQmh-jgMkGtJBcDxCaIGP81zghEGiQe9XJw2Ba+oc1xT162t3Y68bk5PWzcmqaAgemDzAqUIgXCW3IA01IBgJkKQRRHLBDcKEKADAmhiA4P4GQigOAB7QETsxckWuq311qwlUf1Oks0wzmiOm6peNpe94k7EAndT+3DHn54EEcEDAgGwYgEQcEEGYPEDA8RpAYH+deuBVg2A8LXqGxPLq0LD-JiPbf+0d7i2c833w4CvIgLcbACDI57WTMmCIER0CgSgwgD2+AASlC+hpj7714drtQtb4aap7KR4X5xrdbX4mrfDQBW6yhW4DBW5Q6eyOiBimA9IIIwCCDJBSAID+BsCZBRBNDhTfBpAwB8BRCAGMQgGH5FItYnZQFEYwFqZwEGqm7GoXJvJJ4ADkekMAnyYO4iY2ZgfgkSHgTQyQyQCI-gwQmQqweIGY-ACA1eCACIyQTBDepO2KTWZ+faXBb6dOXez27idEQMLcrEGAw+c60MLK3O7KwkyMYkAuzcE8MAHgTEVoqAjoNAAoXoD+UA48ARLAYgAApI6PUK5ENL+lAHwJPInhAAEbgHckQAxupF+LRoEQgEQDAAES8ODpIdZPRLZNzvTIzAglAMiB4ICDIMmH+CFMkOfE0AwFwGVnzKvnoR2ugDelii-BIOUi3tAefqYbTlyLwTwialwJ7CQE-pZvQAgMiEgOBDIF7ChFwHiAUGmGmOgHUSQMkG4H0ThmdmTt3FdurOMSYbGmYdMbHnwXwpAvPBZn0iIGYEGGmF+GkKEGCGIAgPMRIDAFAJkGmLgCICIGcchBIBskMVlBILimMRwRMfcVMU9kOo0L3k5CQG8pyNOuqhzhqFzuPq4cNMDiAGkDclmnPAvPQIAAmEGecJuAaYyIvwjkcAqwB6YIMgYI+goEJAvoYAMgnI6GAW1YbAHU8scJ4an2xhqm6JXW5h1U3e2JdEuJ+JbONCxJWEPUvELhg8QO-Ot4UAXxywdJsEIAgASYRMxUwEZiR9K9qKk04gCSilBbDjQdiOh4i1CNTwAZFtAkBQCOQQCuAFHZFoCBj4zdCWBRhAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Three-pane email client with folder sidebar, message list, and
+            reading pane with full message preview
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌──────────────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   mail.example.com/inbox                                                   │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│┌────────────────────────────────────────────────────────────────────────────────┐│
+││ =  ✉ Mail  Inbox  Sent  Drafts  ⌕                                              ││
+│└────────────────────────────────────────────────────────────────────────────────┘│
+│┌──────────────────┐┌──────────────────────────┐┌────────────────────────────────┐│
+││ Folders          ││ Messages                 ││ Sprint review notes            ││
+│├──────────────────┤├──────────────────────────┤├────────────────────────────────┤│
+││ • Inbox (12)     ││ ┌──────────────────────┐ ││ ┌───┐                          ││
+││ • Starred        ││ │ ⌕ Search mail...     │ ││ │A L│ Alice Lee Today 10:23 AM ││
+││ • Sent           ││ └──────────────────────┘ ││ └───┘                          ││
+││ • Drafts (3)     ││                          ││ ────────────────────────────── ││
+││ • Trash          ││ ● Alice Lee              ││                                ││
+││                  ││   Sprint review notes    ││ Hi team,                       ││
+││                  ││ ──────────────────────── ││                                ││
+││ ── Labels ────── ││                          ││ Here are the notes from        ││
+││                  ││ ● Bob Kim                ││ today's sprint review:         ││
+││ - Work           ││   Deploy v2.4 to prod    ││                                ││
+││ - Personal       ││ ──────────────────────── ││ - Auth system: done            ││
+││ - Finance        ││                          ││ - Search: 80% compl…           ││
+││ - Travel         ││   Carol Sun              ││ - Dark mode: blocked           ││
+││                  ││   Quarterly report       ││ - API docs: in revi…           ││
+││                  ││ ──────────────────────── ││                                ││
+││                  ││                          ││                                ││
+││                  ││   Dave Park              ││ Best,                          ││
+││                  ││   API key rotation       ││ Alice                          ││
+││                  ││ ──────────────────────── ││                                ││
+││                  ││                          ││                                ││
+││                  ││   Eve Zhang              ││                                ││
+││                  ││   Design review invite   ││                                ││
+││                  ││                          ││                                ││
+││                  ││                          ││                                ││
+││                  ││                          ││                                ││
+││                  ││                          ││                                ││
+││                  ││                          ││                                ││
+││                  ││                          ││                                ││
+││                  ││                          ││                                ││
+││                  ││                          ││ ┌────────────┐ ┌────────────┐  ││
+││                  ││                          ││ │  ← Reply   │ │ → Forward  │  ││
+││                  ││                          ││ └────────────┘ └────────────┘  ││
+│└──────────────────┘└──────────────────────────┘└────────────────────────────────┘│
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">4</span>Social Media Feed</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmiABoByA5gI4CCAUgLID6AFSQBJAGYB3AJ4AtAQGUAmgBkADGBDYADgnglEKVKCIIANmhXYoCceYC+2AF7CkNCAA9z2EwENJ0YXSoIABsAIwwMES4AKIAYkwAnLEAqgC0sQAWSHwAzDAA6gCKGiAkkpoQ9MYAttpIEEgkJTV1DSQC5ZVBuFbiMNAl4rQkGWgAHAAs2BkQcCwZTagArFgguAhQrlByZSZdIPBILHslPrgQZkEwCERw3iYAdN6amgD0ohAQdPbUgSAACsEEvhhAgaFBUgBXMYANRhEyg+TYSAUXE0JW0un0aCMpjQoUs1jQOXsICcLnc+K8vn8fzCESicUSKXSWVyBWK2DKFSqCFqyDazT5rUaHR5QSQ3jAuG8UEGw1GqDGqxmcwWxOw6020B2khOVzgRxO2ElYGEJAg1XIqAoIEAQMQAAjkNzuZmwsU+dGw0TcmhMG0q2B4EAi3hYIZKgC4yEAAXR+IFo9AASnwAOIAYRoCiGSZYAAlhNEAOxsSQJCBKADWeYxOjgemQOJAxkuq16aCLpPJrg8GGpfigAXo9MiMXiSTSmWyeSKJW5+xaAsaQv59VFnSqsq9ICGNBGaCWUxAqvmi1CR61W11+oOhuOgZAZwu9A4JjgRAgDqUnxA8cTQQcTQ5CLaQACE+BUABpFg+C4VIlgUSthEKDhvAcWssUbQxmzxVAj3bVBQhULtnB7DVHxpQc6XCUcmQnVlpw5OcNyCRc1yabA2LaMV9ilbwSFleU90VJZplmU9yMvHVdn2Q571ObxzkuEAOCUX9MF+egEirUCmDzSCpU0IhILkMZ-hyNgEgcRSMPrbFsJbfELBAAjQlCEiKV7I8fAHIcghHRlxxZKd2VnLkWNKdwOJwxpBSCAABe530-AB2h10FGP8-lCbwkwcFQYQAEU0AB5HISEhSR-ggSESuqSDNFCWyGwMXFLnwolCJJRxSMpZZ+1pYcaMC5lJzZGdOVKCKLTcaLjFi5cgi4SEYBIB0YAyOAXi+B0Rk-epxAdGhvA29YtwAQnUzSgjYHgEDgYIeEghwJnyDh0wmIhRFiKtRC4Phmvstq0A6mxCImDyyNQYIBqooaGTHUaGNCyb53oGa5uQC1FpAZ0HXcW4LRoB1FIQSE1pGOAYAdKALggE6IAeK6Ez+LgBHwZI81TSC3Acap0AcSEEhMBIEEkUQkDkQGsOBvDCTB0Jgkhvqi1hvyQmGxH6JCibmPFHDV0FTjhSXdoIpoOAwFoAZsF3fdlmck91UIzUNivGT6Dkk4svoUDIXwEqir4JQYW5khhDgVNCrAQqaHgaXWpw9r5fxMZld7MY1eohG6OC8amPC-WMaFBbFhAQBDMgdCZ0AdWuADaHVCGva8AZ-IHTGZn-xAVNK28DgYQUJBQh4APClTXABImCBcBoEqE6bRy+xczr0HQdO0ASLP4dooKxsYsKpv1rjl2Nw31yPrchPtw8xLVM8YbWN3pL1WS72NCilN9vAHUguBqk7v4YBUglVEMkKA-xCoIAUAgPg+R-hJgmMgMYoFgjzwcrhUGaB0BLHXoRZyPlBr+U1rnPeKM9YLhNuxFcIozb6z4gJOUtsFQHlvhJVAORXbam2B7A0RoHxPmUqBSCAD6AKBMA4BweYwCxDYBMGEAglDRDzKBa4+RRB8FwGg2WREU4YCVj1Ty+ICQUV8tnHeSMdYF0PvsYuxtS70HiusXAlYHRpSWJlDSLNhyxEkA4f4wg8gMAyPkNwRY8zpkgkQQochipaKTiDXR6A04GKhk3LeRCc672RrrQuNiool2xmXdMMwiAuLJhTTa1Mhi01EFAbw1RPwkAQKYB0wgHSiDJi4JmPsriaCgGMFQ+AaBFkrEQLgUBChjBKnIDIMIOBMGkHExemCMAJFwaEDhJjCEa0yRY-OB80ZBFsTFQpL45DpmEG02Ua0OlQAdMkNprh4AsCQA6QAKAQOh6HAEwb5vCNG6Z4ruqRKzSH+HwfAoQIAZhBQwXxbgxhjAcDCRhIBMR2RlvEuWy8wY5Hcikvq550k7PMdrfZqMIrH0xmfWh+w-5hgfHbRUORHbiWdqJR+XDryvz4QpT+QRqkQFqfUxmmgjgiKCKEQOyF6lMCUKEQo6ZkjoHFkwTQCRNBMCWRg3ROQcH4t7KEdlBC4YZJJXnfe5Ki75LsacoIlcm5jFrg6BuOQJhOrbksVBPScBCCRGMHg0R-huGSCQHIGR0x8CLNETQog4BatbDqtZ+r8QP2NerAKWtzVkNybyal1DTY8U3JsK+IkjxOzPM5KS3CX6ezfvwxSz4gjpllC0uQkIUDerAOgRIkgOCGi4KmAQlYkxqNTFwdM-wHAPjRS1Be2rsUgzXsmwiqstkmuJSNUlFryG5pofm9ihagj0MEkw4SLDjyssWJsqtXLa08upHykA6YpadtEBkQoYBIJjEggICYmhIQTCUOgEwMBNDeDYEWeNTldETG6mSXqBrM5rvTcQrJliDnTWtScuKIB4pEBbSYVx7cPHXRAOgSsCAwDSDGIUHITBvA0FCNIHIUAizVDgGwOQlYoNYoIhMPV8HDGEU3shsxm6s05OsejLD81bUqSQJIAUDoVp3l2jMB0B0HQ8TkEQKAW01rBAeCoAA-OKkAOQ9h5lwNI0Q6ZIRuD4HwUQqRIIFAnUsHjKyJj6ME1DdA+DKIod2Vu7NUmjkyaxjhyuYwEhOobvx91jd0BmeFgwCYICAh8GiMIKAOQ8wkDkDCSWAgbBaDrLO9BlwliroIp2Zd6BjFprE5m0hknDkGz3afGhh7myX1PfbbBrDnaEo5e7GtvD5IPsbSAAQtMXB3jM4OuAEAYQ8GSBwUCRAkyxBUHmJQ0Su3JAEDxpYInXLEXq6sJr29xOtase1yl+7uIRTfKtEtWCWV33PTenht570JgtFaSgIAADE85Ih6c0NFEHAqhUNPINgEHCAKhIGuJCKAH4Sgg9cGAJppgEeg-qLNfA5AYxeCpgV37SBITVHOHKb1CAHBjAEJwDIDhsgIHNEgWIAgYBLGmYVE7NWV5Lt831dAmzrumtu9k+7FLKFGw6wWilfWdzMIwOy8tqdOFjZvF7etj620sHDKtL4ZnNDpgQMQJgwhQhjFEA4JMz1kihF52ASECATtnZXgJ7s4vvKBeayQ2XGGj4K5Pkrg9EVj0osZeerX7CdfPz13W3l03Co1m9XmJMwQhahGEOgSCDBYiiukOISEYA2BcGSATmdQNMXBHZQRdAPm-e9kG6Jm7LWQ+WrybNApOHCp-IdHmawFwQNmYQG4aQhVQLgPTPkVMCA2AIHgiofISYyhxrK5hROi9TuJOSWL9vqbA9d+D+h3vu7TZPfPvsXA5MmkoH64qNJF6vuJ9G8n7lk2P7TdiKYP6DYN6lwIVNEPCKkDkNUAwDCJBCXqmKGhMAIMkLjl7jqqLm3lgqulLhut3pfjuqxOHlSt1tHmAPxCemrmev1O-mwtek-NWinv9gIvQNEIst6iQNEOIA4AoCwJHEmDQKmHwG4BMP8NIERHwDACinXhiovI3jqnBpgRgEhjgRmhfmSgQZFP3jajhtEJAA6NIBkH8iwGZlmNUOmGwEwEwFPCwA4CVPTEoHIGAMGAIG6KiuVvXvvt7jir7ghlgiJioahnstujmoQXml1srvrA-iQE-u9oRCqJepJPQbehNu-MwUEAAT8kSLYGTmutaFQF4tLngeoSaMKvQEoJRI3CUFbPALgPqCQFAJCBAF4DcJWGbqgKIPcP0NkbYEAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Social feed with post cards featuring avatars, reactions, a trending
+            sidebar, and suggested follows
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌──────────────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   social.app/feed                                                          │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│┌────────────────────────────────────────────────────────────────────────────────┐│
+││ =  ⌂ Social  Feed  Explore  Messages  ☺                                        ││
+│└────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                  │
+│ ┌────────────────────────────────────────────────────┐ ┌───────────────────────┐ │
+│ │ Alice Lee                                          │ │ Trending              │ │
+│ ├────────────────────────────────────────────────────┤ ├───────────────────────┤ │
+│ │ ┌───┐                                              │ │ 1. #typescript        │ │
+│ │ │A L│ @alice · 2h                                  │ │ 2. #wireframes        │ │
+│ │ └───┘                                              │ │ 3. #opensource        │ │
+│ │ Just shipped the new dashboard!                    │ │ 4. #devtools          │ │
+│ │ So excited about this release.                     │ │ 5. #nextjs            │ │
+│ │                                                    │ │                       │ │
+│ │ ────────────────────────────────────────────────── │ │                       │ │
+│ │                                                    │ │                       │ │
+│ │ ♡ 42   ¶ 12   ⟳ 8                                  │ │                       │ │
+│ │                                                    │ │                       │ │
+│ └────────────────────────────────────────────────────┘ └───────────────────────┘ │
+│                                                                                  │
+│ ┌────────────────────────────────────────────────────┐ ┌───────────────────────┐ │
+│ │ Bob Kim                                            │ │ Suggested             │ │
+│ ├────────────────────────────────────────────────────┤ ├───────────────────────┤ │
+│ │ ┌───┐                                              │ │ ┌───┐                 │ │
+│ │ │B K│ @bobk · 5h                                   │ │ │D H│ Dan Howells     │ │
+│ │ └───┘                                              │ │ └───┘                 │ │
+│ │ Check out this wireframe tool I found.             │ │ ┌──────────┐          │ │
+│ │ ASCII art for UI design — brilliant.               │ │ │  Follow  │          │ │
+│ │                                                    │ │ └──────────┘          │ │
+│ │ ┌────────────────────────────┐                     │ │                       │ │
+│ │ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░│                     │ │ ┌───┐                 │ │
+│ │ │░░░░░░░wireframe.png░░░░░░░░│                     │ │ │E Z│ Eve Zhang       │ │
+│ │ │░░░░░░░░░░░░░░░░░░░░░░░░░░░░│                     │ │ └───┘                 │ │
+│ │ ♡─128───¶─34───⟳─56──────────┘                     │ │ ┌──────────┐          │ │
+│ │                                                    │ │ │  Follow  │          │ │
+│ └────────────────────────────────────────────────────┘ │ └──────────┘          │ │
+│                                                        │                       │ │
+│ ┌────────────────────────────────────────────────────┐ └───────────────────────┘ │
+│ │ Carol Sun                                          │                           │
+│ ├────────────────────────────────────────────────────┤                           │
+│ │ ┌───┐                                              │                           │
+│ │ │C S│ @carol · 8h                                  │                           │
+│ │ └───┘                                              │                           │
+│ │ Anyone using the new TypeScript 6.0?               │                           │
+│ │ ♡ 89   ¶ 45   ⟳ 12                                 │                           │
+│ │                                                    │                           │
+│ └────────────────────────────────────────────────────┘                           │
+│                                                                                  │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">5</span>Kanban Project Board</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmiAFICOAsgMICSAEgDYwBiANUIAzAKy8GSAFoAhBiGwAHBPBKIUqUEQQ80ABmxQEAdwMBfbAC8OSGhAAeB7DwCGAT2gc6qEEgcAmoIASrgAggBsAMoAHAC0AOIAKgAaSmwkAKoIAK78iiAk7koQ9DoAtipIEEgkBRVVNSRJxaW+uMYmMNAFJrQkABZoMQAs2AMQcADmA3WoI2MguAhQ9lBRRTxtIPBIU1sFbrgQer5KxoSkMAB09mAA9Muuq-cw53C1cegjIJbUPiAANIsEgxQRRGAkJADHhQNiCACMXFwAHkxAA5OIFFRqDRobS6NAIoymNAAZksIBsdkcRJcHi8AP8QVCkViiVS6SyuXy2CKJTKCEqyCa9SFjVqLQFviQrjAuGevX6Q1QMSwIAm01m5Owy1W0A27gOvl2+1K2FlYA4JAg5XIqAoIEAk6QAAgAChdiGQCrIEM86NgADJwSEFJJwconD7mkCALjIQABdP4gWj0EjogDsYAGAH0eLgOCN0SwUWEUmAwICcm6ItjVHB1Mh8SAdKcySSzKgM5TqfYnBh6Z4oN56MyQuFovFkmkMtk8gV+dsbQ46tgdLVRb4ou9ai7vi7ACgELv4EFwe-06FrydTvgGLDC1SSAwAnABFOJsEb4GD4QFREZxHEUB1riTZaC2hKoO2ICdGgz49rYfY6iAbhDiOMqBOObJTpys48gurSCsK1S1GKxFNFK2yQhASglMB2B9DQgxoBEhgapMMxzMSSwrGshrGjsHxmgUDa2vajpum4SBIEJBS2O6xhTFAEAwOQ2DBBAYBwBAZjYAAIiKibYK4pBwJAGw0US14AjAbDPjAr5kvoNBwHESiuEwOQBK+si4CkwQAKIgQ2eLga2yGwagCLoAhNL9osqGMqOmGspOHIzty858oRvjLquEEbqRvhJAgLoGS6AAUIwAJS-Jg-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-9O4QB8CIVwfAIDmCTEAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Project board with sprint stepper, three columns of task cards with
+            progress bars, and status labels
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌──────────────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   projects.dev/board/sprint-24                                             │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│┌────────────────────────────────────────────────────────────────────────────────┐│
+││ =  ◉ Projects  Board  List  Timeline  ☺                                        ││
+│└────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                  │
+│  Sprint 24 — Feb 2026                                                            │
+│                                                                                  │
+│  ● Planning ───── ● In Progress ───── ○ Review ───── ○ Done                      │
+│                                                                                  │
+│                                                                                  │
+│  To Do (4)                 In Progress (3)            Done (3)                   │
+│                                                                                  │
+│ ┌───────────────────────┐ ┌────────────────────────┐ ┌────────────────────────┐  │
+│ │ Auth system           │ │ Search index           │ │ Login page             │  │
+│ ├───────────────────────┤ ├────────────────────────┤ ├────────────────────────┤  │
+│ │ Implement OAuth2 flow │ │ ┌────────────────────┐ │ │                        │  │
+│ │                       │ │ │ ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░ │ │ └────────────────────────┘  │
+│ └───────────────────────┘ │ └────────────────────┘ │                             │
+│                           └────────────────────────┘ ┌────────────────────────┐  │
+│ ┌───────────────────────┐                            │ User profile           │  │
+│ │ API docs              │ ┌────────────────────────┐ ├────────────────────────┤  │
+│ ├───────────────────────┤ │ Dark mode              │ │                        │  │
+│ │ Write OpenAPI spec    │ ├────────────────────────┤ └────────────────────────┘  │
+│ │                       │ │ ┌────────────────────┐ │                             │
+│ └───────────────────────┘ │ │ ▓▓▓▓▓░░░░░░░░░░░░░ │ │ ┌────────────────────────┐  │
+│                           │ └────────────────────┘ │ │ Notifications          │  │
+│ ┌───────────────────────┐ └────────────────────────┘ ├────────────────────────┤  │
+│ │ DB migration          │                            │                        │  │
+│ ├───────────────────────┤ ┌────────────────────────┐ └────────────────────────┘  │
+│ │ Add user_roles table  │ │ Email templates        │                             │
+│ │                       │ ├────────────────────────┤                             │
+│ └───────────────────────┘ │ ┌────────────────────┐ │                             │
+│                           │ │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░ │ │                             │
+│ ┌───────────────────────┐ │ └────────────────────┘ │                             │
+│ │ Rate limiter          │ └────────────────────────┘                             │
+│ ├───────────────────────┤                                                        │
+│ │ Redis-based throttle  │                                                        │
+│ │                       │                                                        │
+│ └───────────────────────┘                                                        │
+│                                                                                  │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">6</span>Admin Settings Panel</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmiDAKJwDCASgIIBqAKgFIBmALIRcAdzEBPANIBxAFoBXOtgAOCeCUQpUoIggA2aAAzYoCMSYC+2AF4BJJDQgAPE9gMBDSdHt1UIBxCAGJCLggIqkQAqgDqYABm6J7oABz2RACcqiDYJJKqEPT6ALbqSBBIJLkgpeWVJDwFRQG45mIw0DVitCQAFmgA7KnYfRBwAOZ91agArKYguAhQzlAAyvkGLQxwSBNbNV64EEYBnqqqAHSeRCUQl4gA9J0kWnvkNtT+IOgAjgYABRISGCAFo1gBGADyoLYqSEuAALDQAGxwdA1dSabRoPSGNAQswWNACGwgBxOVwEjzeXzfIKhcKRGLxJIpdJZHJ5ZrFBBlZANGp1AVVJqFehITxgXCeKDdXoDVCDFGjcZTGYCbBLFbQDaSA4BeB7A7YSVgewkCAlcioCggQCGRAACDi3IrYAAinhgfSWspUIDWEFeuwm5GwgC4yEAAXU+IFo9F+bFUfAAErEEsYYAAhAFQAHukr2WZsBBEAD6mI0cC0yFxtXxqEJIHaaBRZIpzjcGBpPigfnoDLCESicUSyTSGWyNXy4oCwoqVSFfPqop5c798po-TQ6AWY0m0zQiKwi2Wqz1Bp2xrdICOJ3ogeD7xAsfjATWs0Rik8NEYX+k7osNIACa6AAIplqCAAafBymoVY1joeKnJqzbEqgmTto4nYkj2dIDiEQ7MqObITpy05rvW-ILtU2Dzg0YrbAYcAwLRIA9Fuiq7qqB4zLMWpnrqmzbEa+w3tWVo2nagDzpI6uYIAkcAmiAjqOoGRCKFA1aSDUqlZkpzF7LpjoAHIIFoilEJ4iFhipjqOJaExQNZ2i2apHAAvYjrSBAkjkFGHgsSQF7bDQXoDK+3zmFwKaDCZEwAmsADWoITHAZZ9PYJkcBCawcJW2K1ro9anOgqEtkqWGUl2iJ4X29KEUyI6suOHJTtys4gJaLhsfoVSCgE8mKVsalBm8oYvpgXz0GBoICACRAoqESBZjCCQIBCExQWWJkpgM8GFUhJU7ieFWYXY2FUnMdX9gEg5NSyY7spOXJdZR9GLnRy4io070btgHHbnMtUgPu6oEvxp46uswn0KJyl3qcIAAtAMDIJ4Bj2Ug61QCULm1pF9BlLIKZlkIZapNM7pwMELjRAY7qxCQYj2AV1Y4sV+ilSDFUQugVU4agKq3rS9UEYyw6PaRbWvTO2wfb1300Yx9C7KoihsYDXEg2Dh6oKh2rnrDhohgjnjHEjwRwLAJCmZ4dyTdNARlegfBQYimQcOg0i-IwBiyJIExEEIYhcCZbOIXWXNoPMRKWI2-MXdVQw3Q1EvES1z3kR18tK4KX3UQxlFqxrm5A+gOtqnrBuCTD+oiabN6I-QAAyXq2yZ9tFITAQppI0Q8GWEBAScNA0ACPBIPg+BQnFmQRxzyE7jz6EQrMAtXSMIu9rdgSNZLJGtS9FGdQrS6F6unUl5rCox3uVcagJ0MhXDjeHOb94BIweNKc6Y9QBAGAtk4B9XoIASHJHZxm+IwRgCBPIpkKBwMQqhBiIighCWQ5xcA8CEAvIqS8MAr3jhCVIG8uyZFTuLIizUnpkXam9U+edPpURXL9TqnQtikDLtrHi4N9ZPyNvXV+1534W3oDwOAdxbACkgW+EA+AARgGiCmFMjAeAuGCGIRQMBYhJRMiUYCKIQh4KOtHOYCxeakKToLCECwvA7zTtQqWR9s4MNzhfRWHiVaGhOMQG+nFl68OrgIoSQiTYiJpGIgIbc9jfgmN3KaUD6CqB0bwT2mUXBGIMJ+DgoJMglABBCExUcGzoFOuhdA69rFXQhE2ex+E7r7wzrQmWJ93GsPPqw7xtR-rsVvsDIJMwIQg0NqEy88Mm4fyRrmCACRoCVCIIA2R3x7D4GiFmFMtwYC4HQfgMsUJcC-AmKCRQbBGDFM5qUohO4rHkkul2PmlDGnpxodLY+OdeQeM6T9bpJAEATDEtwgkldeLUihoI8Zb9ImfxAJ6KASVHRCAQM4IUYwiBJQgP4EgUBFAQB7iAMs+Bggt3kItFgLgkBQVkNIFwEwhBwEyEQMAFYDrs3wcdQhccSTGDIQSVC9SxbPKcYfLO9C5afI6QXLplE-kAuUlrYFgywWjLrpCiJIsokgG-p4X+ZkLIgPxkgWyRA0UYqxTivFiS5H2EyCZYIjABCkD6DwEysxslLQppkaICQLkEIrly-Wic7nJ0bCDAVu97oH0znQ2W70mGeOlZ1WVgKAb9OGUqxsITVUN3Vc3AIPAxAIFBMEG4fyoDOg1vtWoprMVoASBjTo+KiA4NkMYDggwwJsAEPILMmQUQ0F+FAeQNB5BcF9Ry-1aF44CERLyxskNw2OIeiKmNbSJU-W+crGV-yU19ICaGjNTYVUv3CbuvNyNFC4GYkQOS5hho3hNcQM1aBsW4vxbECELqhAwF+LYMAigkAcFkDwKAQh5AQiqNEcdZjJ0VQEG2apDzhaLqocu6NrSPlznjZuouSad3yrTSCvhR7a4nqvGeqZ9BogwE8PE50koDCSC0EQY1Nb-D1oMI2q13wtFljAFmEyqh5De0vdIMAJkUSDFBCwMsExoOlPKfHREPLEMEkGE8veLznGitjYwr5UqfmUQxtAfxQNPwZprs-Y25Gzaas9HsaAqBnREH0AB22zgtiIUdCxR0hRcaeBojUYzUA2HbGgOYOU+LjCqAwcYRKWZswcB4IwCEtgiBzKhCmcOrLI6XNOLHKdR5Z2qcbFvFDQq0MtPeW49dgWDNbs6rgDWfyUCpv3Y80GD9cLgrGTmijmqWABcWUYfFBgTK4GMH0YwCQ1gAbKHx8l0gyyzcUPJ04KJyroURMV4NNiKHbwaZp4V6Hqviqw-plhhnGvNdrG1oGHXdaPx69m+gYwpQ6WhUjNYUpu4BQO7ASgTsjuVbea4yUDtomi0dEU7AYAWJwCvS0V9EAPClmfagDjjaYxAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Settings page with sidebar navigation, profile form, preference
+            toggles, danger zone alert, and action buttons
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌────────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   app.acme.io/settings                                               │
+├────────────────────────────────────────────────────────────────────────────┤
+│┌──────────────────────────────────────────────────────────────────────────┐│
+││ =  ≡ Acme  Dashboard  Settings  ☺                                        ││
+│└──────────────────────────────────────────────────────────────────────────┘│
+│┌──────────────────┐                                                        │
+││ Settings         │  Profile Settings                                      │
+│├──────────────────┤                                                        │
+││ - ● Profile      │ ┌────────────────────────────────────────────────────┐ │
+││ -   Security     │ │ Personal Information                               │ │
+││ -   Billing      │ ├────────────────────────────────────────────────────┤ │
+││ -   Notifications│ │ ┌──────────────────────┐  ┌──────────────────────┐ │ │
+││ -   Integrations │ │ │ First Name           │  │ Last Name            │ │ │
+││                  │ │ └──────────────────────┘  └──────────────────────┘ │ │
+││                  │ │ ┌────────────────────────────────────────────────┐ │ │
+││                  │ │ │ ✉ Email Address                                │ │ │
+││                  │ │ └────────────────────────────────────────────────┘ │ │
+││                  │ │ ┌──────────────────────┐  ┌──────────────────────┐ │ │
+││                  │ │ │ Timezone           ▾ │  │ Language           ▾ │ │ │
+││                  │ │ └──────────────────────┘  └──────────────────────┘ │ │
+││                  │ │                                                    │ │
+││                  │ │                                                    │ │
+││                  │ └────────────────────────────────────────────────────┘ │
+││                  │                                                        │
+││                  │ ┌────────────────────────────────────────────────────┐ │
+││                  │ │ Preferences                                        │ │
+││                  │ ├────────────────────────────────────────────────────┤ │
+││                  │ │ [●──] Dark Mo…                                     │ │
+││                  │ │                                                    │ │
+││                  │ │ [●──] Email N…                                     │ │
+││                  │ │                                                    │ │
+││                  │ │ [──●] Two-Fac…                                     │ │
+││                  │ │                                                    │ │
+││                  │ │ [●──] Public …                                     │ │
+││                  │ │                                                    │ │
+││                  │ │ [──●] Usage A…                                     │ │
+││                  │ │                                                    │ │
+││                  │ └────────────────────────────────────────────────────┘ │
+││                  │                                                        │
+││                  │ ┌────────────────────────────────────────────────────┐ │
+││                  │ │ x Danger: Account deletion is permanent            │ │
+││                  │ └────────────────────────────────────────────────────┘ │
+││                  │                                                        │
+││                  │                             ┌──────────┐ ┏━━━━━━━━━━┓  │
+││                  │                             │  Cancel  │ ┃   Save   ┃  │
+││                  │                             └──────────┘ ┗━━━━━━━━━━┛  │
+│└──────────────────┘                                                        │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">7</span>Chat Application</h2>
+          <a
+            href="https://wiretext.app/#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-n7xIeyIFWiUnpMCJkgxN0sq5KZo-Zuw53pv3KSAVqiJbGnV+A4OAA1hFIAQGIb0QhpChF4GIFgM45CtSeQvYZ0YxCYPjJEzGdKfnZyIaopJLIllaIoas1qkAbJBHOLsRF6BVhvBYCYQECAoHfAbD3SISt3JyCgSkBwV9kRIPnuGMJFLV6YkNvI75ptCEqMSQXVlJ9EIcvqMKCa18eWRChUzAisK2YjgRdRXUllrJ2QcoisACAJDxAGmIPUTAwApCEHqDgXR3L-EUNwT+JL1YoNyMlRIiaUppy+fggqcz-kH3KrasM9r6ByAgN4AAhDZOQVgbJwBgDZAYtkhAWEIKQAA-Ii8OlgOCtSDiYAaHB3LSHObuCAvxlC7gvCi3V4YZgqTmuvGdxiU0Lt+XvYhajSFrtMvbN4UAZwkEwDZfADYYAkBso2GAYwaCnrGIimYLB4jcCiO5VYhhKU5GBLuRIEgt1iAcKEQDJxgOJyNdgjsuD52xMXYy2D1qyF2pWfQLwRlsM2TOBwXYEAT0kAQDZfgdZLiIreCQbg8QEDelCHKywhhlBgHwG2hwA0BruTeOxjsybQMzHA3Is1ab4nLuZYEUT67xN7LkzZbwCAGw2RQxdCAlgVPeBsr8KBt7JVB0SEEBwJAWCJBmH2kwyhlAwE9t8VqepR42YwHZnW4TxmZXQNE-jMzBMwatYZBD1VKFRZsgAYnQDMRINlAAoBDZRQTYRBBYgCHUgSxEXcCDtIC8-gGxQL1GwN4iQWAiFCCwQE3g5C8BjmO5BC9ONLyTeBqZlX6XVctZmxZlVln2zoSh9DhgEAICYKOGyFwj04YVZYHdiKiDxaDt4aQ8RFD4DEGIEgkQoGuCgUctg6B3BbdjRxkDIzuMyPjZBgT0HTsAtXRdsT9t7JBxwzADktlyi8CaCe5ARH25fUCCIJAA84CJEUHIZDNpARiAmLgYE-tVBw7EQj0J6BwO0qO+a9N8yV0efqxujzD3qgDaDih-DNk7vxCXOpyVcpvCfGUFAPURBWrfBMCIVqvA3h1QYEIbwYgCuTr2xgErxrEzoFNaLlzS6mVwex7bbzIBlCuqYDAdDfRDCGBskHOArgiOaAgBrz6AtIgOAYLubw7CkDKByEET4AgrRc8UIkNIeohC28xnNYH4Hk3OaUR74TWbT7AtzaCvRldsnihmCtRm9cBWFKFa-SVHB9cA7gHqVUQhhhycUN8O7gI8Ul4pY7njGA51rXRxajNWPkn17ZSCk6dZGxIUMWgOYfKH7mKfr36tZTdQU2eyphT6L4ix4XJK1weoGDeHiLwBwAhfiZESN1N4eIGAMQGgX4VLArbgIrA1BfGRSlI2BRY7DHdfSXHNIubfRvE6XAJsJTFAVvZaE-EiJuHvKxMcGtegQAJMIngABdeA8gVAKgGnRAtfCXbAJAW4LYCQNSGyAQOoC6eAXANUEgKABsCATwBAIgJgCAAIEOQwboGwKgmwIAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Messaging app with contact sidebar, search, avatar list, message
+            bubbles, and message input
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌──────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   chat.example.com                                                 │
+├──────────────────────────────────────────────────────────────────────────┤
+│┌──────────────────────┐┌────────────────────────────────────────────────┐│
+││ Contacts             ││ Alice Lee                                      ││
+│├──────────────────────┤├────────────────────────────────────────────────┤│
+││ ┌──────────────────┐ ││                                                ││
+││ │ ⌕ Search...      │ ││  Hey! How is the project?                      ││
+││ └──────────────────┘ ││                                                ││
+││                      ││                                                ││
+││ ┌───┐                ││                  Great, just pushed the        ││
+││ │A L│ Alice LeOnline ││                  latest changes to main.       ││
+││ └───┘                ││                                                ││
+││ ──────────────────── ││                                                ││
+││                      ││  Can you review my PR?                         ││
+││ ┌───┐                ││  PR #247 — Auth refactor                       ││
+││ │B K│ Bob Kim        ││                                                ││
+││ └───┘                ││                                                ││
+││ ──────────────────── ││                  Sure, looking at it now!      ││
+││                      ││                                                ││
+││ ┌───┐                ││                                                ││
+││ │C S│ Carol Sun      ││                  Left some comments on the     ││
+││ └───┘                ││                  token refresh logic.          ││
+││ ──────────────────── ││                                                ││
+││                      ││                                                ││
+││ ┌───┐                ││  Thanks, will fix those.                       ││
+││ │D P│ Dave Park      ││                                                ││
+││ └───┘                ││                                                ││
+││ ──────────────────── ││                                                ││
+││                      ││                                                ││
+││ ┌───┐                ││                                                ││
+││ │E Z│ Eve Zhang      ││                                                ││
+││ └───┘                ││                                                ││
+││                      ││ ────────────────────────────────────────────── ││
+││                      ││                                                ││
+││                      ││ ┌──────────────────────────────────────┐ ┌────┐││
+││                      ││ │ Type a message...                    │ │ →  │││
+│└──────────────────────┘└─└──────────────────────────────────────┘─└────┘┘│
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">8</span>CMS Blog Editor</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmjgFoBiAIgFICaA5gAwsDMADTYBlAKoBpEQFsRAawBmckNgAOCeCUQpUoIggA2aHtigIA7sYC+2AF4BJJDQgAPY9gMBDAJ7R7dVBwAIU8WEgAFTwAOVWkANQgACUEAWigDGABHJgQVEBJvVQh6fWl1JAgkEjzS8sqSABVC4sDcM3MYaDzzWhIACzQAdijsPog4Lj7q1AAWEZBcBChnKBECgxaQeCQuDbyvXAgjQKJpGAA6XAMELnPnMAB6dRgyB4gaOBIHivMUzygtEQ9jZqAEQDMwABFbxEACCAFEAGxREgpSFgfBiVQAWRcUVgeWen20aD0hjQ-FMFjQMxsIAcTlcaAAjB4fH4wQgQmFIjF4klUuksjk8gUiiUEGVkPUapK6lUmuLWlAIJ4aEQoABXaS4bq9AaofgmEBjCZTFnYRbLaBrbx7QLbXbFbCfCBnSggcIaMh5FhQTwKH3YeEfLQ7EAAXWwnVU-08JCW9AABIAkwiTIBBIFo9DkHE1AGFsVwOHIAOpMIjM8JxcwQIIzCQAVlshI0xOQpJA+mOWBA7TQiLpDOcbgwbN8UH89C5oQi0ViCWSaQy2Vy2DFm1q0qqsqlFQVzXocCQqk11WwPRo-SGM1G40m00pCyWK1t9q2x6d+08h2Onu9SYNJ8wKYKC9ASNigw8AASoiiKagA8kcKQSAAnOgcQiLgiIiAA4q2mgkroXbkmOfbUqgzI8EOjgjhS44ctO3Jznyi6CiuIrroeJxytu54kXu9SKpsnQbKQepXga6C9qaD70c+1qrOsImfnsbK-vQ+bxhAXBLN4GagVmYJBCQtgpPwqHhFe3j5rCfRsIINAcIiEjePpahtloHbEd2aDoIiVKWJR1F2LRTKzAxk6csxvILgKy7Cmu+TcQJ8r8Vu+6NClonEPxl7XpRAUmve5qGpaL42sp9COmpIAHEc9BrPGmrkJm2aBCIChQKoWoADLoPCYgpAhpallA0gGDwqT8USXk6GSxwzLe5FBVRNGMqOjaRVOgQzjy878kuQqrqKKUZTK2DnQeSpZieZ4SQV-AySVj7lYpb4qTstX1X+IgGJqXAGWBgRNkgMBsNBAByCgMAgzKQgwYCNpqmRELYjYSAR7bzSRPaBSytKhRtA7bdFs6xYd7GJadN1XelvGZcJ9AfGAtBdBe+o3neZrTKyCmvlVDqqcUbWcoICE8KojZiCw6ANAwgwQH0KR9LgIhIKIWNzZ2vlkf2hXrXRqCDKTTHkwdbEJSdXG0wzF2pXxTMnP8dAc5JaCNsasmldJb0C3an1fupDWBPmyAkDKouNTMLgsEgpYwJ4zJxNBuClrYgzoJW0szFrRELTS+OUahhvhfMXgTjtwTm6x8XHZxyU3RHLj01UMqBL1SxukmcCqDA2pJjQhhLEmmhJp40gQCQ2BR602INKZuF-TQgyQ5kDS4MyLAQCI3hMJkefeQXEUrX5IX0mFo6oabu0xRbdccUlG70M3rcRzuPFg7lU+alA48fKoOAMAiCfiTEcT45wgZGXoFwRIfQaAGF6vYXAMBES9XCOgKIMw+j5m8FEJgrsQCzXzrjQup8MDMlLqOKiN9q77VrkdR+NNNiv1lG3D+IARDvEHggMBcAWrSAQDQJMEcpR-2PCAj4NBNQ7lniASGBhFh9GgmwAgXVISeFxA0MA-BpA8CIIfHGutlr62klQlkfMK6MVvjXOKjDqY2xYa4N+7cQBniTAcLuYCSA8OuCqJM0hPBcCQJ4ceBg4CZE1J4SBcjzC4XhLCIIMBsQcH4CkBAbAUgGD6JkRsCFMiqAUIYnWpETEUXQPwcxlFexWKimbehdiqbW0bk4lubD37TBAFA9qIB4QsEhDMdA5gGDQW8BIJAAB9QQpYuBBH0ZCVQCFik+VKUXdAhML7E0ok+WpVc9osUaVbBuz9AisMuuHVxYgfGVDgNIf+ATjy3KTJAJAcAJ6YCTJEoB3SwTwhmDwfMKQWCCE1OYBoCEGBiAaDMSGEhbDqlzh5QiR9SEn1MY2KpzJlq7LJg0ymRyn4pTOSRdhnSkDei1MI1w0AQEkHjNoJMmoDBeGkPoGJhkelsCQGcMQCg+hxGGGAQB9hMhsCYCQEgzBlnH0bE+fWzJBxEyNsyLadV2R1JsXiy29dCW20Ejuc5+qsq0xdg9KST5va817Faf274arOjVRpQITBVQkF-tw+wgSuAiw5WCIg4QEYVmkOgVQPB4S4HMDCKAiQaD2EGG4JF2MSnHEbKq+VJclXhQVbQ-ZFNtVMMcRKI1u40pOyzF6h1+UDTMmvsVHmJN+aVQDtVYW34nUgCxNcNUeQ4D6B0CAQAiYQ-PoNiRs8JmRRD6PYSE5gXD4FsIo6C9goBiGYHEaVqLZVrIzZs5VJs1WV1xQc-FOrmFFrSiWx2Z1TVuwKhU7mclUC1ptU2u1rbg5-gaEE1qvr6BMAUNiXC+YgjeAmdiCQU6ogMGZEgOIJAeC2ATUQzyJDdapqLk9TF5d1V7Lvgwppxyzp2wNQ7RmKVwkvDNWfB9pVVUvqUs2oWX0HWundKgCgIB8CeDAJ4YBUBe78TdQmfjngjCWh0seCoUBIweCASQD6zNeMDDkSwKGqENA8AYIiKAzJ0b5kRN4NgUQUhsH4Bu3WvZ9YWUxbWnF9Tj35ocS089fFL1kZuqJ6AeVObG2Wpa+S9GFNMaDo6kOIA-QBh8YnSAwj4xJnQIaGYSZwjYjyJ5gEZb+5ECIBAGAP7gbhaIPYOZ5hMiJAQqhUsGherwmkCwUgXBBDmdIpZiiMxKmZtHOgY0dnNUOYfk5k5pH7Z0zLbgM8CYUC3urX5l6AWKoMbfcxttYXwgqlZhASwLo+30EAJOkw7AiDDYNiOAcQUg0GkAhFIMx7BEAaKoKICERCeAmQfRN2sVkpuNPrdrVT0CWJw0evNA3mlDbpm5oSKVxsSo7NNlkz161lUbYtwO30fxhee5AJMEXAwHZAKhDgbA0YSHQHIXAV2Br5lyZ4fMEAOCY3e6h0iiI5VtY67u8KvsD3WLof1+xoOiPFsNaWqHE3YcgCrSyC1c2keBcFsVbj7lQt-nCJqK4QCBjbe8iAQAbaQZijNzgk7GCu5vvvzhuITJ70F6uqpMzI8is3gFcFoJAtQQA8AgIgch3hoAUKJzoVgIxWCAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Content management editor with metadata inputs, rich text area,
+            featured image, publish controls, and status alerts
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌────────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   cms.blog.dev/posts/edit/new-article                                │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Posts → Drafts → Editing                                                  │
+│                                                                            │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ Post Title                                                             │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                            │
+│ ┌────────────────────┐  ┌──────────────┐  ┌──────────────────────────────┐ │
+│ │ Category         ▾ │  │ Status     ▾ │  │ Slug                         │ │
+│ └────────────────────┘  └──────────────┘  └──────────────────────────────┘ │
+│                                                                            │
+│ ────────────────────────────────────────────────────────────────────────── │
+│                                                                            │
+│ ┌────────────────────────────────────────────────┐ ┌─────────────────────┐ │
+│ │ Content                                        │ │ Featured Image      │ │
+│ ├────────────────────────────────────────────────┤ ├─────────────────────┤ │
+│ │ Lorem ipsum dolor sit amet,                    │ │ ┌─────────────────┐ │ │
+│ │ consectetur adipiscing elit.                   │ │ │░░░░░░░░░░░░░░░░░│ │ │
+│ │ Sed do eiusmod tempor incididunt               │ │ │░░░░░░░░░░░░░░░░░│ │ │
+│ │ ut labore et dolore magna aliqua.              │ │ │░░░░░Upload░░░░░░│ │ │
+│ │                                                │ │ │░░░░░░░░░░░░░░░░░│ │ │
+│ │ Ut enim ad minim veniam, quis                  │ │ └─────────────────┘ │ │
+│ │ nostrud exercitation ullamco.                  │ │                     │ │
+│ │                                                │ │                     │ │
+│ │                                                │ └─────────────────────┘ │
+│ │                                                │                         │
+│ │                                                │ ┌─────────────────────┐ │
+│ │                                                │ │ Tags                │ │
+│ │                                                │ ├─────────────────────┤ │
+│ │                                                │ │ - javascript        │ │
+│ │                                                │ │ - tutorial          │ │
+│ │                                                │ │ - beginner          │ │
+│ │                                                │ │                     │ │
+│ │                                                │ │                     │ │
+│ └────────────────────────────────────────────────┘ └─────────────────────┘ │
+│                                                                            │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ ✓ Draft saved at 2:34 PM                                               │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                            │
+│ ┌────────────┐                                  ┌──────────┐ ┏━━━━━━━━━━━┓ │
+│ │ ◉ Preview  │                                  │ Save Dr… │ ┃ ▶ Publish ┃ │
+│ └────────────┘                                  └──────────┘ ┗━━━━━━━━━━━┛ │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">9</span>Multi-step Registration Wizard</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmiDQKoBSuAsgKwBabSEAEgAUA0oIgAvAIYAhAEoA2fiGwAHBPBKIUqUEQQAbNAAZsUBAHdjAX2ziAkkhoQAHsez7JAT2h26qENIAtIGMbB6yABae0vz4bABmAK4AorhwRgAiyiAknioQ9LgIrtjmtCQRaADsJiAREHAA5hEkaAAsWCBFUE5QAMq5+gX+8EiNQ9nxcPqGIwa0IDbUfiD8gQCcXAD6dvgA8lwA6uuHJAAq5rxIADIAmgjZahpaaLoGaAAcphZoAMw2IHsjhcaAAjO4vD4VkEQmFJJForEEik0plsrl8vQ9ABbNR8JCtbA4vEQAlnPLDEDYhA0SSGUrlSqoDhtbD1JotP7ybDdXoDTwTEZwMYTCG4CCzEAAYSgEEkJAgAAJ7okoIqAIJEPSJAmLTDLegAcTaHw4+H06H0iQ4ySMADF9PxpCQiNIEJ5Huo4JpkK8QHpZqDOmZLKgqgCgU5XBgId4oL56DDQuEojE4klUukstgMZTichSYT-QhcQWyRT6DAFSp8lBsmUaBV2ty6g1mq1UOCuggetB+YKQKNxgVsN6INjyKgKCBNdrddhBGYpqKQIuIPFoKSiBByNhZBAwHAIJYALrYSSkOCQAYQFRgpYgBb+ACOtyIzggzAQXBo5jse2keJ0DgaRsWfMBsxAJ5vReHRi0DYMflQdYIwcKM-ljKFE2CZN4VTJEM1RSDcyxEsSXnYtS3xc4K38FQzEaWUYF3EAGybVA2hbdl2ww7te36QZKSHFd6IQRid0nDgjAfJ8QHkX4uB-a4PildZmAiZ8thgABFAANa4EAgKoi2gn1tDeQNahDMF0FQ4Fo1ZEAPDjBN-CTOEETTZFMzRHNaMo8ii3zajyUxfwaCvWhoHrRk0Cktk205TseR7PlBMrYVhz1A1-CgAA5PphBULZZHMXSzkNdUMlBDh0HMQ4WDaT1nl9OCAxs75Q1BNo7PQ5lMPjaEcI8-D0xRLN0X8hVnCC5AFV1fwzglfRFUSGBFUkIpEhIRVPAQVUYAleJssfFZsS2X5BEaKoVAyRJmFuaQoDaPYqiQQJ9C2Rpmpg1qLI6kBrM7eRepBVAW2crC3OGlNETGnziP84LC2yZHyzCx8kBUbaYsbJl0E6bikt+FL+P7ITMpXDxxUlO04FgHa8skbEChklY7HEQRDWxNpriAwIaF07F8GYZ9zEkCBZHQH6zL9drUF+FsgdBEHbDQsGqgG1yAhhvC4e8ojJoxtHZqowtQspYVsaLNj8cJxKOxJvi0oFCmRRHJzNolehrkkKtFSZlmTtkjhEnkcQSHWeNGD2EtBD6D4CsadU7W+1QvVltr3k7RDQ3QaS1fsz4taG2FYa8wiJr842yLLU3Aot+grZxhk8ebBKOUd0mXYHYSPep73-GSbFJGmDUaBoJiWLgPRtBAQBIcmDs7maMKV0FBBA8rYPTJG0+IwmYWUHnTlrzPggGgfQHrC769YS+wsu9Yr8bfJyJHa+o1GP-N-zm5t2KOJcQdrxXkfZ0pCndtkAekpBB+xgOYVKS96DJGfAANTYJIJASA9gcHiAAa3iFKXSzhnx7GfLIDI0gZawX+jnTqaB0AfFBtGUEtRIaDQfrhTyBEX6IxrmbCiJtG4jAlMQf+bcMD207iA1KYDXYZUgWKQe0p9oEigB6Nm9AVCeGEIaSQhxeAfFlBkQ4MA8qMBIH0QIzBDjUL+ufBWSskKMOYWCLs7DtbuXLjwhGRs8zf0EQEmiGNDpDFILjdiBMO48QVt3ORvdKb9y9pKWQBhWb6lOvQbSjBpBVCOBkde6AHDODtEYCANBUFwHwOIOxZ95ZBnoQrWyN8wYNM9i5UuXDRoGyrm-fhgUv4COCXmeoRA8FFBKKxAB+donEziQJeRECspKMlHYDa4klQkAQIqCoSolpQAnKjUZeDyloBIFARIEBNHhVBIaWQ+BpBsCMJ4Eg+QYDiBKVKXAgR5CTNMjQhxbSga-A4K4zsTsPGdJGvrSur8SL+BNoMhuSNjkTIifjWoRMu7O3iW7ZZnsab0D6IkXAMAiBQDgOKHZ2y+DmBgEMEgCo6xEmOac1A8Q6SHWuSAZIhwPi4EEEYD4sctjXBoPwNoGRfigi4LHdUtS5bZyBUhX4TCWksMcpCzh0Ln6+Orv4oZSK67CK6NtLZKBW7sW6rM7FoCFkJMUQS5RgAEwkVNIC8eCkH+DYJ4CIvw8rqilG9UEkgjC6WtHAKUHA8roCIAqrOsw2iOWBWqwE6sWEcHvtDR+3D4aG31aRQ1RIgkmtwGa30lqmTWtbNI2JOL7WUnqJIMAHoVn0Dyi4HagAkwkWGedp0BJxUEydmrpMLeHZCQMzSkvs4yKlBNkQ88BcCCnOZc9wCAxlso5foLlJ4rBAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            Account creation modal with stepper navigation, form inputs,
+            agreement checkboxes, and progress indicator
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌────────────────────────────────────────────────────────────────────┐
+│                                                                    │
+│                                                                    │
+│       ┌────────────────────────────────────────────────────┐       │
+│       │ Create Your Account                              × │       │
+│       ├────────────────────────────────────────────────────┤       │
+│       │                                                    │       │
+│       │   ● Account ─ ● Profile ─ ○ Preferences ─ ○ Rev…   │       │
+│       │                                                    │       │
+│       │   ┌────────────────────────────────────────────┐   │       │
+│       │   │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░ │   │       │
+│       │   └────────────────────────────────────────────┘   │       │
+│       │ ────────────────────────────────────────────────── │       │
+│       │                                                    │       │
+│       │   Tell us about yourself                           │       │
+│       │                                                    │       │
+│       │   ┌────────────────────┐  ┌────────────────────┐   │       │
+│       │   │ First Name         │  │ Last Name          │   │       │
+│       │   └────────────────────┘  └────────────────────┘   │       │
+│       │                                                    │       │
+│       │   ┌────────────────────────────────────────────┐   │       │
+│       │   │ ✉ Email Address                            │   │       │
+│       │   └────────────────────────────────────────────┘   │       │
+│       │                                                    │       │
+│       │   ┌────────────────────────────────────────────┐   │       │
+│       │   │ Password                                   │   │       │
+│       │   └────────────────────────────────────────────┘   │       │
+│       │                                                    │       │
+│       │   ┌────────────────────┐  ┌────────────────────┐   │       │
+│       │   │ Country          ▾ │  │ Role             ▾ │   │       │
+│       │   └────────────────────┘  └────────────────────┘   │       │
+│       │                                                    │       │
+│       │   ┌──────────────────┐                             │       │
+│       │   │ [✓] I agree to … │                             │       │
+│       │   └──────────────────┘                             │       │
+│       │   ┌──────────────────┐                             │       │
+│       │   │ [ ] Subscribe t… │                             │       │
+│       │   └──────────────────┘                             │       │
+│       └───┌────────────┐──────────────────┏━━━━━━━━━━━━┓───┘       │
+│           │   ← Back   │                  ┃   Next →   ┃           │
+│           └────────────┘                  ┗━━━━━━━━━━━━┛           │
+└────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="counter">10</span>Pricing Page</h2>
+          <a
+            href="https://wiretext.app/#N4IgbgpgTgzglgewHYgFwCYA0IECMBWEAxgC4xoDaocAJmiAMIDmyEAYgIoCaAQgBwB2AKIAPCABkA7gAUIATwDW5bAAcE8EohSpQRBABs0ABmxQEk4wF9sALwCSSGhBHHs+gIZzoduqhAAJABE2EgBGQIA2OTB8AFUAOQUuAFsYPg50AGlMkGwSORUIej1ktSQIJBJckBKyipIAFQKiv1wzSRhoaslaEgALND4AFmw+iDgmPqrUAFYsEFwEKCcoAGV8-RaQeCQmTeqPXAhDP3ciZIgAOkQAehUoOCI4XZBral8cAHkZwoB9cX8CiGMEkJAASgBHfR2ACCvyYsWqag0WjQugMaFCpnMaAAzNYQPZHM5MW5PN4PkEQuEojEEklUuksjk8s1ighSqxKtValzGmy-Eh3GBcO4oN1egNUHx5mMJlM8dhFstoOs5Ps-Ds9kVsEKwHYSBBUpQQIBQMgABDDzjqQNIzDQAK6kap2x7PJjVQIIIjKECrCZIc0OEAAXTeIFo9BsEAERiEDuEgQUADNPpIABq-ADquOSAjscCR6jgmmQaJqGNQuPm7UGBKJThcGDJXigPnoVLCkWicUSKTSGWy1XyhXohpEVWwekq9XoDD6CHUEHNXAQDqg5ukHhQ4cjfnQNHEAE4+GCHQBZIY8ABaJBESF+CGvNlxADVC6pi6XtOiTugaziqChEY9YOI2iogB4rbtn4nY0j29L9kyQ6sqOfjjpOFYztyfjrGKJDmsmUAQBAmDmg6KhMFA7hOOakhjIGchrua5QQDQ5okAglyvJg7xRhAETnumAC0oQqJksR2PgoS4EwuAwEQRglkWKJljoFYnLiJggLWQHoKBxJNiMkHkm2lLBF2tK9gyA7MsOAogBhPLIIaOEgOeLl9Pocg8XxfgQjYbCfCRYDiHYoSvlw+BgMJbC-Og+CZMJKklqi6l6JpR7YhYekGeBswthSHYWfBdJ9oyg4so5Dm8uU3JThydSVE0aGOQgTDahKND9JixlypM0xYgsSwrGqGrbO6+xkkcJwgDCSBIA67j6OaAAUMDCsu6BGAApAAlDyYxEAobFoCQUAOhAu4fOgQgcNGQihHIMI0EY0h2KsEICLiEK-NePmfqpP4aWgAE5aEQx5SSqARIVZnFdS3ZlTZyFVSOWy1bODWcnV-KtUQYp0NgPTdVK6CwyA-UKhgxnKqNGxbFqU0mTN9B4VAhritd9BQHIRBgGwwmvjQmTnjQHCZAIWZcHAWYcJIAgpd+5YZWgxm6aEAhQ02AhwzBAQlUj1lIZV9mtU5DXYdMIAACRGL5EYfFwuDxBAQxHkMcAAOJyLiQy-DCfRe0IERELgRMgMiqVqb+gzZZiWu2GB0N8Hr5mI1ZiEVXZqFbBbWGudbbDEcuyZLBAkBc7xjsdmw15rvgNihGMMw2OmsRDDCTAzAm8RK2lseoOrgGhEe2toFlJnQenlkIeVtkodV+ONXyzk4-ULVbDQcBgLQXTE5KoOyuMA2ksNKprAz9BM0U3N+L8DpDBwQj+AwEKfDCyZe3w56xAu0nCSPP3GOIMh7xwwKEceQFtJQSKrBQ2md56ozNhjFeuM15NTxlsfQcAYCYRJj1DA2kqbTBmEqEaqor6akmjaEsRpyCoAoCAXE5p7gIEIKQX0oRzRex4OaPBSx3BMBtAwDkyQHRIBLHIfhFE1Ac2qDwdw8AiDmncEKbymgfTVG4YadwyRzQXGSEccUIY3C4JIGNLYuAHT6E2FUO+IAkoCB4FAMENA64CH8EQBgMwYQIDYKEWIMBQjAOBqrMBOlAK4nxEnQymIhqwPhvAjOc8Uam1zuyde9UKxZKwfQaxJBOIoAPqTI+owT7U1xOQi+ljr40IOO4VmfgvYQAIuzQ0dAHFZlwF7eIgk5BZnTAwIwIgFAKAdMmSQQgBC-BtFHZW6VKzoEnhrSGsT8qhHmIk-WcEjZZwXmjGqaCsY5MwZvYohMuqEPJuU+U0x0C0woZfdUWwxjCgBizY49A7QIHNIAFAJzQeTwZuBAKgbFigdnuEA6A2BDCUZAAAUpIYS15-ANDgNWX4YAoBKFCSrSsuIhoa0ToSZOTZQhVKnnAg2KTkYmxzkvPOzhMLTkLvQG2yzIUfECL8Lg8Q+CxHcOeTIMxkz+HEOmL2XB3BCHwOgLgeLFmaTIZE8GJKGzQwhmnBGs86XZ0XujMczLnJW3oDcZInkuX0FfGwJA6YswCDgEIBoMw+gKFwEgMAqx9DIuEoYQG0cwkEqJSPMe6zNUqu2TPUqxt9WHOXrkjBfJzl+G3rvFYVyybHzuWfOmlCXl1N2PsBxCAZhcH8Lia8EI+BID4EeMEgQ7BHnPEQPgDoRAREVYPQl4D0CQPDeSimUadUxv2cgjJfhMbZKnXkvwOC8GZtBsQippDqn0wLdQottDDTGkYSAWISAcHJDoexNhHCyDVBmEYHhfCBHUWES6B4SwpEyJUHIzCL0wBqKIGxVR6i5CaN9AwB0Aj9E0A5O4Z4voYTvVUUQH9MByCmMguY2prQbF2KtX4Jg7hVjbSQJEaVgVzy4jAAgYSEIiAcDmV+AeoCe2qrxDE0lcSgK6ypUkmlurY0HJQZkzBSbcYpoWA6QpZYSnXOzafKsa783jTeWAD5hwvl+FiJRaitFOKbjMFhkACKuDQGvA0PoHBfg8BsGABQR5kj6HdrEIQHz5l0fCTMCmqyoGhFThxnZCDUn0oNUcxN2Mzk1UuRJsmFMSGg0eTUqhE0t0NKaSAIQM4oD3FwbfauUKjBMUdXAIYBZxAzHiEQOQR50DJFfBAZMuAu2gJmF54lHnJ7DuSdxsd6TGVGonCatlfhgOgd00eV8-hJDXlWMkBoXAwTuGvFwa8fQaDSFxNGa8dXwkRBVU1gdS7tVtdHUgzrhr0LGstn1yODwngvAcSoOwnw5DwCYGCEgMxXyBFTEwOQDQYTATWwGhZg8GvgNHlAvte2uMHbSQy47pzV7BeTQ5NNe9xThbKZTFduanlofi51BxvxQihEhPEFQoRrxHl+GwCAMBAj4CgLiDgR4ITrcrEDxjEDQdbNMj52lPHx1dcncc6dgvZ0oYXajohtzpMqrzc88aN9qh0N3UwoQlcAN9HdOaZ42mEDVFWKsT45objmlWDCc84hPRsUeO4Dpr7326-EDCc0TAlrURnDaGEDpt4EX0O1IDIHOL6NZdRThoYzF4Ox9Y2xrTdPJgUClzIMJhKZBEAMmYClPihBgK+EgcrmcnFZ7paJoPKWtYh3sw70PAsCfh0JhyBSimLowFJypsnZeM3qdNFTjAXJnDactKnunxACBUKI3A55VhyFiBELMcgvaxBoDQJg0k-uR1oyA8JYM8RhpY-lB54PdmIKhwFhN1fYe19akjjN4u+DLpzUBVv2P5ed9mpT6365lyiNKGKXBZYHERHiIoFmOgCoEePgF7J8DYAoPoPgPoF7JkDAFwBHE5uvksuAkMP2jvtDOgJGlztGuXkfvGqgkFmfhvA5CQI0szAQlKDfpLtTJPDLo-h3hpA6MkEgAwkwq-iQO-rruQRzPvLaDptgClpzOlp0KGJYMhokuwX5GXofv5lVEKBcPQOIKZOaCEtgLvPALgBqOdJdG4N6CdL4MmMtJ0BIZYEAA"
+            target="_blank"
+            rel="noopener"
+            >Open in Editor →</a
+          >
+        </div>
+        <div class="card-body">
+          <p class="description">
+            SaaS pricing page with three-tier pricing cards, feature lists,
+            billing toggle, and comparison table
+          </p>
+          <div class="preview-wrapper">
+            <pre
+              class="preview"
+            >┌──────────────────────────────────────────────────────────────────────────────────┐
+│ &lt; &gt; O   acme.io/pricing                                                          │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│┌────────────────────────────────────────────────────────────────────────────────┐│
+││ =  ★ Acme  Product  Pricing  Docs  Sign In                                     ││
+│└────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                  │
+│                                                                                  │
+│                               Choose Your Plan                                   │
+│                                                                                  │
+│                     Start free, upgrade when you need to.                        │
+│                                                                                  │
+│                             Monthly  [●──] Annual …                              │
+│                                                                                  │
+│ ┌────────────────────────┐ ┏━━━━━━━━━━━━━━━━━━━━━━━━┓ ┌────────────────────────┐ │
+│ │ Starter                │ ┃ Pro — Most Popular     ┃ │ Enterprise             │ │
+│ ├────────────────────────┤ ┣────────────────────────┫ ├────────────────────────┤ │
+│ │ $0  Free forever       │ ┃ $29 /month             ┃ │ Custom pricing         │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │ ────────────────────── │ ┃ ────────────────────── ┃ │ ────────────────────── │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │ • 3 projects           │ ┃ • Unlimited projects   ┃ │ • Everything in Pro    │ │
+│ │ • 1 GB storage         │ ┃ • 50 GB storage        ┃ │ • SSO / SAML           │ │
+│ │ • Community support    │ ┃ • Priority support     ┃ │ • Dedicated support    │ │
+│ │ • Basic analytics      │ ┃ • Advanced analytics   ┃ │ • SLA guarantee        │ │
+│ │ • 1 team member        │ ┃ • Custom domains       ┃ │ • Audit logs           │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ │ ┌────────────────────┐ │ ┃ ┏━━━━━━━━━━━━━━━━━━━━┓ ┃ │ ┌────────────────────┐ │ │
+│ │ │    Get Started     │ │ ┃ ┃   Upgrade to Pro   ┃ ┃ │ │   Contact Sales    │ │ │
+│ │ └────────────────────┘ │ ┃ ┗━━━━━━━━━━━━━━━━━━━━┛ ┃ │ └────────────────────┘ │ │
+│ │                        │ ┃                        ┃ │                        │ │
+│ └────────────────────────┘ ┗━━━━━━━━━━━━━━━━━━━━━━━━┛ └────────────────────────┘ │
+│                                                                                  │
+│ ── Feature Comparison ────────────────────────────────────────────────────────── │
+│                                                                                  │
+│ ┌──────────────────┬──────────────────┬──────────────────┬─────────────────────┐ │
+│ │ Feature          │ Starter          │ Pro              │ Enterprise          │ │
+│ │──────────────────┼──────────────────┼──────────────────┼─────────────────────│ │
+│ │                  │                  │                  │                     │ │
+│ │                  │                  │                  │                     │ │
+│ │                  │                  │                  │                     │ │
+│ │                  │                  │                  │                     │ │
+│ │                  │                  │                  │                     │ │
+│ └──────────────────┴──────────────────┴──────────────────┴─────────────────────┘ │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Built with <a href="https://wiretext.app" target="_blank">Wiretext</a> —
+      ASCII wireframes for UI design
+    </footer>
+  </body>
+</html>
