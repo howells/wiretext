@@ -41,6 +41,8 @@ export type ComponentType =
 
 export type AlertType = "info" | "warning" | "error" | "success";
 export type ListStyle = "bullet" | "number" | "dash";
+export type TextAlign = "center" | "left";
+export type IconPosition = "left" | "right";
 
 export interface Layer {
   id: LayerId;
@@ -94,9 +96,13 @@ export interface ComponentObject extends BaseObject {
   fill?: FillStyle;
   label?: string;
   icon?: string;
+  align?: TextAlign;
+  iconPosition?: IconPosition;
   checked?: boolean;
   progress?: number;
   columns?: string[];
+  rows?: string[][];
+  filterable?: boolean;
   tabs?: string[];
   navItems?: string[];
   alertType?: AlertType;

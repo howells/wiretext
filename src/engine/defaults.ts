@@ -8,8 +8,10 @@ import type {
   FillStyle,
   GridPoint,
   GridSize,
+  IconPosition,
   Layer,
   ListStyle,
+  TextAlign,
   WireObject,
 } from "./types";
 
@@ -58,9 +60,13 @@ export interface MinimalComponent extends MinimalBase {
   fill?: FillStyle;
   label?: string;
   icon?: string;
+  align?: TextAlign;
+  iconPosition?: IconPosition;
   checked?: boolean;
   progress?: number;
   columns?: string[];
+  rows?: string[][];
+  filterable?: boolean;
   tabs?: string[];
   navItems?: string[];
   alertType?: AlertType;
@@ -153,9 +159,13 @@ export function fillDefaults(objects: MinimalObject[]): {
           fill: obj.fill,
           label: obj.label,
           icon: obj.icon,
+          align: obj.align,
+          iconPosition: obj.iconPosition,
           checked: obj.checked,
           progress: obj.progress,
           columns: obj.columns,
+          rows: obj.rows,
+          filterable: obj.filterable,
           tabs: obj.tabs,
           navItems: obj.navItems,
           alertType: obj.alertType,
