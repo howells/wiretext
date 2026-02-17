@@ -1,7 +1,7 @@
 "use client";
 
 import { COMPONENT_BY_TYPE } from "@/engine/components";
-import { WIRE_ICONS } from "@/engine/icons";
+import { ICON_CATEGORIES, WIRE_ICONS } from "@/engine/icons";
 import type { BorderStyle, ComponentType, WireObject } from "@/engine/types";
 import { useEditorStore } from "@/store";
 
@@ -198,41 +198,54 @@ function IconPicker({
   return (
     <div>
       <FieldLabel>Icon</FieldLabel>
-      <div className="grid grid-cols-6 gap-0.5">
+      <div className="flex flex-col gap-1.5">
         {showNone && (
-          <button
-            className={`rounded px-1 py-0.5 font-mono text-sm transition-colors ${
-              obj.icon
-                ? "bg-surface-hover text-text-dim hover:text-text"
-                : "bg-accent text-bg"
-            }`}
-            onClick={() =>
-              updateObject(obj.id, { icon: undefined } as Partial<WireObject>)
-            }
-            title="None"
-            type="button"
-          >
-            ∅
-          </button>
+          <div className="grid grid-cols-8 gap-0.5">
+            <button
+              className={`rounded px-1 py-0.5 font-mono text-sm transition-colors ${
+                obj.icon
+                  ? "bg-surface-hover text-text-dim hover:text-text"
+                  : "bg-accent text-bg"
+              }`}
+              onClick={() =>
+                updateObject(obj.id, { icon: undefined } as Partial<WireObject>)
+              }
+              title="None"
+              type="button"
+            >
+              ∅
+            </button>
+          </div>
         )}
-        {WIRE_ICONS.map((icon) => (
-          <button
-            className={`rounded px-1 py-0.5 font-mono text-sm transition-colors ${
-              obj.icon === icon.char
-                ? "bg-accent text-bg"
-                : "bg-surface-hover text-text-dim hover:text-text"
-            }`}
-            key={icon.char}
-            onClick={() =>
-              updateObject(obj.id, {
-                icon: icon.char,
-              } as Partial<WireObject>)
-            }
-            title={icon.label}
-            type="button"
-          >
-            {icon.char}
-          </button>
+        {ICON_CATEGORIES.map((category) => (
+          <div key={category}>
+            <span className="mb-0.5 block text-[10px] text-text-dim uppercase tracking-wider">
+              {category}
+            </span>
+            <div className="grid grid-cols-8 gap-0.5">
+              {WIRE_ICONS.filter((icon) => icon.category === category).map(
+                (icon) => (
+                  <button
+                    className={`rounded px-1 py-0.5 font-mono text-sm transition-colors ${
+                      obj.icon === icon.char
+                        ? "bg-accent text-bg"
+                        : "bg-surface-hover text-text-dim hover:text-text"
+                    }`}
+                    key={icon.char}
+                    onClick={() =>
+                      updateObject(obj.id, {
+                        icon: icon.char,
+                      } as Partial<WireObject>)
+                    }
+                    title={icon.label}
+                    type="button"
+                  >
+                    {icon.char}
+                  </button>
+                )
+              )}
+            </div>
+          </div>
         ))}
       </div>
     </div>

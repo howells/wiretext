@@ -1,7 +1,7 @@
 import type { MouseEvent as ReactMouseEvent } from "react";
+import { BORDERLESS_COMPONENTS } from "@/engine/min-width";
 import type {
   ArrowObject,
-  ComponentType,
   Layer,
   LineObject,
   WireObject,
@@ -9,17 +9,6 @@ import type {
 import { getResizeConstraint, hasRectBounds } from "@/engine/types";
 import { useEditorStore } from "@/store";
 import type { ToolHandler } from "./types";
-
-const BORDERLESS_COMPONENTS: ReadonlySet<ComponentType> = new Set([
-  "icon",
-  "divider",
-  "toggle",
-  "breadcrumb",
-  "list",
-  "stepper",
-  "rating",
-  "skeleton",
-]);
 
 function getMinSize(obj: WireObject): { minW: number; minH: number } {
   if (

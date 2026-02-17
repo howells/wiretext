@@ -26,8 +26,6 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-mono);
-  overflow: hidden;
-  height: 100%;
 }
 
 ::selection {
