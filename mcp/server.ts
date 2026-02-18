@@ -3,6 +3,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { compose, gridToString } from "../src/engine/compose";
 import { computeRenderGridSize, fillDefaults } from "../src/engine/defaults";
+import { resolveLayers } from "../src/engine/layers";
+import { addPadding } from "../src/engine/padding";
 import { validateContentWidth } from "../src/engine/validate";
 import { encodeDocument } from "../src/lib/sharing";
 
@@ -28,6 +30,12 @@ NESTING CHILDREN INSIDE CONTAINERS:
 - Formula: child.col >= parent.col + 2, child.col + child.width <= parent.col + parent.width - 2
 - Same rule applies vertically
 
+BOX LABELS:
+- Box labels support multiline via \\n (e.g., "Line 1\\nLine 2")
+- Each line is individually centered horizontally
+- The block of lines is vertically centered within the box interior
+- Min width is based on the widest line + 4
+
 TEXT SIZING:
 - Each character in text content = 1 cell wide
 - Text at col=10 with 15 characters occupies cols 10-24
@@ -45,7 +53,8 @@ COMPONENT SIZES:
 - input/select: min width = label.length + 6, height 3
 - checkbox/radio: min width = label.length + 8, height 3 (includes [✓] or (●) prefix)
 - table: min height 5, width should fit all column headers
-- card/modal/browser: min height 5 (needs room for title bar separator)
+- card/modal: min height 6 (border + title + padding row + separator + content + border). Body text (via body field) renders left-aligned starting at row+4. Use \\n for multiline body text.
+- browser: min height 5 (URL bar + separator + content)
 - tabs: height should be tall enough for content below the tab labels (labels render at vertical center)
 - progress: min width = 8, height 3 (bar renders inside borders)
 - icon: width 3, height 3 (renders single char at center)
@@ -89,8 +98,24 @@ const borderStyleSchema = z
 
 const fillStyleSchema = z.enum(["solid", "transparent"]).optional();
 
+const layerSchema = z.object({
+  id: z
+    .string()
+    .describe(
+      "Unique layer ID. Objects reference this via their layerId field."
+    ),
+  name: z
+    .string()
+    .describe(
+      "Human-readable name for this layer (e.g., 'UI Elements', 'Annotations', 'Flow Arrows')."
+    ),
+});
+
 const baseFields = {
-  id: z.string().optional(),
+  id: z
+    .string()
+    .optional()
+    .describe("Unique object ID. Auto-generated if omitted."),
   position: gridPointSchema
     .optional()
     .describe("Top-left corner in grid coordinates (default: 0,0)"),
@@ -101,10 +126,30 @@ const baseFields = {
     .describe(
       "Render order — higher values draw on top. Use low values for containers, high for content."
     ),
-  layerId: z.string().optional(),
-  name: z.string().optional(),
-  annotation: z.string().optional(),
-  groupId: z.string().optional(),
+  layerId: z
+    .string()
+    .optional()
+    .describe(
+      "ID of the layer this object belongs to. Must match a layer ID from the layers array. Defaults to the first layer."
+    ),
+  name: z
+    .string()
+    .optional()
+    .describe(
+      "Human-readable name for this object (e.g., 'Header Nav', 'Submit Button'). Shown in the editor's object list."
+    ),
+  annotation: z
+    .string()
+    .optional()
+    .describe(
+      "Design note or annotation attached to this object. Visible as a tooltip in the editor."
+    ),
+  groupId: z
+    .string()
+    .optional()
+    .describe(
+      "Group ID for logically related objects. Objects sharing a groupId move and select together."
+    ),
 };
 
 const boxSchema = z.object({
@@ -133,7 +178,9 @@ const boxSchema = z.object({
   label: z
     .string()
     .optional()
-    .describe("Centered label. Max length: width - 4 characters."),
+    .describe(
+      "Centered label. Max length: width - 4 characters. Use \\n for multiline centered text (each line is individually centered)."
+    ),
 });
 
 const textSchema = z.object({
@@ -219,7 +266,7 @@ const componentSchema = z.object({
     .min(1)
     .optional()
     .describe(
-      "Height including borders. Bordered components need height>=3. Borderless components (divider, toggle, breadcrumb, stepper, rating, skeleton) can be height=1. Card/modal/browser/table need height>=5."
+      "Height including borders. Bordered components need height>=3. Borderless components (divider, toggle, breadcrumb, stepper, rating, skeleton) can be height=1. Card/modal need height>=6. Browser/table need height>=5."
     ),
   borderStyle: borderStyleSchema,
   fill: fillStyleSchema,
@@ -330,6 +377,12 @@ const componentSchema = z.object({
     .describe(
       "Maximum value for rating component (total number of stars). Default: 5."
     ),
+  body: z
+    .string()
+    .optional()
+    .describe(
+      "Body text for card/modal, rendered left-aligned below the title separator starting at row+4. Use \\n for multiple lines. Lines exceeding available height are clipped."
+    ),
 });
 
 const wireObjectSchema = z.discriminatedUnion("type", [
@@ -370,15 +423,27 @@ Most fields have sensible defaults — only 'type' is required for a box.
 ${LAYOUT_GUIDE}`,
   {
     objects: validatedObjectsSchema.describe("Array of wire objects to render"),
+    layers: z
+      .array(layerSchema)
+      .optional()
+      .describe(
+        "Named layers for organizing objects. Objects reference layers via layerId. If omitted, a single default layer is created."
+      ),
     baseUrl: z
       .string()
       .optional()
       .describe(`Base URL for the editor (default: ${BASE_URL})`),
   },
-  ({ objects, baseUrl }) => {
+  ({ objects, layers: userLayers, baseUrl }) => {
     try {
-      const { objects: filled, layer } = fillDefaults(objects);
-      const encoded = encodeDocument(filled, [layer]);
+      const { objects: filled, layer: defaultLayer } = fillDefaults(objects);
+      const { objects: resolved, layers } = resolveLayers(
+        filled,
+        defaultLayer,
+        userLayers
+      );
+      const finalObjects = addPadding(resolved, 1);
+      const encoded = encodeDocument(finalObjects, layers);
       const url = `${baseUrl ?? BASE_URL}/#${encoded}`;
       return { content: [{ type: "text", text: url }] };
     } catch (error) {
@@ -402,12 +467,24 @@ server.tool(
 ${LAYOUT_GUIDE}`,
   {
     objects: validatedObjectsSchema.describe("Array of wire objects to render"),
+    layers: z
+      .array(layerSchema)
+      .optional()
+      .describe(
+        "Named layers for organizing objects. Objects reference layers via layerId. If omitted, a single default layer is created."
+      ),
   },
-  ({ objects }) => {
+  ({ objects, layers: userLayers }) => {
     try {
-      const { objects: filled, layer } = fillDefaults(objects);
-      const gridSize = computeRenderGridSize(filled);
-      const grid = compose(filled, gridSize, [layer]);
+      const { objects: filled, layer: defaultLayer } = fillDefaults(objects);
+      const { objects: resolved, layers } = resolveLayers(
+        filled,
+        defaultLayer,
+        userLayers
+      );
+      const finalObjects = addPadding(resolved, 1);
+      const gridSize = computeRenderGridSize(finalObjects);
+      const grid = compose(finalObjects, gridSize, layers);
       return { content: [{ type: "text", text: gridToString(grid) }] };
     } catch (error) {
       return {

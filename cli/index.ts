@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { z } from "zod";
 import { compose, gridToString } from "../src/engine/compose";
 import { computeRenderGridSize, fillDefaults } from "../src/engine/defaults";
+import { resolveLayers } from "../src/engine/layers";
+import { addPadding } from "../src/engine/padding";
 import { validateContentWidth } from "../src/engine/validate";
 import { encodeDocument } from "../src/lib/sharing";
 
@@ -114,6 +116,7 @@ const componentSchema = z.object({
   activeStep: z.number().int().min(0).optional(),
   value: z.number().min(0).optional(),
   maxValue: z.number().int().min(1).optional(),
+  body: z.string().optional(),
 });
 
 const wireObjectSchema = z.discriminatedUnion("type", [
@@ -136,6 +139,11 @@ const objectsArraySchema = z.array(wireObjectSchema).superRefine((arr, ctx) => {
   }
 });
 
+const layerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
 function readInput(filePath?: string): string {
   if (filePath && filePath !== "-") {
     return readFileSync(filePath, "utf-8");
@@ -143,7 +151,12 @@ function readInput(filePath?: string): string {
   return readFileSync(0, "utf-8");
 }
 
-function parseInput(raw: string): z.infer<typeof wireObjectSchema>[] {
+interface ParsedInput {
+  objects: z.infer<typeof wireObjectSchema>[];
+  layers?: z.infer<typeof layerSchema>[];
+}
+
+function parseInput(raw: string): ParsedInput {
   const parsed = JSON.parse(raw);
 
   const arr = Array.isArray(parsed) ? parsed : parsed?.objects;
@@ -162,7 +175,16 @@ function parseInput(raw: string): z.infer<typeof wireObjectSchema>[] {
     });
     throw new Error(`Invalid input:\n${issues.join("\n")}`);
   }
-  return result.data;
+
+  let layers: z.infer<typeof layerSchema>[] | undefined;
+  if (!Array.isArray(parsed) && Array.isArray(parsed?.layers)) {
+    const layerResult = z.array(layerSchema).safeParse(parsed.layers);
+    if (layerResult.success) {
+      layers = layerResult.data;
+    }
+  }
+
+  return { objects: result.data, layers };
 }
 
 function copyToClipboard(text: string): boolean {
@@ -212,9 +234,15 @@ function cmdCreate(
   }
 ): void {
   const raw = readInput(filePath);
-  const minimal = parseInput(raw);
-  const { objects, layer } = fillDefaults(minimal);
-  const encoded = encodeDocument(objects, [layer]);
+  const { objects: minimal, layers: userLayers } = parseInput(raw);
+  const { objects: filled, layer: defaultLayer } = fillDefaults(minimal);
+  const { objects: resolved, layers } = resolveLayers(
+    filled,
+    defaultLayer,
+    userLayers
+  );
+  const objects = addPadding(resolved, 1);
+  const encoded = encodeDocument(objects, layers);
   const url = `${options.baseUrl}/#${encoded}`;
 
   if (options.copy) {
@@ -244,10 +272,16 @@ function cmdCreate(
 
 function cmdRender(filePath?: string): void {
   const raw = readInput(filePath);
-  const minimal = parseInput(raw);
-  const { objects, layer } = fillDefaults(minimal);
+  const { objects: minimal, layers: userLayers } = parseInput(raw);
+  const { objects: filled, layer: defaultLayer } = fillDefaults(minimal);
+  const { objects: resolved, layers } = resolveLayers(
+    filled,
+    defaultLayer,
+    userLayers
+  );
+  const objects = addPadding(resolved, 1);
   const gridSize = computeRenderGridSize(objects);
-  const grid = compose(objects, gridSize, [layer]);
+  const grid = compose(objects, gridSize, layers);
   console.log(gridToString(grid));
 }
 
@@ -264,7 +298,8 @@ Options:
   --base-url <url>      Base URL for create (default: ${DEFAULT_BASE_URL})
 
 Input: JSON from file argument or stdin
-Format: { "objects": [...] } or bare [...]`);
+Format: { "objects": [...], "layers": [...] } or bare [...]
+Layers: [{ "id": "ui", "name": "UI Elements" }, ...]`);
 }
 
 function main(): void {
