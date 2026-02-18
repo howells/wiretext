@@ -6,11 +6,13 @@ export default defineConfig({
   format: ["esm"],
   target: "node20",
   bundle: true,
+  minify: true,
   banner: { js: "#!/usr/bin/env node" },
   noExternal: [/.*/],
   esbuildOptions(options) {
     options.alias = {
       "@": resolve(process.cwd(), "../src"),
     };
+    options.nodePaths = [resolve(process.cwd(), "node_modules")];
   },
 });
