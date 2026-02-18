@@ -113,17 +113,9 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-border border-t px-5 py-3">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] text-text-dim">
-              v{version}
-            </span>
-            <a
-              className="font-mono text-[10px] text-accent hover:underline"
-              href="/mcp"
-            >
-              MCP Server
-            </a>
-          </div>
+          <span className="font-mono text-[10px] text-text-dim">
+            v{version}
+          </span>
           <span className="font-mono text-[10px] text-text-dim">
             └────────────────┘
           </span>

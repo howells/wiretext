@@ -20,6 +20,7 @@ import { ContextMenu } from "./context-menu";
 import { ExamplesDialog } from "./examples-dialog";
 import { ExportDialog } from "./export-dialog";
 import { LabelEditorOverlay } from "./label-editor-overlay";
+import { McpDialog } from "./mcp-dialog";
 import { PropertiesPanel } from "./properties-panel";
 import { StatusBar } from "./status-bar";
 import { TextEditorOverlay } from "./text-editor-overlay";
@@ -36,6 +37,7 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
   const [hoverCoord, setHoverCoord] = useState({ col: 0, row: 0 });
   const [exportOpen, setExportOpen] = useState(false);
   const [examplesOpen, setExamplesOpen] = useState(false);
+  const [mcpOpen, setMcpOpen] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
   const toggleExport = useCallback(() => setExportOpen((v) => !v), []);
   useKeyboard(toggleExport);
@@ -166,6 +168,13 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
             </button>
             <button
               className="rounded border border-border bg-surface px-3 py-1.5 text-text-dim text-xs transition-colors hover:bg-surface-hover hover:text-text"
+              onClick={() => setMcpOpen(true)}
+              type="button"
+            >
+              MCP
+            </button>
+            <button
+              className="rounded border border-border bg-surface px-3 py-1.5 text-text-dim text-xs transition-colors hover:bg-surface-hover hover:text-text"
               onClick={() => useEditorStore.getState().clearAll()}
               type="button"
             >
@@ -207,6 +216,7 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
         onClose={() => setExamplesOpen(false)}
         open={examplesOpen}
       />
+      <McpDialog onClose={() => setMcpOpen(false)} open={mcpOpen} />
       <ContextMenu />
     </div>
   );
