@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getEffectiveGridSize } from "@/engine/grid-size";
+import { prepareForExport } from "@/engine/padding";
 import { trackExport } from "@/lib/analytics";
 import {
   composeToGitHub,
@@ -30,10 +30,9 @@ interface ExportDialogProps {
 export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const objects = useEditorStore((s) => s.objects);
   const layers = useEditorStore((s) => s.layers);
-  const gridSize = useEditorStore((s) => s.gridSize);
-  const effectiveGridSize = useMemo(
-    () => getEffectiveGridSize(objects, gridSize),
-    [objects, gridSize]
+  const { objects: exportObjects, gridSize: exportGridSize } = useMemo(
+    () => prepareForExport(objects, 1),
+    [objects]
   );
   const [format, setFormat] = useState<ExportFormat>("text");
   const [copied, setCopied] = useState(false);
@@ -41,22 +40,22 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const getOutput = useCallback(() => {
     switch (format) {
       case "text":
-        return composeToText(objects, effectiveGridSize, layers);
+        return composeToText(exportObjects, exportGridSize, layers);
       case "markdown":
-        return composeToMarkdown(objects, effectiveGridSize, layers);
+        return composeToMarkdown(exportObjects, exportGridSize, layers);
       case "html":
-        return composeToHtml(objects, effectiveGridSize, layers);
+        return composeToHtml(exportObjects, exportGridSize, layers);
       case "github":
         return composeToGitHub(
-          objects,
-          effectiveGridSize,
+          exportObjects,
+          exportGridSize,
           objects.length > 0 ? getShareUrl(objects, layers) : undefined,
           layers
         );
       default:
-        return composeToText(objects, effectiveGridSize, layers);
+        return composeToText(exportObjects, exportGridSize, layers);
     }
-  }, [objects, effectiveGridSize, format, layers]);
+  }, [exportObjects, exportGridSize, objects, format, layers]);
 
   const handleCopy = useCallback(async () => {
     const ok = await copyToClipboard(getOutput());

@@ -39,6 +39,36 @@ describe("validateContentWidth", () => {
       });
       expect(errors).toEqual([]);
     });
+
+    it("should use widest line for multiline label minimum width", () => {
+      // "AB\nCDEF" → widest line is "CDEF" (4 chars) → minWidth = 4 + 4 = 8
+      const errors = validateContentWidth({
+        type: "box",
+        label: "AB\nCDEF",
+        width: 7,
+      });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain("minimum: 8");
+    });
+
+    it("should pass when multiline label widest line fits", () => {
+      const errors = validateContentWidth({
+        type: "box",
+        label: "AB\nCDEF",
+        width: 8,
+      });
+      expect(errors).toEqual([]);
+    });
+
+    it("should use short line width when all lines are short", () => {
+      // "A\nB" → widest = 1 → minWidth = 5
+      const errors = validateContentWidth({
+        type: "box",
+        label: "A\nB",
+        width: 5,
+      });
+      expect(errors).toEqual([]);
+    });
   });
 
   describe("component (label-based)", () => {

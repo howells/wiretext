@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { getObjectBounds } from "./bounds";
 import { COMPONENT_BY_TYPE } from "./components";
+import { getComponentMinWidth } from "./min-width";
 import type {
   AlertType,
   BorderStyle,
@@ -76,6 +77,7 @@ export interface MinimalComponent extends MinimalBase {
   activeStep?: number;
   value?: number;
   maxValue?: number;
+  body?: string;
 }
 
 export type MinimalObject =
@@ -153,7 +155,8 @@ export function fillDefaults(objects: MinimalObject[]): {
           ...base,
           type: "component",
           componentType: obj.componentType,
-          width: obj.width ?? def.defaultWidth,
+          width:
+            obj.width ?? Math.max(def.defaultWidth, getComponentMinWidth(obj)),
           height: obj.height ?? def.defaultHeight,
           borderStyle: obj.borderStyle ?? "single",
           fill: obj.fill,
@@ -175,6 +178,7 @@ export function fillDefaults(objects: MinimalObject[]): {
           activeStep: obj.activeStep,
           value: obj.value,
           maxValue: obj.maxValue,
+          body: obj.body,
         });
         break;
       }

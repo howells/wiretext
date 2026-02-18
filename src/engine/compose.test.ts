@@ -504,8 +504,10 @@ describe("compose", () => {
     expect(lines[1]).toContain("Modal");
     // Close button
     expect(lines[1]).toContain("×");
-    // Separator
-    expect(lines[2]).toContain("─");
+    // Padding row between title and separator
+    expect(lines[2]).not.toContain("─");
+    // Separator at row+3
+    expect(lines[3]).toContain("─");
   });
 
   it("component respects min size of 3x3", () => {
@@ -1226,7 +1228,8 @@ describe("compose", () => {
     const result = gridToString(compose([card], { cols: 25, rows: 12 }));
     const lines = result.split("\n");
     expect(lines[1]).toContain("Card");
-    expect(lines[2]).toContain("─");
+    // Padding row at lines[2], separator at lines[3]
+    expect(lines[3]).toContain("─");
   });
 
   it("card renders custom label and has no close button", () => {
@@ -1934,7 +1937,7 @@ describe("compose", () => {
     });
 
     it("card truncates long title with ellipsis", () => {
-      const card = makeComponent("card", 10, 5, {
+      const card = makeComponent("card", 10, 6, {
         label: "Very Long Card Title",
       });
       const result = gridToString(compose([card], { cols: 15, rows: 8 }));
@@ -1943,7 +1946,7 @@ describe("compose", () => {
     });
 
     it("modal truncates long title with ellipsis", () => {
-      const modal = makeComponent("modal", 10, 5, {
+      const modal = makeComponent("modal", 10, 6, {
         label: "Very Long Modal Title",
       });
       const result = gridToString(compose([modal], { cols: 15, rows: 8 }));
@@ -2249,6 +2252,238 @@ describe("compose", () => {
       expect(result).not.toContain("\x00");
       expect(result).toContain("┐");
       expect(result).toContain("┘");
+    });
+  });
+
+  // ─── Multiline box labels ──────────────────────────────────────────
+  describe("multiline box labels", () => {
+    it("single-line label renders at same row as before (regression)", () => {
+      const box: BoxObject = {
+        id: "1",
+        type: "box",
+        position: { col: 0, row: 0 },
+        width: 12,
+        height: 5,
+        borderStyle: "single",
+        label: "Hello",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const grid = compose([box], { cols: 15, rows: 7 });
+      // row + Math.floor(height / 2) = 0 + Math.floor(5/2) = 2
+      const labelRow = grid[2];
+      expect(labelRow.join("")).toContain("Hello");
+    });
+
+    it("renders two-line label centered vertically and horizontally", () => {
+      const box: BoxObject = {
+        id: "1",
+        type: "box",
+        position: { col: 0, row: 0 },
+        width: 14,
+        height: 6,
+        borderStyle: "single",
+        label: "Line 1\nLine 2",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([box], { cols: 18, rows: 8 }));
+      expect(result).toContain("Line 1");
+      expect(result).toContain("Line 2");
+    });
+
+    it("clips excess lines that do not fit in interior height", () => {
+      const box: BoxObject = {
+        id: "1",
+        type: "box",
+        position: { col: 0, row: 0 },
+        width: 12,
+        height: 4,
+        borderStyle: "single",
+        label: "A\nB\nC\nD\nE",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([box], { cols: 15, rows: 6 }));
+      // Interior height = 4 - 2 = 2, so only first 2 lines visible
+      expect(result).toContain("A");
+      expect(result).toContain("B");
+      expect(result).not.toContain("C");
+    });
+
+    it("vertically centers odd line count in even interior", () => {
+      const box: BoxObject = {
+        id: "1",
+        type: "box",
+        position: { col: 0, row: 0 },
+        width: 12,
+        height: 6,
+        borderStyle: "single",
+        label: "X",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      // height 6 → interior 4, single-line label at Math.floor(6/2)=3
+      const grid = compose([box], { cols: 15, rows: 8 });
+      expect(grid[3].join("")).toContain("X");
+    });
+
+    it("vertically centers two lines in height=6 box", () => {
+      const box: BoxObject = {
+        id: "1",
+        type: "box",
+        position: { col: 0, row: 0 },
+        width: 12,
+        height: 6,
+        borderStyle: "single",
+        label: "AA\nBB",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      // Interior height = 4, 2 lines → startRow = 0 + 1 + floor((4-2)/2) = 2
+      const grid = compose([box], { cols: 15, rows: 8 });
+      expect(grid[2].join("")).toContain("AA");
+      expect(grid[3].join("")).toContain("BB");
+    });
+  });
+
+  // ─── Card/modal body text ──────────────────────────────────────────
+  describe("card body text", () => {
+    it("renders body text left-aligned below separator at row+4", () => {
+      const card: ComponentObject = {
+        id: "1",
+        type: "component",
+        componentType: "card",
+        position: { col: 0, row: 0 },
+        width: 20,
+        height: 8,
+        borderStyle: "single",
+        label: "Title",
+        body: "Body text",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([card], { cols: 25, rows: 12 }));
+      const lines = result.split("\n");
+      // Title at row 1, separator at row 3, body starts at row 4
+      expect(lines[1]).toContain("Title");
+      expect(lines[4]).toContain("Body text");
+      // Body is left-aligned at col+2
+      expect(lines[4].indexOf("Body text")).toBe(2);
+    });
+
+    it("renders multiline body text", () => {
+      const card: ComponentObject = {
+        id: "1",
+        type: "component",
+        componentType: "card",
+        position: { col: 0, row: 0 },
+        width: 20,
+        height: 10,
+        borderStyle: "single",
+        body: "First\nSecond\nThird",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([card], { cols: 25, rows: 14 }));
+      const lines = result.split("\n");
+      expect(lines[4]).toContain("First");
+      expect(lines[5]).toContain("Second");
+      expect(lines[6]).toContain("Third");
+    });
+
+    it("clips body lines that exceed available height", () => {
+      const card: ComponentObject = {
+        id: "1",
+        type: "component",
+        componentType: "card",
+        position: { col: 0, row: 0 },
+        width: 20,
+        height: 7,
+        borderStyle: "single",
+        body: "Line1\nLine2\nLine3\nLine4",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([card], { cols: 25, rows: 10 }));
+      // height=7: body rows = row+4 to row+5 (endRow = 0+7-2=5), so 2 rows
+      expect(result).toContain("Line1");
+      expect(result).toContain("Line2");
+      expect(result).not.toContain("Line3");
+    });
+
+    it("does not render body when height < 6", () => {
+      const card: ComponentObject = {
+        id: "1",
+        type: "component",
+        componentType: "card",
+        position: { col: 0, row: 0 },
+        width: 20,
+        height: 5,
+        borderStyle: "single",
+        body: "Should not appear",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([card], { cols: 25, rows: 8 }));
+      expect(result).not.toContain("Should not appear");
+    });
+
+    it("does not render body when body is undefined", () => {
+      const card: ComponentObject = {
+        id: "1",
+        type: "component",
+        componentType: "card",
+        position: { col: 0, row: 0 },
+        width: 20,
+        height: 8,
+        borderStyle: "single",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([card], { cols: 25, rows: 12 }));
+      const lines = result.split("\n");
+      // Row 4 should be interior spaces only
+      expect(lines[4].trim()).toBe("│                  │");
+    });
+
+    it("modal also renders body text", () => {
+      const modal: ComponentObject = {
+        id: "1",
+        type: "component",
+        componentType: "modal",
+        position: { col: 0, row: 0 },
+        width: 20,
+        height: 8,
+        borderStyle: "single",
+        label: "Confirm",
+        body: "Are you sure?",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([modal], { cols: 25, rows: 12 }));
+      const lines = result.split("\n");
+      expect(lines[1]).toContain("Confirm");
+      expect(lines[1]).toContain("×");
+      expect(lines[4]).toContain("Are you sure?");
+    });
+
+    it("truncates long body lines with ellipsis", () => {
+      const card: ComponentObject = {
+        id: "1",
+        type: "component",
+        componentType: "card",
+        position: { col: 0, row: 0 },
+        width: 12,
+        height: 8,
+        borderStyle: "single",
+        body: "This is a very long body line that overflows",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const result = gridToString(compose([card], { cols: 16, rows: 12 }));
+      const lines = result.split("\n");
+      expect(lines[4]).toContain("…");
     });
   });
 });

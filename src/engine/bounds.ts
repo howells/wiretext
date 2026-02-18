@@ -7,6 +7,47 @@ export interface ObjectBounds {
   height: number;
 }
 
+export interface ContentBounds {
+  minCol: number;
+  minRow: number;
+  maxCol: number;
+  maxRow: number;
+}
+
+/** Get the tight bounding box enclosing all objects. Returns null for empty arrays. */
+export function getContentBounds(
+  objects: readonly WireObject[]
+): ContentBounds | null {
+  if (objects.length === 0) {
+    return null;
+  }
+
+  let minCol = Number.POSITIVE_INFINITY;
+  let minRow = Number.POSITIVE_INFINITY;
+  let maxCol = 0;
+  let maxRow = 0;
+
+  for (const obj of objects) {
+    const b = getObjectBounds(obj);
+    if (b.col < minCol) {
+      minCol = b.col;
+    }
+    if (b.row < minRow) {
+      minRow = b.row;
+    }
+    const endCol = b.col + b.width;
+    const endRow = b.row + b.height;
+    if (endCol > maxCol) {
+      maxCol = endCol;
+    }
+    if (endRow > maxRow) {
+      maxRow = endRow;
+    }
+  }
+
+  return { minCol, minRow, maxCol, maxRow };
+}
+
 export function getObjectBounds(obj: WireObject): ObjectBounds {
   switch (obj.type) {
     case "box":

@@ -112,6 +112,7 @@ export interface ComponentObject extends BaseObject {
   activeStep?: number;
   value?: number;
   maxValue?: number;
+  body?: string;
 }
 
 export type WireObject =

@@ -37,7 +37,9 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@biomejs/biome",
+      "core-js",
       "esbuild",
+      "protobufjs",
       "sharp"
     ]
   },

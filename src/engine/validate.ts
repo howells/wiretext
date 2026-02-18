@@ -21,7 +21,9 @@ export function validateContentWidth(obj: MinimalObject): ContentWidthError[] {
     if (!obj.label) {
       return [];
     }
-    const minWidth = displayWidth(obj.label) + 4;
+    const lines = obj.label.split("\n");
+    const widest = Math.max(...lines.map((l) => displayWidth(l)));
+    const minWidth = widest + 4;
     if (obj.width < minWidth) {
       return [
         {

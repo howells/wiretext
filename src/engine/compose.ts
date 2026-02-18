@@ -182,11 +182,29 @@ function stampCenteredLabel(
   height: number,
   label: string
 ) {
-  const labelRow = row + Math.floor(height / 2);
   const maxLabelLen = width - 4;
-  const trimmed = truncate(label, maxLabelLen);
-  const labelCol = col + Math.floor((width - displayWidth(trimmed)) / 2);
-  stampText(grid, labelCol, labelRow, trimmed);
+  const lines = label.split("\n");
+
+  if (lines.length === 1) {
+    // Single-line: preserve exact original centering row
+    const labelRow = row + Math.floor(height / 2);
+    const trimmed = truncate(label, maxLabelLen);
+    const labelCol = col + Math.floor((width - displayWidth(trimmed)) / 2);
+    stampText(grid, labelCol, labelRow, trimmed);
+    return;
+  }
+
+  // Multiline: vertically center the block of lines within the interior
+  const interiorHeight = height - 2;
+  const visibleLines = lines.slice(0, interiorHeight);
+  const startRow =
+    row + 1 + Math.floor((interiorHeight - visibleLines.length) / 2);
+
+  for (let i = 0; i < visibleLines.length; i++) {
+    const trimmed = truncate(visibleLines[i], maxLabelLen);
+    const labelCol = col + Math.floor((width - displayWidth(trimmed)) / 2);
+    stampText(grid, labelCol, startRow + i, trimmed);
+  }
 }
 
 function stampBox(grid: string[][], obj: BoxObject) {
@@ -510,18 +528,43 @@ function stampComponentTitleBar(
   title: string,
   showClose: boolean
 ) {
-  if (obj.height < 5) {
+  if (obj.height < 6) {
     return;
   }
   const chars = getBoxChars(obj.borderStyle);
-  stampHLine(grid, col + 1, row + 2, obj.width - 2);
-  forceSetChar(grid, col, row + 2, chars.teeRight);
-  forceSetChar(grid, col + obj.width - 1, row + 2, chars.teeLeft);
+  // Title at row+1, padding row at row+2, separator at row+3
+  stampHLine(grid, col + 1, row + 3, obj.width - 2);
+  forceSetChar(grid, col, row + 3, chars.teeRight);
+  forceSetChar(grid, col + obj.width - 1, row + 3, chars.teeLeft);
   if (showClose) {
     setChar(grid, col + obj.width - 3, row + 1, "×");
   }
   const maxLen = showClose ? obj.width - 6 : obj.width - 4;
   stampText(grid, col + 2, row + 1, truncate(title, maxLen));
+}
+
+function stampCardBody(
+  grid: string[][],
+  obj: ComponentObject,
+  col: number,
+  row: number
+) {
+  if (obj.height < 6 || !obj.body) {
+    return;
+  }
+  const lines = obj.body.split("\n");
+  const maxLen = obj.width - 4;
+  const startRow = row + 4;
+  const endRow = row + obj.height - 2;
+
+  for (let i = 0; i < lines.length; i++) {
+    const r = startRow + i;
+    if (r > endRow) {
+      break;
+    }
+    const trimmed = truncate(lines[i], maxLen);
+    stampText(grid, col + 2, r, trimmed);
+  }
 }
 
 function stampComponentBrowser(
@@ -866,25 +909,15 @@ function stampComponentContent(
     case "table":
       return stampComponentTable(grid, obj, col, row);
     case "modal":
-      return stampComponentTitleBar(
-        grid,
-        obj,
-        col,
-        row,
-        obj.label ?? "Modal",
-        true
-      );
+      stampComponentTitleBar(grid, obj, col, row, obj.label ?? "Modal", true);
+      stampCardBody(grid, obj, col, row);
+      return;
     case "browser":
       return stampComponentBrowser(grid, obj, col, row);
     case "card":
-      return stampComponentTitleBar(
-        grid,
-        obj,
-        col,
-        row,
-        obj.label ?? "Card",
-        false
-      );
+      stampComponentTitleBar(grid, obj, col, row, obj.label ?? "Card", false);
+      stampCardBody(grid, obj, col, row);
+      return;
     case "navbar":
       return stampComponentNavbar(grid, obj, col, row);
     case "tabs":

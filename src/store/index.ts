@@ -1,6 +1,7 @@
 import { enableMapSet, produce } from "immer";
 import { nanoid } from "nanoid";
 import { create } from "zustand";
+import { BORDERLESS_COMPONENTS } from "@/engine/min-width";
 import type {
   ComponentType,
   GridSize,
@@ -346,10 +347,13 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
         if (obj.id !== id || !hasRectBounds(obj)) {
           return obj;
         }
+        const isBorderless =
+          obj.type === "component" &&
+          BORDERLESS_COMPONENTS.has(obj.componentType);
         return {
           ...obj,
-          width: Math.max(3, newWidth),
-          height: Math.max(3, newHeight),
+          width: Math.max(isBorderless ? 1 : 3, newWidth),
+          height: Math.max(isBorderless ? 1 : 3, newHeight),
         };
       }),
     }));

@@ -165,7 +165,7 @@ describe("fillDefaults", () => {
       }
     });
 
-    it("should apply default width regardless of label length", () => {
+    it("should auto-size width to fit label when wider than default", () => {
       const { objects } = fillDefaults([
         {
           type: "component",
@@ -174,7 +174,51 @@ describe("fillDefaults", () => {
         },
       ]);
       if (objects[0].type === "component") {
+        // "Download Everything" = 19 chars + 4 padding = 23
+        expect(objects[0].width).toBe(23);
+      }
+    });
+
+    it("should use default width when label fits within it", () => {
+      const { objects } = fillDefaults([
+        {
+          type: "component",
+          componentType: "button",
+          label: "OK",
+        },
+      ]);
+      if (objects[0].type === "component") {
         expect(objects[0].width).toBe(COMPONENT_BY_TYPE.button.defaultWidth);
+      }
+    });
+
+    it("should auto-size toggle width to fit label", () => {
+      const { objects } = fillDefaults([
+        {
+          type: "component",
+          componentType: "toggle",
+          label: "Push notifications",
+        },
+      ]);
+      if (objects[0].type === "component") {
+        // "Push notifications" = 18 chars + 6 padding = 24
+        expect(objects[0].width).toBe(24);
+      }
+    });
+
+    it("should auto-size navbar width to fit nav items", () => {
+      const { objects } = fillDefaults([
+        {
+          type: "component",
+          componentType: "navbar",
+          navItems: ["Home", "About", "Contact Us", "Blog"],
+        },
+      ]);
+      if (objects[0].type === "component") {
+        // "Home  About  Contact Us  Blog" = 30 chars + 7 padding = 37
+        expect(objects[0].width).toBe(
+          Math.max(COMPONENT_BY_TYPE.navbar.defaultWidth, 37)
+        );
       }
     });
 

@@ -596,16 +596,16 @@ function BoxProperties({ obj }: { obj: Extract<WireObject, { type: "box" }> }) {
         >
           Label
         </label>
-        <input
-          className="w-full rounded border border-border bg-bg px-2 py-1 text-text text-xs outline-none focus:border-accent"
+        <textarea
+          className="w-full resize-y rounded border border-border bg-bg px-2 py-1 text-text text-xs outline-none focus:border-accent"
           id="box-label"
           onChange={(e) =>
             updateObject(obj.id, {
               label: e.target.value || undefined,
             } as Partial<WireObject>)
           }
-          placeholder="Optional label"
-          type="text"
+          placeholder="Optional label (use Enter for multiline)"
+          rows={2}
           value={obj.label ?? ""}
         />
       </div>
@@ -687,6 +687,39 @@ function ArrowProperties({
           {endHead ? "─▸" : "──"}
         </button>
       </div>
+    </div>
+  );
+}
+
+function BodyTextField({
+  obj,
+}: {
+  obj: Extract<WireObject, { type: "component" }>;
+}) {
+  const updateObject = useEditorStore((s) => s.updateObject);
+  if (obj.componentType !== "card" && obj.componentType !== "modal") {
+    return null;
+  }
+  return (
+    <div>
+      <label
+        className="mb-1 block text-[10px] text-text-dim uppercase tracking-wider"
+        htmlFor="component-body"
+      >
+        Body
+      </label>
+      <textarea
+        className="w-full resize-y rounded border border-border bg-bg px-2 py-1 text-text text-xs outline-none focus:border-accent"
+        id="component-body"
+        onChange={(e) =>
+          updateObject(obj.id, {
+            body: e.target.value || undefined,
+          } as Partial<WireObject>)
+        }
+        placeholder="Body text (use Enter for multiline)"
+        rows={3}
+        value={obj.body ?? ""}
+      />
     </div>
   );
 }
@@ -835,6 +868,8 @@ function ComponentProperties({
           />
         </div>
       )}
+
+      <BodyTextField obj={obj} />
     </>
   );
 }
