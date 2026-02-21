@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm turbo build --filter=@wiretext/app",
+  "outputDirectory": "apps/app/.next",
+  "framework": "nextjs",
+  "installCommand": "pnpm install"
+}
