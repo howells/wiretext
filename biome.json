@@ -1,38 +1,20 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.15/schema.json",
-  "extends": [
-    "ultracite/biome/core",
-    "ultracite/biome/react",
-    "ultracite/biome/next"
-  ],
+  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "extends": ["ultracite/biome/core"],
   "root": true,
-  "files": {
-    "includes": ["src/**/*.ts", "src/**/*.tsx"]
+  "vcs": {
+    "useIgnoreFile": false
   },
   "overrides": [
     {
-      "includes": ["scripts/**"],
-      "linter": { "enabled": false },
-      "formatter": { "enabled": false }
-    }
-  ],
-  "linter": {
-    "rules": {
-      "suspicious": {
-        "noUnknownAtRules": "off"
-      },
-      "security": {
-        "noDangerouslySetInnerHtml": "off"
-      },
-      "a11y": {
-        "noNoninteractiveElementInteractions": "off",
-        "useKeyWithClickEvents": "off"
+      "includes": ["**/src/index.ts", "**/src/index.tsx"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "off"
+          }
+        }
       }
     }
-  },
-  "css": {
-    "linter": {
-      "enabled": false
-    }
-  }
+  ]
 }

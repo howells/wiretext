@@ -1,0 +1,15 @@
+{
+  "root": false,
+  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/next"
+  ],
+  "vcs": {
+    "useIgnoreFile": false
+  },
+  "files": {
+    "includes": ["src/**/*.ts", "src/**/*.tsx"]
+  }
+}

@@ -1,6 +1,5 @@
 # dependencies
-/node_modules
-/.pnp
+node_modules/
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -9,11 +8,11 @@
 !.yarn/versions
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build/
 
 # misc
 .DS_Store
@@ -37,3 +36,8 @@ next-env.d.ts
 
 # build output
 dist/
+# turbo
+.turbo/
+
+# Nightshift plan artifacts (keep out of version control)
+.nightshift-plan
