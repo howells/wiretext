@@ -93,7 +93,7 @@ export const boxSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Centered label. Max length: width - 4 characters. Use \\n for multiline centered text (each line is individually centered)."
+      "Centered label. Max length: width - 4 characters. For symmetric padding, width and label length must share parity (both even or both odd). Use \\n for multiline centered text."
     ),
 });
 

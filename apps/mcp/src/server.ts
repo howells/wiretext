@@ -40,6 +40,14 @@ BOX LABELS:
 - The block of lines is vertically centered within the box interior
 - Min width is based on the widest line + 4
 
+EVEN CENTERING:
+- Labels are centered using floor division, so odd remainders cause 1 extra space on the right
+- For perfectly even padding around a label: width and label length must have the same parity (both even or both odd)
+- Example: "Save" (4 chars) → use width 8 (even+even), NOT 7. Width 8 = 2 border + 2 pad + 4 label = symmetric
+- Example: "Login" (5 chars) → use width 9 (odd+odd). Width 9 = 2 border + 1 pad + 5 label + 1 pad = symmetric
+- Same rule applies vertically: for centered vertical content, match height parity to content line count
+- Formula: width = label.length + 4 gives minimum symmetric width. Add 2 to widen while keeping symmetry
+
 TEXT SIZING:
 - Each character in text content = 1 cell wide
 - Text at col=10 with 15 characters occupies cols 10-24
@@ -55,7 +63,7 @@ VERTICAL STACKING (inputs, checkboxes, etc.):
 COMPONENT SIZES:
 - button: min width = label.length + 4, height 3
 - input/select: min width = label.length + 6, height 3
-- checkbox/radio: min width = label.length + 8, height 3 (includes [✓] or (●) prefix)
+- checkbox/radio: height 1, borderless [✓]/( ●) indicator + label, uses checked field
 - table: min height 5, width should fit all column headers
 - card/modal: min height 6 (border + title + padding row + separator + content + border). Body text (via body field) renders left-aligned starting at row+4. Use \\n for multiline body text.
 - browser: min height 5 (URL bar + separator + content)
@@ -93,6 +101,13 @@ CONNECTORS:
 - endHead defaults to true (arrow at end), startHead defaults to false
 - Connectors move automatically when connected objects are moved
 - Give connected objects explicit id values so connectors can reference them
+- Optional label field renders text centered at the path midpoint (supports multiline via \n, max 20 chars per line)
+
+GROUPING:
+- Set the same groupId string on multiple objects to group them
+- Grouped objects move and select together in the editor
+- Use any string as groupId (e.g., "header-group", "form-1")
+- Omit groupId to leave objects ungrouped
 
 Z-INDEX:
 - Higher zIndex objects render on top and overwrite lower ones

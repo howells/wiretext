@@ -11,5 +11,17 @@
   },
   "files": {
     "includes": ["src/**/*.ts", "src/**/*.tsx"]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/app/layout.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
+    }
+  ]
 }

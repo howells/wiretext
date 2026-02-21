@@ -37,7 +37,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0f",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f8fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0f" },
+  ],
 };
 
 const jsonLd = {
@@ -62,7 +65,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html className={mono.variable} lang="en">
+    <html className={mono.variable} lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("wiretext-theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme:dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="font-mono antialiased">
         <Script
           id="json-ld"

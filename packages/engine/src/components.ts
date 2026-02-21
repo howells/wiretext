@@ -42,16 +42,16 @@ export const COMPONENT_DEFS: ComponentDef[] = [
     name: "Checkbox",
     preview: "[✓] ",
     category: "input",
-    defaultWidth: 20,
-    defaultHeight: 3,
+    defaultWidth: 14,
+    defaultHeight: 1,
   },
   {
     type: "radio",
     name: "Radio",
     preview: "(●) ",
     category: "input",
-    defaultWidth: 20,
-    defaultHeight: 3,
+    defaultWidth: 14,
+    defaultHeight: 1,
   },
   // Layout
   {

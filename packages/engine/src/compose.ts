@@ -24,6 +24,8 @@ const BORDERLESS_COMPONENTS: ReadonlySet<ComponentType> = new Set([
   "icon",
   "divider",
   "toggle",
+  "checkbox",
+  "radio",
   "breadcrumb",
   "list",
   "stepper",
@@ -124,6 +126,19 @@ function stampText(grid: string[][], col: number, row: number, text: string) {
   let offset = 0;
   for (const ch of text) {
     setChar(grid, col + offset, row, ch);
+    offset += charWidth(ch);
+  }
+}
+
+function forceStampText(
+  grid: string[][],
+  col: number,
+  row: number,
+  text: string
+) {
+  let offset = 0;
+  for (const ch of text) {
+    forceSetChar(grid, col + offset, row, ch);
     offset += charWidth(ch);
   }
 }
@@ -458,9 +473,10 @@ function stampComponentToggle(
   defaultLabel: string
 ) {
   const mid = row + Math.floor(obj.height / 2);
-  stampText(grid, col + 2, mid, indicator);
-  const maxLen = obj.width - 8;
-  stampText(grid, col + 6, mid, truncate(obj.label ?? defaultLabel, maxLen));
+  stampText(grid, col, mid, indicator);
+  const labelCol = col + displayWidth(indicator) + 1;
+  const maxLen = obj.width - displayWidth(indicator) - 1;
+  stampText(grid, labelCol, mid, truncate(obj.label ?? defaultLabel, maxLen));
 }
 
 function stampTableHeaders(
@@ -733,10 +749,9 @@ function stampComponentToggleSwitch(
   const on = obj.checked === true;
   const toggle = on ? "[●──]" : "[──●]";
   stampText(grid, col, row, toggle);
-  if (obj.label) {
-    const maxLen = obj.width - 6;
-    stampText(grid, col + 6, row, truncate(obj.label, maxLen));
-  }
+  const toggleLabel = obj.label ?? "Toggle";
+  const maxLen = obj.width - 6;
+  stampText(grid, col + 6, row, truncate(toggleLabel, maxLen));
 }
 
 function stampComponentAlert(
@@ -1051,6 +1066,86 @@ function stampConnectorArrowHeads(
   }
 }
 
+/** Find the midpoint along a connector path by walking segment lengths. */
+export function getConnectorMidpoint(points: GridPoint[]): {
+  col: number;
+  row: number;
+  isHorizontal: boolean;
+} {
+  let totalLength = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const from = points[i];
+    const to = points[i + 1];
+    totalLength += Math.abs(to.col - from.col) + Math.abs(to.row - from.row);
+  }
+
+  const halfLen = totalLength / 2;
+  let accumulated = 0;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const from = points[i];
+    const to = points[i + 1];
+    const segLen = Math.abs(to.col - from.col) + Math.abs(to.row - from.row);
+
+    if (accumulated + segLen >= halfLen) {
+      const remaining = halfLen - accumulated;
+      const isHorizontal = from.row === to.row;
+
+      if (isHorizontal) {
+        const dir = to.col > from.col ? 1 : -1;
+        return {
+          col: from.col + dir * Math.round(remaining),
+          row: from.row,
+          isHorizontal,
+        };
+      }
+      const dir = to.row > from.row ? 1 : -1;
+      return {
+        col: from.col,
+        row: from.row + dir * Math.round(remaining),
+        isHorizontal,
+      };
+    }
+    accumulated += segLen;
+  }
+
+  return { col: points[0].col, row: points[0].row, isHorizontal: true };
+}
+
+function stampConnectorLabel(
+  grid: string[][],
+  points: GridPoint[],
+  label: string
+) {
+  const maxLabelWidth = 20;
+  const lines = label.split("\n");
+  const {
+    col: midCol,
+    row: midRow,
+    isHorizontal,
+  } = getConnectorMidpoint(points);
+
+  // Vertically center the block of lines around the midpoint
+  const startRow = midRow - Math.floor(lines.length / 2);
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = truncate(lines[i], maxLabelWidth);
+    const lineWidth = displayWidth(trimmed);
+    if (lineWidth === 0) {
+      continue;
+    }
+    const row = startRow + i;
+
+    if (isHorizontal) {
+      const startCol = midCol - Math.floor(lineWidth / 2);
+      stampText(grid, startCol, row - 1, trimmed);
+    } else {
+      const startCol = midCol - Math.floor(lineWidth / 2);
+      forceStampText(grid, startCol, row, trimmed);
+    }
+  }
+}
+
 function stampConnector(
   grid: string[][],
   obj: ConnectorObject,
@@ -1068,6 +1163,10 @@ function stampConnector(
   stampConnectorSegments(grid, points);
   stampConnectorCorners(grid, points);
   stampConnectorArrowHeads(grid, points, showStart, showEnd);
+
+  if (obj.label) {
+    stampConnectorLabel(grid, points, obj.label);
+  }
 }
 
 function getConnectorArrowHead(dir: string): string {

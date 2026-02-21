@@ -76,25 +76,27 @@ export function hitTest(
   return null;
 }
 
-/** Check if a point lies on an axis-aligned segment between two grid points */
+/** Check if a point lies on an axis-aligned segment between two grid points.
+ *  tolerance adds a hit-test buffer in grid cells around the segment. */
 function isPointOnSegment(
   col: number,
   row: number,
   a: GridPoint,
-  b: GridPoint
+  b: GridPoint,
+  tolerance = 0
 ): boolean {
   if (a.row === b.row) {
     return (
-      row === a.row &&
-      col >= Math.min(a.col, b.col) &&
-      col <= Math.max(a.col, b.col)
+      Math.abs(row - a.row) <= tolerance &&
+      col >= Math.min(a.col, b.col) - tolerance &&
+      col <= Math.max(a.col, b.col) + tolerance
     );
   }
   if (a.col === b.col) {
     return (
-      col === a.col &&
-      row >= Math.min(a.row, b.row) &&
-      row <= Math.max(a.row, b.row)
+      Math.abs(col - a.col) <= tolerance &&
+      row >= Math.min(a.row, b.row) - tolerance &&
+      row <= Math.max(a.row, b.row) + tolerance
     );
   }
   return false;
@@ -152,7 +154,7 @@ function isPointOnConnector(
     return false;
   }
   for (let i = 0; i < path.points.length - 1; i++) {
-    if (isPointOnSegment(col, row, path.points[i], path.points[i + 1])) {
+    if (isPointOnSegment(col, row, path.points[i], path.points[i + 1], 1)) {
       return true;
     }
   }
@@ -465,6 +467,11 @@ function tryDoubleClickEdit(
     return true;
   }
   if (hit.type === "component" && !NO_INLINE_EDIT.has(hit.componentType)) {
+    state.setEditingLabelId(hit.id);
+    state.selectObject(hit.id);
+    return true;
+  }
+  if (hit.type === "connector") {
     state.setEditingLabelId(hit.id);
     state.selectObject(hit.id);
     return true;

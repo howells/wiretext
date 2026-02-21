@@ -15,6 +15,7 @@ import { getShareUrl } from "@/lib/sharing";
 import { useCanvasEvents } from "@/lib/use-canvas-events";
 import { useCharMetrics } from "@/lib/use-char-metrics";
 import { useKeyboard } from "@/lib/use-keyboard";
+import { useTheme } from "@/lib/use-theme";
 import { useEditorStore } from "@/store";
 import { Canvas } from "./canvas";
 import { ContextMenu } from "./context-menu";
@@ -40,6 +41,7 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [mcpOpen, setMcpOpen] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
+  const { resolvedTheme, setTheme } = useTheme();
   const toggleExport = useCallback(() => setExportOpen((v) => !v), []);
   useKeyboard(toggleExport);
 
@@ -193,6 +195,16 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
               type="button"
             >
               {shareMsg || "Share"}
+            </button>
+            <button
+              className="rounded border border-border bg-surface px-3 py-1.5 text-text-dim text-xs transition-colors hover:bg-surface-hover hover:text-text"
+              onClick={() =>
+                setTheme(resolvedTheme === "dark" ? "light" : "dark")
+              }
+              title={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
+              type="button"
+            >
+              {resolvedTheme === "dark" ? "☾" : "☀"}
             </button>
           </div>
         </div>

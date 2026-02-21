@@ -2645,5 +2645,85 @@ describe("compose", () => {
       expect(grid[2][10]).toBe("─");
       expect(grid[2][15]).toBe("─");
     });
+
+    it("renders label on a vertical connector centered at the midpoint", () => {
+      const connector = makeConnector({ label: "API" });
+      const grid = compose([boxA, boxB, connector], { cols: 20, rows: 20 });
+      // Vertical connector goes from row 5 to row 9 at col 5
+      // Midpoint is row 7, label centered on col 5 (width 3 → starts at col 4)
+      expect(grid[7][4]).toBe("A");
+      expect(grid[7][5]).toBe("P");
+      expect(grid[7][6]).toBe("I");
+    });
+
+    it("renders label on a horizontal connector one row above the line", () => {
+      const leftBox: BoxObject = {
+        id: "a",
+        type: "box",
+        position: { col: 0, row: 0 },
+        width: 10,
+        height: 5,
+        borderStyle: "single",
+        zIndex: 0,
+        layerId: "layer-1",
+      };
+      const rightBox: BoxObject = {
+        id: "b",
+        type: "box",
+        position: { col: 20, row: 0 },
+        width: 10,
+        height: 5,
+        borderStyle: "single",
+        zIndex: 1,
+        layerId: "layer-1",
+      };
+      const connector = makeConnector({ label: "data" });
+      const grid = compose([leftBox, rightBox, connector], {
+        cols: 40,
+        rows: 10,
+      });
+      // Horizontal connector at row 2, label should be one row above at row 1
+      const row1 = grid[1].join("");
+      expect(row1).toContain("data");
+      // The connector line at row 2 should remain intact
+      expect(grid[2][15]).toBe("─");
+    });
+
+    it("truncates long connector labels", () => {
+      const connector = makeConnector({
+        label: "This is a very long label that exceeds twenty",
+      });
+      const grid = compose([boxA, boxB, connector], { cols: 40, rows: 20 });
+      const result = gridToString(grid);
+      expect(result).toContain("…");
+      // Should not contain the full original text
+      expect(result).not.toContain("twenty");
+    });
+
+    it("does not render label when label is undefined", () => {
+      const connector = makeConnector();
+      const grid = compose([boxA, boxB, connector], { cols: 20, rows: 20 });
+      // Midpoint row 7 should only have the vertical line char at col 5
+      for (let c = 0; c < 20; c++) {
+        if (c === 5) {
+          expect(grid[7][c]).toBe("│");
+        } else {
+          expect(grid[7][c]).toBe(" ");
+        }
+      }
+    });
+
+    it("does not render label when label is empty string", () => {
+      const connector = makeConnector({ label: "" });
+      const grid = compose([boxA, boxB, connector], { cols: 20, rows: 20 });
+      // Should behave the same as no label
+      for (let c = 0; c < 20; c++) {
+        if (c === 5) {
+          expect(grid[7][c]).toBe("│");
+        } else {
+          expect(grid[7][c]).toBe(" ");
+        }
+      }
+    });
   });
 });

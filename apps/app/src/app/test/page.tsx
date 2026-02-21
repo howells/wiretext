@@ -505,7 +505,7 @@ export default function TestPage() {
   return (
     <div
       style={{
-        background: "#1a1a2e",
+        background: "var(--color-bg)",
         height: "100vh",
         padding: "2rem",
         fontFamily: "var(--font-mono), monospace",
@@ -514,7 +514,7 @@ export default function TestPage() {
     >
       <h1
         style={{
-          color: "#e0e0e0",
+          color: "var(--color-text)",
           fontSize: "1.2rem",
           marginBottom: "0.5rem",
           fontFamily: "system-ui, sans-serif",
@@ -524,7 +524,7 @@ export default function TestPage() {
       </h1>
       <p
         style={{
-          color: "#888",
+          color: "var(--color-text-dim)",
           fontSize: "0.85rem",
           marginBottom: "1.5rem",
           fontFamily: "system-ui, sans-serif",
@@ -535,7 +535,7 @@ export default function TestPage() {
       </p>
       <pre
         style={{
-          color: "#c8d6e5",
+          color: "var(--color-text)",
           fontSize: "14px",
           lineHeight: "1.35",
           whiteSpace: "pre",

@@ -52,17 +52,30 @@ function CheckedToggle({
   return (
     <div>
       <FieldLabel>State</FieldLabel>
-      <button
-        className={`rounded px-2 py-0.5 text-xs transition-colors ${
-          checked
-            ? "bg-accent text-bg"
-            : "bg-surface-hover text-text-dim hover:text-text"
-        }`}
-        onClick={() => onChange(!checked)}
-        type="button"
-      >
-        {checked ? label[0] : label[1]}
-      </button>
+      <div className="flex gap-1">
+        <button
+          className={`rounded px-2 py-0.5 text-xs transition-colors ${
+            checked
+              ? "bg-accent text-bg"
+              : "bg-surface-hover text-text-dim hover:text-text"
+          }`}
+          onClick={() => onChange(true)}
+          type="button"
+        >
+          {label[0]}
+        </button>
+        <button
+          className={`rounded px-2 py-0.5 text-xs transition-colors ${
+            checked
+              ? "bg-surface-hover text-text-dim hover:text-text"
+              : "bg-accent text-bg"
+          }`}
+          onClick={() => onChange(false)}
+          type="button"
+        >
+          {label[1]}
+        </button>
+      </div>
     </div>
   );
 }
@@ -947,50 +960,40 @@ function ConnectorProperties({
 
       <div>
         <FieldLabel>From side</FieldLabel>
-        <div className="flex gap-1">
+        <select
+          className="w-full rounded bg-surface-hover px-1.5 py-1 text-text text-xs outline-none"
+          onChange={(e) =>
+            updateObject(obj.id, {
+              fromSide: e.target.value === "auto" ? undefined : e.target.value,
+            } as Partial<WireObject>)
+          }
+          value={obj.fromSide ?? "auto"}
+        >
           {connectorSides.map((side) => (
-            <button
-              className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
-                (obj.fromSide ?? "auto") === side
-                  ? "bg-accent text-bg"
-                  : "bg-surface-hover text-text-dim hover:text-text"
-              }`}
-              key={side}
-              onClick={() =>
-                updateObject(obj.id, {
-                  fromSide: side === "auto" ? undefined : side,
-                } as Partial<WireObject>)
-              }
-              type="button"
-            >
+            <option key={side} value={side}>
               {side}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       <div>
         <FieldLabel>To side</FieldLabel>
-        <div className="flex gap-1">
+        <select
+          className="w-full rounded bg-surface-hover px-1.5 py-1 text-text text-xs outline-none"
+          onChange={(e) =>
+            updateObject(obj.id, {
+              toSide: e.target.value === "auto" ? undefined : e.target.value,
+            } as Partial<WireObject>)
+          }
+          value={obj.toSide ?? "auto"}
+        >
           {connectorSides.map((side) => (
-            <button
-              className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
-                (obj.toSide ?? "auto") === side
-                  ? "bg-accent text-bg"
-                  : "bg-surface-hover text-text-dim hover:text-text"
-              }`}
-              key={side}
-              onClick={() =>
-                updateObject(obj.id, {
-                  toSide: side === "auto" ? undefined : side,
-                } as Partial<WireObject>)
-              }
-              type="button"
-            >
+            <option key={side} value={side}>
               {side}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       <div>

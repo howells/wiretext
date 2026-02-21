@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme inline {
+@theme {
   --color-bg: #0a0a0f;
   --color-surface: #12121a;
   --color-surface-hover: #1a1a26;
@@ -19,16 +19,41 @@
     "Liberation Mono", monospace;
 }
 
-html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family: var(--font-mono);
-  color: var(--color-text);
-  background: var(--color-bg);
+:root:not(.dark) {
+  --color-bg: #f8f8fb;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f0f0f5;
+  --color-border: #d8d8e0;
+  --color-border-bright: #c0c0cc;
+  --color-text: #1a1a2e;
+  --color-text-dim: #6b6b80;
+  --color-text-bright: #000000;
+  --color-accent: #4a6aef;
+  --color-accent-dim: #8a9ad0;
+  --color-grid-dot: #e0e0ea;
+  --color-selection: rgba(74, 106, 239, 0.12);
+  --color-selection-border: rgba(74, 106, 239, 0.4);
 }
 
-::selection {
-  color: var(--color-bg);
-  background: var(--color-accent);
+@layer base {
+  html,
+  body {
+    @apply m-0 p-0 font-mono text-text bg-bg;
+  }
+
+  ::selection {
+    @apply text-bg bg-accent;
+  }
+
+  .no-transitions * {
+    @apply !transition-none;
+  }
+
+  * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
 }

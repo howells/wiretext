@@ -5,6 +5,8 @@ const BORDERLESS_COMPONENTS: ReadonlySet<ComponentType> = new Set([
   "icon",
   "divider",
   "toggle",
+  "checkbox",
+  "radio",
   "breadcrumb",
   "list",
   "stepper",

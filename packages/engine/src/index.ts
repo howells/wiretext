@@ -25,7 +25,7 @@ export {
   COMPONENT_DEFS,
 } from "./components";
 // Compose
-export { compose, gridToString } from "./compose";
+export { compose, getConnectorMidpoint, gridToString } from "./compose";
 // Connector routing
 export type {
   ConnectorPath,

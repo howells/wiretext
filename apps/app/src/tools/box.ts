@@ -64,7 +64,7 @@ export const boxTool: ToolHandler = {
         type: "box",
         position: { col: dragStart.col, row: dragStart.row },
         width: 16,
-        height: 6,
+        height: 5,
         borderStyle: "single",
         zIndex: state.objects.length,
         layerId: state.activeLayerId,

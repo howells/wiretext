@@ -16,7 +16,6 @@ export function StatusBar({ hoverCol, hoverRow }: StatusBarProps) {
   const viewport = useEditorStore((s) => s.viewport);
   const selection = useEditorStore((s) => s.selection);
   const pendingComponent = useEditorStore((s) => s.pendingComponent);
-
   return (
     <div className="flex h-7 shrink-0 items-center gap-4 border-border border-t bg-surface px-3 text-text-dim text-xs">
       <span className="w-16">
