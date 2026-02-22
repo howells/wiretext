@@ -176,6 +176,40 @@ function handleEscape(e: KeyboardEvent, key: string): boolean {
   return true;
 }
 
+export function handleArrowKeys(e: KeyboardEvent, key: string): boolean {
+  if (
+    key !== "arrowup" &&
+    key !== "arrowdown" &&
+    key !== "arrowleft" &&
+    key !== "arrowright"
+  ) {
+    return false;
+  }
+  const state = useEditorStore.getState();
+  if (state.selection.size === 0) {
+    return false;
+  }
+  e.preventDefault();
+  const step = e.shiftKey ? 5 : 1;
+  switch (key) {
+    case "arrowup":
+      state.moveSelection(0, -step);
+      break;
+    case "arrowdown":
+      state.moveSelection(0, step);
+      break;
+    case "arrowleft":
+      state.moveSelection(-step, 0);
+      break;
+    case "arrowright":
+      state.moveSelection(step, 0);
+      break;
+    default:
+      break;
+  }
+  return true;
+}
+
 function handleZOrder(e: KeyboardEvent, key: string): boolean {
   if (key !== "]" && key !== "[") {
     return false;
@@ -235,6 +269,7 @@ export function useKeyboard(onToggleExport?: () => void) {
         handlePaste(e, key) ||
         handleDuplicate(e, key) ||
         handleZOrder(e, key) ||
+        handleArrowKeys(e, key) ||
         handleExport(e, key, onToggleExport) ||
         handleEscape(e, key) ||
         handleToggleSidebar(e, key);
