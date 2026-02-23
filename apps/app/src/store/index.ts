@@ -86,7 +86,7 @@ export interface EditorActions {
   deleteLayer: (id: LayerId) => void;
   deleteObject: (id: ObjectId) => void;
   deleteSelection: () => void;
-  duplicateSelection: () => void;
+  duplicateSelection: (offsetCol?: number, offsetRow?: number) => void;
 
   // Grouping
   groupSelection: () => void;
@@ -449,8 +449,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     if (clipboard.length === 0) {
       return;
     }
-    const OFFSET_COL = 2;
-    const OFFSET_ROW = 1;
+    const offsetCol = 2;
+    const offsetRow = 1;
     const newIds = new Set<ObjectId>();
     const rawObjects = clipboard.map((obj) => {
       const newId = nanoid();
@@ -460,8 +460,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
         id: newId,
         layerId: activeLayerId,
         position: {
-          col: obj.position.col + OFFSET_COL,
-          row: obj.position.row + OFFSET_ROW,
+          col: obj.position.col + offsetCol,
+          row: obj.position.row + offsetRow,
         },
       };
       // Also offset endPosition for line/arrow
@@ -469,8 +469,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
         return {
           ...base,
           endPosition: {
-            col: obj.endPosition.col + OFFSET_COL,
-            row: obj.endPosition.row + OFFSET_ROW,
+            col: obj.endPosition.col + offsetCol,
+            row: obj.endPosition.row + offsetRow,
           },
         } as WireObject;
       }
@@ -486,7 +486,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     }));
   },
 
-  duplicateSelection: () => {
+  duplicateSelection: (offsetCol = 2, offsetRow = 1) => {
     const state = get();
     if (state.selection.size === 0) {
       return;
@@ -495,8 +495,6 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     const copied = state.objects.filter(
       (obj) => state.selection.has(obj.id) && obj.type !== "connector"
     );
-    const OFFSET_COL = 2;
-    const OFFSET_ROW = 1;
     const newIds = new Set<ObjectId>();
     const rawObjects = copied.map((obj) => {
       const newId = nanoid();
@@ -506,16 +504,16 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
         id: newId,
         layerId: state.activeLayerId,
         position: {
-          col: obj.position.col + OFFSET_COL,
-          row: obj.position.row + OFFSET_ROW,
+          col: obj.position.col + offsetCol,
+          row: obj.position.row + offsetRow,
         },
       };
       if ("endPosition" in obj) {
         return {
           ...base,
           endPosition: {
-            col: obj.endPosition.col + OFFSET_COL,
-            row: obj.endPosition.row + OFFSET_ROW,
+            col: obj.endPosition.col + offsetCol,
+            row: obj.endPosition.row + offsetRow,
           },
         } as WireObject;
       }

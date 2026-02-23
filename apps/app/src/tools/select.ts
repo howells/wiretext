@@ -722,6 +722,13 @@ export const selectTool: ToolHandler = {
       state.selectObject(hit.id);
     }
 
+    // Alt+click: duplicate selection in-place, then drag the clones
+    if (e.altKey && !e.shiftKey) {
+      const freshState = useEditorStore.getState();
+      freshState.duplicateSelection(0, 0);
+      deferredDeselect = null;
+    }
+
     state.setEditingLabelId(null);
     didDrag = false;
     dragStart = { col, row };
