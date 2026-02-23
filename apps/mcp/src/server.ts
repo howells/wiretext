@@ -122,55 +122,11 @@ const server = new McpServer({
 
 server.tool(
   "create_wireframe",
-  `Generate an editable Wiretext URL from wire objects. Returns a URL that opens in the Wiretext editor for further editing.
+  `Generate an editable Wiretext URL from wire objects. Returns a short URL (e.g. https://wiretext.app/w/abc12345) that opens in the Wiretext editor for further editing.
 
 Object types: box, text, line, arrow, connector, component (button, input, select, checkbox, radio, table, modal, browser, card, navbar, tabs, progress, icon, image, divider, toggle, alert, breadcrumb, avatar, list, stepper, rating, skeleton).
 
 Most fields have sensible defaults — only 'type' is required for a box.
-
-${LAYOUT_GUIDE}`,
-  {
-    objects: validatedObjectsSchema.describe("Array of wire objects to render"),
-    layers: z
-      .array(layerSchema)
-      .optional()
-      .describe(
-        "Named layers for organizing objects. Objects reference layers via layerId. If omitted, a single default layer is created."
-      ),
-    baseUrl: z
-      .string()
-      .optional()
-      .describe(`Base URL for the editor (default: ${BASE_URL})`),
-  },
-  ({ objects, layers: userLayers, baseUrl }) => {
-    try {
-      const { objects: filled, layer: defaultLayer } = fillDefaults(objects);
-      const { objects: resolved, layers } = resolveLayers(
-        filled,
-        defaultLayer,
-        userLayers
-      );
-      const finalObjects = addPadding(resolved, 1);
-      const encoded = encodeDocument(finalObjects, layers);
-      const url = `${baseUrl ?? BASE_URL}/#${encoded}`;
-      return { content: [{ type: "text", text: url }] };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-  }
-);
-
-server.tool(
-  "share_wireframe",
-  `Generate a short wiretext.app URL from wire objects. POSTs the encoded document to the share API and returns a compact URL like https://wiretext.app/w/abc12345 (instead of a long hash URL). Prefer this over create_wireframe when the URL will be embedded in markdown or shared.
 
 ${LAYOUT_GUIDE}`,
   {
@@ -229,7 +185,7 @@ ${LAYOUT_GUIDE}`,
 
 server.tool(
   "render_wireframe",
-  `Render wire objects as ASCII/Unicode art text. Use this to preview layouts before generating a shareable URL with create_wireframe.
+  `Render wire objects as ASCII/Unicode art text. Use this to preview layouts before generating a URL with create_wireframe.
 
 ${LAYOUT_GUIDE}`,
   {
