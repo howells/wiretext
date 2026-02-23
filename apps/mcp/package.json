@@ -1,6 +1,6 @@
 {
   "name": "@wiretext/mcp",
-  "version": "0.1.4",
+  "version": "0.2.1",
   "type": "module",
   "bin": {
     "wiretext-mcp": "./dist/server.js"
