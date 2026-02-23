@@ -120,29 +120,28 @@ importers:
         version: 5.9.3
 
   apps/mcp:
-    dependencies:
+    devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.0
         version: 1.26.0(zod@4.3.6)
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.11
       '@wiretext/engine':
         specifier: workspace:*
         version: link:../../packages/engine
       '@wiretext/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.11
       tsup:
         specifier: ^8.0.0
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
 
   packages/engine:
     dependencies:
