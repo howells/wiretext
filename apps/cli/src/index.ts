@@ -108,6 +108,28 @@ interface CreateOptions {
   open: boolean;
 }
 
+interface ShareOptions extends CreateOptions {
+  hash?: string;
+}
+
+async function postShare(
+  baseUrl: string,
+  data: string
+): Promise<{ id: string; url: string }> {
+  const res = await fetch(`${baseUrl}/api/share`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      `Share failed (${res.status}): ${(body as { error?: string }).error ?? res.statusText}`
+    );
+  }
+  return res.json() as Promise<{ id: string; url: string }>;
+}
+
 function cmdCreate(
   filePath?: string,
   options: CreateOptions = {
@@ -153,6 +175,62 @@ function cmdCreate(
   }
 }
 
+async function cmdShare(
+  filePath?: string,
+  options: ShareOptions = {
+    baseUrl: DEFAULT_BASE_URL,
+    open: false,
+    copy: false,
+  }
+): Promise<void> {
+  let encoded: string;
+
+  if (options.hash) {
+    // Extract hash from URL or use raw value
+    const hashValue = options.hash.includes("#")
+      ? options.hash.split("#")[1]
+      : options.hash;
+    encoded = hashValue;
+  } else {
+    const raw = readInput(filePath);
+    const { objects: minimal, layers: userLayers } = parseInput(raw);
+    const { objects: filled, layer: defaultLayer } = fillDefaults(minimal);
+    const { objects: resolved, layers } = resolveLayers(
+      filled,
+      defaultLayer,
+      userLayers
+    );
+    const objects = addPadding(resolved, 1);
+    encoded = encodeDocument(objects, layers);
+  }
+
+  const { url } = await postShare(options.baseUrl, encoded);
+
+  if (options.copy) {
+    if (copyToClipboard(url)) {
+      console.log("Short URL copied to clipboard");
+    } else {
+      console.error("Failed to copy to clipboard");
+      console.log(url);
+    }
+  }
+
+  if (options.open) {
+    if (openInBrowser(url)) {
+      if (!options.copy) {
+        console.log("Opened in browser");
+      }
+    } else {
+      console.error("Failed to open browser");
+      console.log(url);
+    }
+  }
+
+  if (!(options.copy || options.open)) {
+    console.log(url);
+  }
+}
+
 function cmdRender(filePath?: string): void {
   const raw = readInput(filePath);
   const { objects: minimal, layers: userLayers } = parseInput(raw);
@@ -172,20 +250,22 @@ function printHelp(): void {
   console.log(`Usage: wiretext <command> [file.json] [options]
 
 Commands:
-  create [file.json]    Generate an editable Wiretext URL
+  create [file.json]    Generate an editable Wiretext URL (hash fragment)
+  share  [file.json]    Generate a short Wiretext URL via the share API
   render [file.json]    Render ASCII art to stdout
 
 Options:
   --open, -o            Open the URL in your default browser
   --copy, -c            Copy the URL to clipboard
-  --base-url <url>      Base URL for create (default: ${DEFAULT_BASE_URL})
+  --base-url <url>      Base URL (default: ${DEFAULT_BASE_URL})
+  --hash <url|hash>     (share only) Share an existing hash URL
 
 Input: JSON from file argument or stdin
 Format: { "objects": [...], "layers": [...] } or bare [...]
 Layers: [{ "id": "ui", "name": "UI Elements" }, ...]`);
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const command = args[0];
 
@@ -197,11 +277,15 @@ function main(): void {
   let baseUrl = DEFAULT_BASE_URL;
   let shouldOpen = false;
   let shouldCopy = false;
+  let hashValue: string | undefined;
   const filteredArgs: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--base-url" && i + 1 < args.length) {
       baseUrl = args[i + 1];
+      i++;
+    } else if (args[i] === "--hash" && i + 1 < args.length) {
+      hashValue = args[i + 1];
       i++;
     } else if (args[i] === "--open" || args[i] === "-o") {
       shouldOpen = true;
@@ -219,6 +303,14 @@ function main(): void {
     case "create":
       cmdCreate(filePath, { baseUrl, open: shouldOpen, copy: shouldCopy });
       break;
+    case "share":
+      await cmdShare(filePath, {
+        baseUrl,
+        open: shouldOpen,
+        copy: shouldCopy,
+        hash: hashValue,
+      });
+      break;
     case "render":
       cmdRender(filePath);
       break;
@@ -228,9 +320,7 @@ function main(): void {
   }
 }
 
-try {
-  main();
-} catch (error) {
+main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
-}
+});

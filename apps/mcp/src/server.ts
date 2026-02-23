@@ -169,6 +169,65 @@ ${LAYOUT_GUIDE}`,
 );
 
 server.tool(
+  "share_wireframe",
+  `Generate a short wiretext.app URL from wire objects. POSTs the encoded document to the share API and returns a compact URL like https://wiretext.app/w/abc12345 (instead of a long hash URL). Prefer this over create_wireframe when the URL will be embedded in markdown or shared.
+
+${LAYOUT_GUIDE}`,
+  {
+    objects: validatedObjectsSchema.describe("Array of wire objects to render"),
+    layers: z
+      .array(layerSchema)
+      .optional()
+      .describe(
+        "Named layers for organizing objects. Objects reference layers via layerId. If omitted, a single default layer is created."
+      ),
+    baseUrl: z
+      .string()
+      .optional()
+      .describe(`Base URL for the editor (default: ${BASE_URL})`),
+  },
+  async ({ objects, layers: userLayers, baseUrl }) => {
+    try {
+      const { objects: filled, layer: defaultLayer } = fillDefaults(objects);
+      const { objects: resolved, layers } = resolveLayers(
+        filled,
+        defaultLayer,
+        userLayers
+      );
+      const finalObjects = addPadding(resolved, 1);
+      const encoded = encodeDocument(finalObjects, layers);
+      const target = baseUrl ?? BASE_URL;
+
+      const res = await fetch(`${target}/api/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: encoded }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          `Share API error (${res.status}): ${(body as { error?: string }).error ?? res.statusText}`
+        );
+      }
+
+      const { url } = (await res.json()) as { url: string };
+      return { content: [{ type: "text" as const, text: url }] };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+server.tool(
   "render_wireframe",
   `Render wire objects as ASCII/Unicode art text. Use this to preview layouts before generating a shareable URL with create_wireframe.
 

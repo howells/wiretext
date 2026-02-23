@@ -13,6 +13,7 @@ const VALID_OBJECT_TYPES = new Set([
   "text",
   "line",
   "arrow",
+  "connector",
   "component",
 ]);
 
