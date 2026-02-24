@@ -219,7 +219,8 @@ export function McpDialog({ open, onClose }: McpDialogProps) {
               Primitives: <code className="text-text">box</code>,{" "}
               <code className="text-text">text</code>,{" "}
               <code className="text-text">line</code>,{" "}
-              <code className="text-text">arrow</code>
+              <code className="text-text">arrow</code>,{" "}
+              <code className="text-text">connector</code>
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
