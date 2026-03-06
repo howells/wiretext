@@ -161,7 +161,7 @@ export function Canvas({
         const rect = overlayRef.current?.getBoundingClientRect();
         const centerX = rect ? e.clientX - rect.left : e.clientX;
         const centerY = rect ? e.clientY - rect.top : e.clientY;
-        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        const delta = -e.deltaY * 0.005;
         zoomViewport(delta, centerX, centerY);
       } else {
         panViewport(-e.deltaX, -e.deltaY);
