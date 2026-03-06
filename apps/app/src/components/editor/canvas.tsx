@@ -13,10 +13,8 @@ import {
 import {
   type MouseEvent as ReactMouseEvent,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import {
   gridToScreen,
@@ -24,6 +22,7 @@ import {
   shiftObjectsForRender,
 } from "@/lib/coordinates";
 import { useCharMetrics } from "@/lib/use-char-metrics";
+import { useViewportGestures } from "@/lib/use-viewport-gestures";
 import { useEditorStore } from "@/store";
 import { hitTest } from "@/tools/select";
 
@@ -48,15 +47,9 @@ export function Canvas({
   const viewport = useEditorStore((s) => s.viewport);
   const selection = useEditorStore((s) => s.selection);
   const marquee = useEditorStore((s) => s.marquee);
-  const panViewport = useEditorStore((s) => s.panViewport);
-  const zoomViewport = useEditorStore((s) => s.zoomViewport);
 
-  const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
+  const { bind, isPanning, spaceHeld } = useViewportGestures();
   const overlayRef = useRef<HTMLDivElement | null>(null);
-  const isPanning = useRef(false);
-  const lastPan = useRef({ x: 0, y: 0 });
-  const spaceHeld = useRef(false);
-  const panCleanupRef = useRef<(() => void) | null>(null);
 
   // Compose all objects + draft, shifting negative positions into valid grid space
   const allObjects = draft ? [...objects, draft] : objects;
@@ -91,130 +84,43 @@ export function Canvas({
 
   const handleMouseDown = useCallback(
     (e: ReactMouseEvent) => {
-      // Middle-click or space+click → pan (with global tracking)
-      if (e.button === 1 || (e.button === 0 && spaceHeld.current)) {
-        isPanning.current = true;
-        lastPan.current = { x: e.clientX, y: e.clientY };
-        e.preventDefault();
-
-        // Track pan globally so cursor can leave the canvas area
-        const onMove = (we: globalThis.MouseEvent) => {
-          const dx = we.clientX - lastPan.current.x;
-          const dy = we.clientY - lastPan.current.y;
-          panViewport(dx, dy);
-          lastPan.current = { x: we.clientX, y: we.clientY };
-        };
-        const cleanup = () => {
-          isPanning.current = false;
-          window.removeEventListener("mousemove", onMove);
-          window.removeEventListener("mouseup", cleanup);
-          panCleanupRef.current = null;
-        };
-        panCleanupRef.current = cleanup;
-        window.addEventListener("mousemove", onMove);
-        window.addEventListener("mouseup", cleanup);
-        return;
+      if (isPanning.current || e.button === 1 || spaceHeld.current) {
+        return; // Pan handled by useViewportGestures
       }
-
       const pt = getGridPoint(e);
       if (pt) {
         onMouseDown?.(pt.col, pt.row, e);
       }
     },
-    [getGridPoint, onMouseDown, panViewport]
+    [getGridPoint, onMouseDown, isPanning, spaceHeld]
   );
 
   const handleMouseMove = useCallback(
     (e: ReactMouseEvent) => {
       if (isPanning.current) {
-        return; // Pan handled by window listeners
+        return;
       }
-
       const pt = getGridPoint(e);
       if (pt) {
         onMouseMove?.(pt.col, pt.row, e);
         onGridHover?.(pt.col, pt.row);
       }
     },
-    [getGridPoint, onMouseMove, onGridHover]
+    [getGridPoint, onMouseMove, onGridHover, isPanning]
   );
 
   const handleMouseUp = useCallback(
     (e: ReactMouseEvent) => {
       if (isPanning.current) {
-        return; // Pan handled by window listeners
+        return;
       }
-
       const pt = getGridPoint(e);
       if (pt) {
         onMouseUp?.(pt.col, pt.row, e);
       }
     },
-    [getGridPoint, onMouseUp]
+    [getGridPoint, onMouseUp, isPanning]
   );
-
-  const handleWheel = useCallback(
-    (e: WheelEvent) => {
-      e.preventDefault();
-      if (e.ctrlKey || e.metaKey) {
-        // Use canvas-relative coords so zoom centers on the cursor
-        const rect = overlayRef.current?.getBoundingClientRect();
-        const centerX = rect ? e.clientX - rect.left : e.clientX;
-        const centerY = rect ? e.clientY - rect.top : e.clientY;
-        const delta = -e.deltaY * 0.005;
-        zoomViewport(delta, centerX, centerY);
-      } else {
-        panViewport(-e.deltaX, -e.deltaY);
-      }
-    },
-    [panViewport, zoomViewport]
-  );
-
-  // Attach wheel handler as non-passive so preventDefault() works
-  useEffect(() => {
-    if (!overlayEl) {
-      return;
-    }
-    overlayEl.addEventListener("wheel", handleWheel, { passive: false });
-    return () => overlayEl.removeEventListener("wheel", handleWheel);
-  }, [handleWheel, overlayEl]);
-
-  // Track space key for pan mode
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !e.repeat) {
-        const target = e.target as HTMLElement;
-        const tag = target?.tagName;
-        if (
-          tag === "INPUT" ||
-          tag === "TEXTAREA" ||
-          tag === "SELECT" ||
-          target?.isContentEditable
-        ) {
-          return;
-        }
-        spaceHeld.current = true;
-      }
-    };
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
-        spaceHeld.current = false;
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  }, []);
-
-  // Clean up global pan listeners on unmount
-  useEffect(() => {
-    return () => {
-      panCleanupRef.current?.();
-    };
-  }, []);
 
   if (!metrics) {
     return null;
@@ -419,9 +325,11 @@ export function Canvas({
           );
         })()}
 
-      {/* Mouse overlay */}
+      {/* Mouse + gesture overlay */}
       <div
-        className="absolute inset-0"
+        {...bind()}
+        className="absolute inset-0 touch-none"
+        data-gesture-root=""
         onContextMenu={(e) => {
           e.preventDefault();
           const pt = getGridPoint(e);
@@ -431,7 +339,6 @@ export function Canvas({
           const state = useEditorStore.getState();
           const hit = hitTest(pt.col, pt.row, state.objects, state.layers);
           const targetObjectId = hit?.id ?? null;
-          // If right-clicked an object that's not selected, select it (+ group)
           if (targetObjectId && !state.selection.has(targetObjectId)) {
             state.selectObject(targetObjectId);
           }
@@ -440,10 +347,7 @@ export function Canvas({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        ref={(el) => {
-          overlayRef.current = el;
-          setOverlayEl(el);
-        }}
+        ref={overlayRef}
         role="none"
       />
     </div>
