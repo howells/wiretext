@@ -54,12 +54,11 @@ export function useViewportGestures() {
       onWheel: ({ event, delta: [dx, dy], ctrlKey }) => {
         event.preventDefault();
         if (ctrlKey || event.metaKey) {
-          const rect = (
-            event.currentTarget as HTMLElement
-          ).getBoundingClientRect();
-          const centerX = event.clientX - rect.left;
-          const centerY = event.clientY - rect.top;
-          // Negate deltaY so scroll-up = zoom in
+          const target = (event.currentTarget ??
+            event.target) as HTMLElement | null;
+          const rect = target?.getBoundingClientRect();
+          const centerX = rect ? event.clientX - rect.left : event.clientX;
+          const centerY = rect ? event.clientY - rect.top : event.clientY;
           zoomViewport(-dy * 0.005, centerX, centerY);
         } else {
           panViewport(-dx, -dy);
