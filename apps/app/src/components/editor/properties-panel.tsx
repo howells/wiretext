@@ -11,7 +11,22 @@ import {
   ICON_CATEGORIES,
   WIRE_ICONS,
 } from "@wiretext/engine";
+import { useRef } from "react";
 import { useEditorStore } from "@/store";
+
+/**
+ * Generates stable keys for editable lists so inputs keep focus across
+ * re-renders. Value-based keys cause React to remount on every keystroke.
+ */
+function useStableKeys(count: number): string[] {
+  const nextId = useRef(0);
+  const keys = useRef<string[]>([]);
+  while (keys.current.length < count) {
+    keys.current.push(`k${nextId.current++}`);
+  }
+  keys.current.length = count;
+  return keys.current;
+}
 
 const BORDERLESS_COMPONENTS: ReadonlySet<ComponentType> = new Set([
   "icon",
@@ -106,18 +121,17 @@ function EditableItemList({
   onChange: (items: string[]) => void;
 }) {
   const singular = label.toLowerCase().replace(TRAILING_S, "");
+  const keys = useStableKeys(items.length);
   return (
     <div>
       <FieldLabel>{label}</FieldLabel>
       <div className="flex flex-col gap-1">
-        {items.map((item) => {
-          const itemKey = `${singular}-${item}`;
+        {items.map((item, idx) => {
           return (
-            <div className="flex items-center gap-1" key={itemKey}>
+            <div className="flex items-center gap-1" key={keys[idx]}>
               <input
                 className="flex-1 rounded border border-border bg-bg px-1.5 py-0.5 text-text text-xs outline-none focus:border-accent"
                 onChange={(e) => {
-                  const idx = items.indexOf(item);
                   const next = items.map((v, j) =>
                     j === idx ? e.target.value : v
                   );
@@ -129,10 +143,7 @@ function EditableItemList({
               {items.length > 1 && (
                 <button
                   className="rounded px-1 text-text-dim text-xs hover:text-text"
-                  onClick={() => {
-                    const idx = items.indexOf(item);
-                    onChange(items.filter((_, j) => j !== idx));
-                  }}
+                  onClick={() => onChange(items.filter((_, j) => j !== idx))}
                   title={`Remove ${singular}`}
                   type="button"
                 >
@@ -284,15 +295,14 @@ function StepperEditor({
   const updateObject = useEditorStore((s) => s.updateObject);
   const items = obj.items ?? [];
   const activeStep = obj.activeStep ?? 0;
+  const keys = useStableKeys(items.length);
   return (
     <div>
       <FieldLabel>Steps</FieldLabel>
       <div className="flex flex-col gap-1">
-        {items.map((step) => {
-          const stepIdx = items.indexOf(step);
-          const stepKey = `step-${step}`;
+        {items.map((step, stepIdx) => {
           return (
-            <div className="flex items-center gap-1" key={stepKey}>
+            <div className="flex items-center gap-1" key={keys[stepIdx]}>
               <button
                 className={`shrink-0 rounded px-1 py-0.5 font-mono text-[10px] transition-colors ${
                   stepIdx <= activeStep
