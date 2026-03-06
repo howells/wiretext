@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import type {
   ArrowObject,
   BoxObject,
@@ -8,6 +7,7 @@ import type {
   Viewport,
   WireObject,
 } from "@wiretext/engine";
+import { describe, expect, it } from "vitest";
 import {
   fitViewport,
   gridToScreen,

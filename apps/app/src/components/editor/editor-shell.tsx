@@ -77,7 +77,7 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
 
   // Fit viewport to content after loading a document (once metrics are ready)
   useEffect(() => {
-    if (!documentLoaded.current || !metrics || !canvasAreaRef.current) {
+    if (!(documentLoaded.current && metrics && canvasAreaRef.current)) {
       return;
     }
     documentLoaded.current = false;
