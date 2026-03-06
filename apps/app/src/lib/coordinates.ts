@@ -90,10 +90,10 @@ export function fitViewport(
     return { panX: 0, panY: 0, zoom: 1 };
   }
 
-  let minCol = Infinity;
-  let minRow = Infinity;
-  let maxCol = -Infinity;
-  let maxRow = -Infinity;
+  let minCol = Number.POSITIVE_INFINITY;
+  let minRow = Number.POSITIVE_INFINITY;
+  let maxCol = Number.NEGATIVE_INFINITY;
+  let maxRow = Number.NEGATIVE_INFINITY;
 
   for (const obj of objects) {
     const bounds =

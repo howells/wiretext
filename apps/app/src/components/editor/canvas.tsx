@@ -126,7 +126,9 @@ export function Canvas({
 
   const handleMouseMove = useCallback(
     (e: ReactMouseEvent) => {
-      if (isPanning.current) return; // Pan handled by window listeners
+      if (isPanning.current) {
+        return; // Pan handled by window listeners
+      }
 
       const pt = getGridPoint(e);
       if (pt) {
@@ -139,7 +141,9 @@ export function Canvas({
 
   const handleMouseUp = useCallback(
     (e: ReactMouseEvent) => {
-      if (isPanning.current) return; // Pan handled by window listeners
+      if (isPanning.current) {
+        return; // Pan handled by window listeners
+      }
 
       const pt = getGridPoint(e);
       if (pt) {
