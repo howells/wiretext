@@ -11,6 +11,7 @@ import {
 } from "react";
 import { trackDocumentLoaded, trackShare } from "@/lib/analytics";
 import { copyToClipboard } from "@/lib/clipboard";
+import { fitViewport } from "@/lib/coordinates";
 import { getShareUrl } from "@/lib/sharing";
 import { useCanvasEvents } from "@/lib/use-canvas-events";
 import { useCharMetrics } from "@/lib/use-char-metrics";
@@ -47,6 +48,8 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
 
   // Tracks whether the browser bar currently shows a short URL (/w/...)
   const shortUrlActive = useRef(false);
+  const canvasAreaRef = useRef<HTMLDivElement>(null);
+  const documentLoaded = useRef(false);
 
   // Load document: from prop (short URL) or hash (hash URL)
   useLayoutEffect(() => {
@@ -55,6 +58,7 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
     if (initialDocument) {
       store.loadDocument(initialDocument.objects, initialDocument.layers);
       shortUrlActive.current = true;
+      documentLoaded.current = true;
       trackDocumentLoaded();
       return;
     }
@@ -66,9 +70,25 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
     const decoded = decodeDocument(hash);
     if (decoded && decoded.objects.length > 0) {
       store.loadDocument(decoded.objects, decoded.layers);
+      documentLoaded.current = true;
       trackDocumentLoaded();
     }
   }, [initialDocument]);
+
+  // Fit viewport to content after loading a document (once metrics are ready)
+  useEffect(() => {
+    if (!documentLoaded.current || !metrics || !canvasAreaRef.current) {
+      return;
+    }
+    documentLoaded.current = false;
+    const { objects } = useEditorStore.getState();
+    if (objects.length === 0) {
+      return;
+    }
+    const rect = canvasAreaRef.current.getBoundingClientRect();
+    const viewport = fitViewport(objects, rect.width, rect.height, metrics);
+    useEditorStore.setState({ viewport });
+  }, [metrics]);
 
   // Clear short URL from browser bar when document content changes
   useEffect(() => {
@@ -139,7 +159,7 @@ export function EditorShell({ initialDocument }: EditorShellProps) {
       <div className="flex flex-1 overflow-hidden">
         <Toolbar />
 
-        <div className="relative flex-1" style={{ cursor }}>
+        <div className="relative flex-1" ref={canvasAreaRef} style={{ cursor }}>
           <Canvas
             onGridHover={handleGridHover}
             onMouseDown={onMouseDown}

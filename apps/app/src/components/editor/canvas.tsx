@@ -16,8 +16,13 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
-import { gridToScreen, screenToGrid } from "@/lib/coordinates";
+import {
+  gridToScreen,
+  screenToGrid,
+  shiftObjectsForRender,
+} from "@/lib/coordinates";
 import { useCharMetrics } from "@/lib/use-char-metrics";
 import { useEditorStore } from "@/store";
 import { hitTest } from "@/tools/select";
@@ -46,18 +51,26 @@ export function Canvas({
   const panViewport = useEditorStore((s) => s.panViewport);
   const zoomViewport = useEditorStore((s) => s.zoomViewport);
 
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
   const isPanning = useRef(false);
   const lastPan = useRef({ x: 0, y: 0 });
   const spaceHeld = useRef(false);
+  const panCleanupRef = useRef<(() => void) | null>(null);
 
-  // Compose all objects + draft
+  // Compose all objects + draft, shifting negative positions into valid grid space
   const allObjects = draft ? [...objects, draft] : objects;
-  const effectiveGridSize = useMemo(
-    () => getEffectiveGridSize(allObjects, gridSize),
-    [allObjects, gridSize]
+
+  const { renderObjects, originCol, originRow } = useMemo(
+    () => shiftObjectsForRender(allObjects),
+    [allObjects]
   );
-  const grid = compose(allObjects, effectiveGridSize, layers);
+
+  const effectiveGridSize = useMemo(
+    () => getEffectiveGridSize(renderObjects, gridSize),
+    [renderObjects, gridSize]
+  );
+  const grid = compose(renderObjects, effectiveGridSize, layers);
   const text = gridToString(grid);
 
   const getGridPoint = useCallback(
@@ -78,11 +91,28 @@ export function Canvas({
 
   const handleMouseDown = useCallback(
     (e: ReactMouseEvent) => {
-      // Middle-click or space+click → pan
+      // Middle-click or space+click → pan (with global tracking)
       if (e.button === 1 || (e.button === 0 && spaceHeld.current)) {
         isPanning.current = true;
         lastPan.current = { x: e.clientX, y: e.clientY };
         e.preventDefault();
+
+        // Track pan globally so cursor can leave the canvas area
+        const onMove = (we: globalThis.MouseEvent) => {
+          const dx = we.clientX - lastPan.current.x;
+          const dy = we.clientY - lastPan.current.y;
+          panViewport(dx, dy);
+          lastPan.current = { x: we.clientX, y: we.clientY };
+        };
+        const cleanup = () => {
+          isPanning.current = false;
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", cleanup);
+          panCleanupRef.current = null;
+        };
+        panCleanupRef.current = cleanup;
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", cleanup);
         return;
       }
 
@@ -91,18 +121,12 @@ export function Canvas({
         onMouseDown?.(pt.col, pt.row, e);
       }
     },
-    [getGridPoint, onMouseDown]
+    [getGridPoint, onMouseDown, panViewport]
   );
 
   const handleMouseMove = useCallback(
     (e: ReactMouseEvent) => {
-      if (isPanning.current) {
-        const dx = e.clientX - lastPan.current.x;
-        const dy = e.clientY - lastPan.current.y;
-        panViewport(dx, dy);
-        lastPan.current = { x: e.clientX, y: e.clientY };
-        return;
-      }
+      if (isPanning.current) return; // Pan handled by window listeners
 
       const pt = getGridPoint(e);
       if (pt) {
@@ -110,15 +134,12 @@ export function Canvas({
         onGridHover?.(pt.col, pt.row);
       }
     },
-    [getGridPoint, onMouseMove, onGridHover, panViewport]
+    [getGridPoint, onMouseMove, onGridHover]
   );
 
   const handleMouseUp = useCallback(
     (e: ReactMouseEvent) => {
-      if (isPanning.current) {
-        isPanning.current = false;
-        return;
-      }
+      if (isPanning.current) return; // Pan handled by window listeners
 
       const pt = getGridPoint(e);
       if (pt) {
@@ -132,8 +153,12 @@ export function Canvas({
     (e: WheelEvent) => {
       e.preventDefault();
       if (e.ctrlKey || e.metaKey) {
+        // Use canvas-relative coords so zoom centers on the cursor
+        const rect = overlayRef.current?.getBoundingClientRect();
+        const centerX = rect ? e.clientX - rect.left : e.clientX;
+        const centerY = rect ? e.clientY - rect.top : e.clientY;
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        zoomViewport(delta, e.clientX, e.clientY);
+        zoomViewport(delta, centerX, centerY);
       } else {
         panViewport(-e.deltaX, -e.deltaY);
       }
@@ -143,13 +168,12 @@ export function Canvas({
 
   // Attach wheel handler as non-passive so preventDefault() works
   useEffect(() => {
-    const el = overlayRef.current;
-    if (!el) {
+    if (!overlayEl) {
       return;
     }
-    el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
-  }, [handleWheel]);
+    overlayEl.addEventListener("wheel", handleWheel, { passive: false });
+    return () => overlayEl.removeEventListener("wheel", handleWheel);
+  }, [handleWheel, overlayEl]);
 
   // Track space key for pan mode
   useEffect(() => {
@@ -181,12 +205,16 @@ export function Canvas({
     };
   }, []);
 
+  // Clean up global pan listeners on unmount
+  useEffect(() => {
+    return () => {
+      panCleanupRef.current?.();
+    };
+  }, []);
+
   if (!metrics) {
     return null;
   }
-
-  const gridPixelWidth = effectiveGridSize.cols * metrics.charWidth;
-  const gridPixelHeight = effectiveGridSize.rows * metrics.lineHeight;
 
   // Build selection overlay rects with handle info
   const HANDLE_SIZE = 7;
@@ -243,28 +271,25 @@ export function Canvas({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-bg">
-      {/* Grid background dots */}
+      {/* Infinite grid background dots */}
       <div
-        className="pointer-events-none absolute"
+        className="pointer-events-none absolute inset-0"
         style={{
-          left: viewport.panX,
-          top: viewport.panY,
-          width: gridPixelWidth * viewport.zoom,
-          height: gridPixelHeight * viewport.zoom,
           backgroundImage:
             "radial-gradient(circle, var(--color-grid-dot) 1px, transparent 1px)",
           backgroundSize: `${metrics.charWidth * viewport.zoom}px ${metrics.lineHeight * viewport.zoom}px`,
+          backgroundPosition: `${viewport.panX}px ${viewport.panY}px`,
         }}
       />
 
-      {/* Pre-rendered text */}
+      {/* Pre-rendered text (shifted by grid origin for negative positions) */}
       <pre
         className="pointer-events-none absolute m-0 p-0 leading-[1.5]"
         style={{
           fontFamily: 'var(--font-mono), "JetBrains Mono", monospace',
           fontSize: `${14 * viewport.zoom}px`,
-          left: viewport.panX,
-          top: viewport.panY,
+          left: viewport.panX + originCol * metrics.charWidth * viewport.zoom,
+          top: viewport.panY + originRow * metrics.lineHeight * viewport.zoom,
           color: "var(--color-text)",
         }}
       >
@@ -411,7 +436,10 @@ export function Canvas({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        ref={overlayRef}
+        ref={(el) => {
+          overlayRef.current = el;
+          setOverlayEl(el);
+        }}
         role="none"
       />
     </div>
