@@ -241,6 +241,15 @@ function handleToggleSidebar(e: KeyboardEvent, key: string): boolean {
   return false;
 }
 
+function handleToggleSnap(e: KeyboardEvent, key: string): boolean {
+  if (!(e.metaKey || e.ctrlKey || e.altKey) && key === ";") {
+    e.preventDefault();
+    useEditorStore.getState().toggleSnap();
+    return true;
+  }
+  return false;
+}
+
 export function useKeyboard(onToggleExport?: () => void) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -272,7 +281,8 @@ export function useKeyboard(onToggleExport?: () => void) {
         handleArrowKeys(e, key) ||
         handleExport(e, key, onToggleExport) ||
         handleEscape(e, key) ||
-        handleToggleSidebar(e, key);
+        handleToggleSidebar(e, key) ||
+        handleToggleSnap(e, key);
     };
 
     window.addEventListener("keydown", handleKeyDown);

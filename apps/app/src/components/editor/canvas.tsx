@@ -47,6 +47,7 @@ export function Canvas({
   const viewport = useEditorStore((s) => s.viewport);
   const selection = useEditorStore((s) => s.selection);
   const marquee = useEditorStore((s) => s.marquee);
+  const snapGuides = useEditorStore((s) => s.snapGuides);
 
   const { bind, isPanning, spaceHeld } = useViewportGestures();
   const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -324,6 +325,38 @@ export function Canvas({
             />
           );
         })()}
+
+      {/* Snap alignment guide lines */}
+      {snapGuides.cols.map((col) => {
+        const pos = gridToScreen(col, 0, viewport, metrics);
+        return (
+          <div
+            key={`snap-col-${col}`}
+            className="pointer-events-none absolute top-0 bottom-0"
+            style={{
+              left: pos.x,
+              width: 1,
+              backgroundColor: "var(--color-snap-guide, #3b82f6)",
+              opacity: 0.6,
+            }}
+          />
+        );
+      })}
+      {snapGuides.rows.map((row) => {
+        const pos = gridToScreen(0, row, viewport, metrics);
+        return (
+          <div
+            key={`snap-row-${row}`}
+            className="pointer-events-none absolute left-0 right-0"
+            style={{
+              top: pos.y,
+              height: 1,
+              backgroundColor: "var(--color-snap-guide, #3b82f6)",
+              opacity: 0.6,
+            }}
+          />
+        );
+      })}
 
       {/* Mouse + gesture overlay */}
       <div

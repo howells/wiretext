@@ -60,6 +60,10 @@ export interface EditorState {
   // Document
   objects: WireObject[];
 
+  // Snap / alignment guides
+  snapGuides: { cols: number[]; rows: number[] };
+  snapEnabled: boolean;
+
   // History
   past: HistorySnapshot[];
   pendingComponent: ComponentType | null;
@@ -123,6 +127,8 @@ export interface EditorActions {
   ) => void;
   setPendingComponent: (type: ComponentType | null) => void;
   setSelection: (ids: Set<ObjectId>) => void;
+  setSnapGuides: (guides: { cols: number[]; rows: number[] }) => void;
+  toggleSnap: () => void;
   toggleLayerLock: (id: LayerId) => void;
   toggleLayerVisibility: (id: LayerId) => void;
   toggleSidebar: () => void;
@@ -227,6 +233,8 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   pendingComponent: null,
   sidebarExpanded: true,
   marquee: null,
+  snapGuides: { cols: [], rows: [] },
+  snapEnabled: true,
   contextMenu: null,
   clipboard: [],
   past: [],
@@ -656,6 +664,10 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   setPendingComponent: (type) => set({ pendingComponent: type }),
 
   setMarquee: (marquee) => set({ marquee }),
+
+  setSnapGuides: (guides) => set({ snapGuides: guides }),
+
+  toggleSnap: () => set((s) => ({ snapEnabled: !s.snapEnabled })),
 
   setContextMenu: (menu) => set({ contextMenu: menu }),
 

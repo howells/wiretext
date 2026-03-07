@@ -9,11 +9,13 @@ import type {
 import {
   BORDERLESS_COMPONENTS,
   getConnectorBounds,
+  getObjectBounds,
   getResizeConstraint,
   hasRectBounds,
   resolveConnectorPath,
 } from "@wiretext/engine";
 import type { MouseEvent as ReactMouseEvent } from "react";
+import { computeSnap, type BoundingRect } from "@/lib/snap";
 import { useEditorStore } from "@/store";
 import type { ToolHandler } from "./types";
 
@@ -32,6 +34,26 @@ function getExcludedLayerIds(layers: Layer[]): Set<string> {
   return new Set(layers.filter((l) => !l.visible || l.locked).map((l) => l.id));
 }
 
+function getSelectionBounds(objects: WireObject[]): BoundingRect {
+  let minCol = Infinity;
+  let minRow = Infinity;
+  let maxCol = -Infinity;
+  let maxRow = -Infinity;
+  for (const obj of objects) {
+    const b = getObjectBounds(obj);
+    minCol = Math.min(minCol, b.col);
+    minRow = Math.min(minRow, b.row);
+    maxCol = Math.max(maxCol, b.col + b.width);
+    maxRow = Math.max(maxRow, b.row + b.height);
+  }
+  return {
+    col: minCol,
+    row: minRow,
+    width: maxCol - minCol,
+    height: maxRow - minRow,
+  };
+}
+
 let dragStart: { col: number; row: number } | null = null;
 let dragTarget: string | null = null;
 let resizeHandle: string | null = null;
@@ -45,6 +67,12 @@ let originalSize: { width: number; height: number } | null = null;
 let deferredDeselect: string | null = null;
 /** True when the mouse moved during a drag (used to decide deferred deselect) */
 let didDrag = false;
+/** Aggregate bounds of the selection at drag start (for snap computation) */
+let dragOriginBounds: BoundingRect | null = null;
+/** Cumulative raw (unsnapped) displacement from drag origin */
+let rawDelta = { col: 0, row: 0 };
+/** Last snapped total displacement actually applied */
+let appliedDelta = { col: 0, row: 0 };
 
 export type ResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
 
@@ -682,6 +710,11 @@ function resetDragState() {
   originalSize = null;
   deferredDeselect = null;
   didDrag = false;
+  // Snap cleanup
+  dragOriginBounds = null;
+  rawDelta = { col: 0, row: 0 };
+  appliedDelta = { col: 0, row: 0 };
+  useEditorStore.getState().setSnapGuides({ cols: [], rows: [] });
 }
 
 // --- Tool handler ---
@@ -734,6 +767,19 @@ export const selectTool: ToolHandler = {
     dragStart = { col, row };
     dragTarget = hit.id;
     resizeHandle = null;
+
+    // Capture selection bounds for snap
+    const snapState = useEditorStore.getState();
+    const selObjects = snapState.objects.filter(
+      (o) => snapState.selection.has(o.id) && o.type !== "connector"
+    );
+    if (selObjects.length > 0) {
+      dragOriginBounds = getSelectionBounds(selObjects);
+    } else {
+      dragOriginBounds = null;
+    }
+    rawDelta = { col: 0, row: 0 };
+    appliedDelta = { col: 0, row: 0 };
   },
 
   onMouseMove(col, row) {
@@ -774,7 +820,69 @@ export const selectTool: ToolHandler = {
     didDrag = true;
     deferredDeselect = null;
     dragStart = { col, row };
-    useEditorStore.getState().moveSelection(deltaCol, deltaRow);
+
+    // Accumulate raw (unsnapped) displacement
+    rawDelta = { col: rawDelta.col + deltaCol, row: rawDelta.row + deltaRow };
+
+    const state = useEditorStore.getState();
+
+    let snappedTotal = { col: rawDelta.col, row: rawDelta.row };
+
+    if (state.snapEnabled && dragOriginBounds) {
+      // Build proposed bounds at raw position
+      const proposedBounds: BoundingRect = {
+        col: dragOriginBounds.col + rawDelta.col,
+        row: dragOriginBounds.row + rawDelta.row,
+        width: dragOriginBounds.width,
+        height: dragOriginBounds.height,
+      };
+
+      // Collect snap targets: all non-selected, non-connector, visible+unlocked objects
+      const excluded = getExcludedLayerIds(state.layers);
+      const otherBounds: BoundingRect[] = [];
+      for (const obj of state.objects) {
+        if (
+          state.selection.has(obj.id) ||
+          obj.type === "connector" ||
+          excluded.has(obj.layerId)
+        ) {
+          continue;
+        }
+        const b = getObjectBounds(obj);
+        otherBounds.push({
+          col: b.col,
+          row: b.row,
+          width: b.width,
+          height: b.height,
+        });
+      }
+
+      const snap = computeSnap(proposedBounds, otherBounds, 1);
+      snappedTotal = {
+        col: rawDelta.col + snap.deltaCol,
+        row: rawDelta.row + snap.deltaRow,
+      };
+
+      // Update guide lines
+      const cols = snap.guides
+        .filter((g) => g.axis === "col")
+        .map((g) => g.position);
+      const rows = snap.guides
+        .filter((g) => g.axis === "row")
+        .map((g) => g.position);
+      state.setSnapGuides({ cols, rows });
+    } else {
+      state.setSnapGuides({ cols: [], rows: [] });
+    }
+
+    // Compute incremental move from what was already applied
+    const moveCol = snappedTotal.col - appliedDelta.col;
+    const moveRow = snappedTotal.row - appliedDelta.row;
+    appliedDelta = snappedTotal;
+
+    if (moveCol !== 0 || moveRow !== 0) {
+      state.moveSelection(moveCol, moveRow);
+    }
   },
 
   onMouseUp(_col, _row) {
