@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { BoundingRect } from "./snap";
-import { computeSnap } from "./snap";
+import { type BoundingRect, computeSnap } from "./snap";
 
 function rect(
   col: number,

@@ -331,8 +331,8 @@ export function Canvas({
         const pos = gridToScreen(col, 0, viewport, metrics);
         return (
           <div
-            key={`snap-col-${col}`}
             className="pointer-events-none absolute top-0 bottom-0"
+            key={`snap-col-${col}`}
             style={{
               left: pos.x,
               width: 1,
@@ -346,8 +346,8 @@ export function Canvas({
         const pos = gridToScreen(0, row, viewport, metrics);
         return (
           <div
+            className="pointer-events-none absolute right-0 left-0"
             key={`snap-row-${row}`}
-            className="pointer-events-none absolute left-0 right-0"
             style={{
               top: pos.y,
               height: 1,

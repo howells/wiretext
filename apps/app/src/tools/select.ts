@@ -1,21 +1,19 @@
-import type {
-  ArrowObject,
-  ConnectorObject,
-  GridPoint,
-  Layer,
-  LineObject,
-  WireObject,
-} from "@wiretext/engine";
 import {
+  type ArrowObject,
   BORDERLESS_COMPONENTS,
+  type ConnectorObject,
+  type GridPoint,
   getConnectorBounds,
   getObjectBounds,
   getResizeConstraint,
   hasRectBounds,
+  type Layer,
+  type LineObject,
   resolveConnectorPath,
+  type WireObject,
 } from "@wiretext/engine";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { computeSnap, type BoundingRect } from "@/lib/snap";
+import { type BoundingRect, computeSnap } from "@/lib/snap";
 import { useEditorStore } from "@/store";
 import type { ToolHandler } from "./types";
 
@@ -35,10 +33,10 @@ function getExcludedLayerIds(layers: Layer[]): Set<string> {
 }
 
 function getSelectionBounds(objects: WireObject[]): BoundingRect {
-  let minCol = Infinity;
-  let minRow = Infinity;
-  let maxCol = -Infinity;
-  let maxRow = -Infinity;
+  let minCol = Number.POSITIVE_INFINITY;
+  let minRow = Number.POSITIVE_INFINITY;
+  let maxCol = Number.NEGATIVE_INFINITY;
+  let maxRow = Number.NEGATIVE_INFINITY;
   for (const obj of objects) {
     const b = getObjectBounds(obj);
     minCol = Math.min(minCol, b.col);

@@ -60,15 +60,15 @@ export interface EditorState {
   // Document
   objects: WireObject[];
 
-  // Snap / alignment guides
-  snapGuides: { cols: number[]; rows: number[] };
-  snapEnabled: boolean;
-
   // History
   past: HistorySnapshot[];
   pendingComponent: ComponentType | null;
   selection: Set<ObjectId>;
   sidebarExpanded: boolean;
+  snapEnabled: boolean;
+
+  // Snap / alignment guides
+  snapGuides: { cols: number[]; rows: number[] };
   viewport: Viewport;
 }
 
@@ -128,10 +128,10 @@ export interface EditorActions {
   setPendingComponent: (type: ComponentType | null) => void;
   setSelection: (ids: Set<ObjectId>) => void;
   setSnapGuides: (guides: { cols: number[]; rows: number[] }) => void;
-  toggleSnap: () => void;
   toggleLayerLock: (id: LayerId) => void;
   toggleLayerVisibility: (id: LayerId) => void;
   toggleSidebar: () => void;
+  toggleSnap: () => void;
 
   // History
   undo: () => void;
