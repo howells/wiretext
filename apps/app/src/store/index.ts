@@ -486,12 +486,22 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     });
     const newObjects = remapGroupIds(rawObjects);
 
-    set((state) => ({
-      ...pushHistory(state),
-      objects: [...state.objects, ...newObjects],
-      selection: newIds,
-      clipboard: newObjects,
-    }));
+    set((state) => {
+      const layerObjs = state.objects.filter(
+        (o) => o.layerId === activeLayerId
+      );
+      const maxZ = layerObjs.reduce((m, o) => Math.max(m, o.zIndex), -1);
+      let nextZ = maxZ + 1;
+      const raised = newObjects.map(
+        (obj) => ({ ...obj, zIndex: nextZ++ }) as WireObject
+      );
+      return {
+        ...pushHistory(state),
+        objects: [...state.objects, ...raised],
+        selection: newIds,
+        clipboard: raised,
+      };
+    });
   },
 
   duplicateSelection: (offsetCol = 2, offsetRow = 1) => {
@@ -529,11 +539,21 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     });
     const newObjects = remapGroupIds(rawObjects);
 
-    set((state) => ({
-      ...pushHistory(state),
-      objects: [...state.objects, ...newObjects],
-      selection: newIds,
-    }));
+    set((state) => {
+      const layerObjs = state.objects.filter(
+        (o) => o.layerId === state.activeLayerId
+      );
+      const maxZ = layerObjs.reduce((m, o) => Math.max(m, o.zIndex), -1);
+      let nextZ = maxZ + 1;
+      const raised = newObjects.map(
+        (obj) => ({ ...obj, zIndex: nextZ++ }) as WireObject
+      );
+      return {
+        ...pushHistory(state),
+        objects: [...state.objects, ...raised],
+        selection: newIds,
+      };
+    });
   },
 
   // Grouping
