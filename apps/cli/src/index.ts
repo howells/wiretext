@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import {
   addPadding,
@@ -7,6 +7,7 @@ import {
   encodeDocument,
   fillDefaults,
   gridToString,
+  LAYOUT_GUIDE,
   resolveLayers,
   validateContentWidth,
 } from "@wiretext/engine";
@@ -14,6 +15,85 @@ import { layerSchema, wireObjectSchema } from "@wiretext/schemas";
 import { z } from "zod";
 
 const DEFAULT_BASE_URL = "https://wiretext.app";
+
+// Top-level regex patterns for input hardening (biome requires top-level scope)
+// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — reject null bytes and control chars in untrusted input
+const CONTROL_CHARS_RE = /[\u0000-\u001f]/;
+const ENCODED_TRAVERSAL_RE = /%(?:2[eEfF]|5[cC])/i;
+const HASH_FRAGMENT_PREFIX_RE = /^[^#]*#/;
+const QUERY_OR_HASH_RE = /[?#]/;
+
+// ---------------------------------------------------------------------------
+// Axis 1: Machine-Readable Output — structured JSON, auto-detected in non-TTY
+// ---------------------------------------------------------------------------
+
+type OutputMode = "human" | "json";
+
+function detectMode(jsonFlag: boolean): OutputMode {
+  if (jsonFlag) {
+    return "json";
+  }
+  if (!process.stdout.isTTY) {
+    return "json";
+  }
+  return "human";
+}
+
+function emitJson(data: Record<string, unknown>): void {
+  console.log(JSON.stringify(data));
+}
+
+function emitError(mode: OutputMode, message: string, code: string): never {
+  if (mode === "json") {
+    emitJson({ ok: false, error: message, code });
+  } else {
+    console.error(message);
+  }
+  process.exit(1);
+}
+
+// ---------------------------------------------------------------------------
+// Axis 5: Input Hardening — defend against agent hallucination patterns
+// ---------------------------------------------------------------------------
+
+function validateFilePath(filePath: string): void {
+  if (CONTROL_CHARS_RE.test(filePath)) {
+    throw new Error("Invalid file path: contains control characters");
+  }
+  if (ENCODED_TRAVERSAL_RE.test(filePath)) {
+    throw new Error("Invalid file path: contains encoded path segments");
+  }
+}
+
+function validateBaseUrl(baseUrl: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(baseUrl);
+  } catch {
+    throw new Error(`Invalid --base-url: "${baseUrl}" is not a valid URL`);
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("Invalid --base-url: must use http or https protocol");
+  }
+  if (parsed.search || parsed.hash) {
+    throw new Error(
+      "Invalid --base-url: must not contain query string or fragment"
+    );
+  }
+}
+
+function validateHashValue(hash: string): void {
+  if (CONTROL_CHARS_RE.test(hash)) {
+    throw new Error("Invalid --hash: contains control characters");
+  }
+  if (QUERY_OR_HASH_RE.test(hash.replace(HASH_FRAGMENT_PREFIX_RE, ""))) {
+    throw new Error("Invalid --hash: contains embedded query params");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Input parsing & validation
+// ---------------------------------------------------------------------------
 
 const objectsArraySchema = z.array(wireObjectSchema).superRefine((arr, ctx) => {
   for (let i = 0; i < arr.length; i++) {
@@ -29,6 +109,7 @@ const objectsArraySchema = z.array(wireObjectSchema).superRefine((arr, ctx) => {
 
 function readInput(filePath?: string): string {
   if (filePath && filePath !== "-") {
+    validateFilePath(filePath);
     return readFileSync(filePath, "utf-8");
   }
   return readFileSync(0, "utf-8");
@@ -70,15 +151,19 @@ function parseInput(raw: string): ParsedInput {
   return { objects: result.data, layers };
 }
 
+// ---------------------------------------------------------------------------
+// Axis 5 continued: shell-injection-safe platform helpers (execFileSync)
+// ---------------------------------------------------------------------------
+
 function copyToClipboard(text: string): boolean {
   try {
     const platform = process.platform;
     if (platform === "darwin") {
-      execSync("pbcopy", { input: text });
+      execFileSync("pbcopy", [], { input: text });
     } else if (platform === "win32") {
-      execSync("clip", { input: text });
+      execFileSync("clip", [], { input: text });
     } else {
-      execSync("xclip -selection clipboard", { input: text });
+      execFileSync("xclip", ["-selection", "clipboard"], { input: text });
     }
     return true;
   } catch {
@@ -90,11 +175,11 @@ function openInBrowser(url: string): boolean {
   try {
     const platform = process.platform;
     if (platform === "darwin") {
-      execSync(`open "${url}"`);
+      execFileSync("open", [url]);
     } else if (platform === "win32") {
-      execSync(`start "" "${url}"`);
+      execFileSync("cmd", ["/c", "start", "", url]);
     } else {
-      execSync(`xdg-open "${url}"`);
+      execFileSync("xdg-open", [url]);
     }
     return true;
   } catch {
@@ -102,15 +187,9 @@ function openInBrowser(url: string): boolean {
   }
 }
 
-interface CreateOptions {
-  baseUrl: string;
-  copy: boolean;
-  open: boolean;
-}
-
-interface ShareOptions extends CreateOptions {
-  hash?: string;
-}
+// ---------------------------------------------------------------------------
+// Axis 6: Safety Rails — dry-run for mutating commands
+// ---------------------------------------------------------------------------
 
 async function postShare(
   baseUrl: string,
@@ -130,13 +209,58 @@ async function postShare(
   return res.json() as Promise<{ id: string; url: string }>;
 }
 
-function cmdCreate(
-  filePath?: string,
-  options: CreateOptions = {
-    baseUrl: DEFAULT_BASE_URL,
-    open: false,
-    copy: false,
+// ---------------------------------------------------------------------------
+// Commands
+// ---------------------------------------------------------------------------
+
+interface CommandOptions {
+  baseUrl: string;
+  copy: boolean;
+  mode: OutputMode;
+  open: boolean;
+}
+
+interface ShareCommandOptions extends CommandOptions {
+  dryRun: boolean;
+  hash?: string;
+}
+
+function emitUrl(
+  mode: OutputMode,
+  url: string,
+  copyLabel: string,
+  options: { copy: boolean; open: boolean }
+): void {
+  if (mode === "json") {
+    emitJson({ ok: true, url });
+    return;
   }
+  if (options.copy) {
+    if (copyToClipboard(url)) {
+      console.log(`${copyLabel} copied to clipboard`);
+    } else {
+      console.error("Failed to copy to clipboard");
+      console.log(url);
+    }
+  }
+  if (options.open) {
+    if (openInBrowser(url)) {
+      if (!options.copy) {
+        console.log("Opened in browser");
+      }
+    } else {
+      console.error("Failed to open browser");
+      console.log(url);
+    }
+  }
+  if (!(options.copy || options.open)) {
+    console.log(url);
+  }
+}
+
+function cmdCreate(
+  filePath: string | undefined,
+  options: CommandOptions
 ): void {
   const raw = readInput(filePath);
   const { objects: minimal, layers: userLayers } = parseInput(raw);
@@ -149,44 +273,18 @@ function cmdCreate(
   const objects = addPadding(resolved, 1);
   const encoded = encodeDocument(objects, layers);
   const url = `${options.baseUrl}/#${encoded}`;
-
-  if (options.copy) {
-    if (copyToClipboard(url)) {
-      console.log("URL copied to clipboard");
-    } else {
-      console.error("Failed to copy to clipboard");
-      console.log(url);
-    }
-  }
-
-  if (options.open) {
-    if (openInBrowser(url)) {
-      if (!options.copy) {
-        console.log("Opened in browser");
-      }
-    } else {
-      console.error("Failed to open browser");
-      console.log(url);
-    }
-  }
-
-  if (!(options.copy || options.open)) {
-    console.log(url);
-  }
+  emitUrl(options.mode, url, "URL", options);
 }
 
 async function cmdShare(
-  filePath?: string,
-  options: ShareOptions = {
-    baseUrl: DEFAULT_BASE_URL,
-    open: false,
-    copy: false,
-  }
+  filePath: string | undefined,
+  options: ShareCommandOptions
 ): Promise<void> {
   let encoded: string;
+  let objectCount: number | undefined;
 
   if (options.hash) {
-    // Extract hash from URL or use raw value
+    validateHashValue(options.hash);
     const hashValue = options.hash.includes("#")
       ? options.hash.split("#")[1]
       : options.hash;
@@ -194,6 +292,7 @@ async function cmdShare(
   } else {
     const raw = readInput(filePath);
     const { objects: minimal, layers: userLayers } = parseInput(raw);
+    objectCount = minimal.length;
     const { objects: filled, layer: defaultLayer } = fillDefaults(minimal);
     const { objects: resolved, layers } = resolveLayers(
       filled,
@@ -204,34 +303,34 @@ async function cmdShare(
     encoded = encodeDocument(objects, layers);
   }
 
+  // Axis 6: --dry-run validates without POSTing
+  if (options.dryRun) {
+    if (options.mode === "json") {
+      emitJson({
+        ok: true,
+        dryRun: true,
+        valid: true,
+        objectCount: objectCount ?? null,
+        encodedBytes: encoded.length,
+      });
+    } else {
+      const countMsg =
+        objectCount !== undefined ? `, ${objectCount} object(s)` : "";
+      console.log(
+        `Dry run: valid input${countMsg}, ${encoded.length} bytes encoded. No URL created.`
+      );
+    }
+    return;
+  }
+
   const { url } = await postShare(options.baseUrl, encoded);
-
-  if (options.copy) {
-    if (copyToClipboard(url)) {
-      console.log("Short URL copied to clipboard");
-    } else {
-      console.error("Failed to copy to clipboard");
-      console.log(url);
-    }
-  }
-
-  if (options.open) {
-    if (openInBrowser(url)) {
-      if (!options.copy) {
-        console.log("Opened in browser");
-      }
-    } else {
-      console.error("Failed to open browser");
-      console.log(url);
-    }
-  }
-
-  if (!(options.copy || options.open)) {
-    console.log(url);
-  }
+  emitUrl(options.mode, url, "Short URL", options);
 }
 
-function cmdRender(filePath?: string): void {
+function cmdRender(
+  filePath: string | undefined,
+  options: { mode: OutputMode }
+): void {
   const raw = readInput(filePath);
   const { objects: minimal, layers: userLayers } = parseInput(raw);
   const { objects: filled, layer: defaultLayer } = fillDefaults(minimal);
@@ -243,84 +342,225 @@ function cmdRender(filePath?: string): void {
   const objects = addPadding(resolved, 1);
   const gridSize = computeRenderGridSize(objects);
   const grid = compose(objects, gridSize, layers);
-  console.log(gridToString(grid));
+  const ascii = gridToString(grid);
+
+  // Axis 4: structured output includes dimensions for context window awareness
+  if (options.mode === "json") {
+    emitJson({
+      ok: true,
+      ascii,
+      width: gridSize.cols,
+      height: gridSize.rows,
+      objectCount: minimal.length,
+    });
+    return;
+  }
+  console.log(ascii);
 }
 
-function printHelp(): void {
+// ---------------------------------------------------------------------------
+// Axis 3: Schema Introspection — runtime JSON Schema from Zod definitions
+// ---------------------------------------------------------------------------
+
+function cmdSchema(): void {
+  const documentSchema = z.object({
+    objects: z
+      .array(wireObjectSchema)
+      .describe("Array of wire objects to render"),
+    layers: z
+      .array(layerSchema)
+      .optional()
+      .describe(
+        "Named layers for organizing objects. Objects reference layers via layerId."
+      ),
+  });
+  const jsonSchema = z.toJSONSchema(documentSchema);
+  console.log(JSON.stringify(jsonSchema, null, 2));
+}
+
+// ---------------------------------------------------------------------------
+// Axis 7: Agent Knowledge Packaging — layout guide accessible via CLI
+// ---------------------------------------------------------------------------
+
+function cmdContext(): void {
+  console.log(LAYOUT_GUIDE);
+}
+
+// ---------------------------------------------------------------------------
+// Help — structured in JSON mode, human-readable otherwise
+// ---------------------------------------------------------------------------
+
+function printHelp(mode: OutputMode): void {
+  if (mode === "json") {
+    emitJson({
+      ok: true,
+      commands: {
+        create: "Generate an editable Wiretext URL (hash fragment)",
+        share: "Generate a short Wiretext URL via the share API",
+        render: "Render ASCII art to stdout",
+        schema: "Print JSON Schema for the wire object input format",
+        context: "Print the layout guide for AI agent use",
+      },
+      options: {
+        "--json": "Structured JSON output (auto-enabled when piped)",
+        "--open, -o": "Open URL in default browser (create/share)",
+        "--copy, -c": "Copy URL to clipboard (create/share)",
+        "--dry-run": "Validate without posting (share only)",
+        "--base-url <url>": `Base URL (default: ${DEFAULT_BASE_URL})`,
+        "--hash <url|hash>": "Share an existing hash URL (share only)",
+      },
+      input: '{ "objects": [...], "layers": [...] } or bare [...]',
+      outputFormats: {
+        success:
+          '{ "ok": true, "url": "..." } or { "ok": true, "ascii": "...", "width": N, "height": N }',
+        error: '{ "ok": false, "error": "...", "code": "..." }',
+      },
+    });
+    return;
+  }
+
   console.log(`Usage: wiretext <command> [file.json] [options]
 
 Commands:
   create [file.json]    Generate an editable Wiretext URL (hash fragment)
   share  [file.json]    Generate a short Wiretext URL via the share API
   render [file.json]    Render ASCII art to stdout
+  schema                Print JSON Schema for the wire object input format
+  context               Print the layout guide for AI agent use
 
 Options:
+  --json                Structured JSON output (auto-enabled when piped)
   --open, -o            Open the URL in your default browser
   --copy, -c            Copy the URL to clipboard
+  --dry-run             (share only) Validate without posting to the API
   --base-url <url>      Base URL (default: ${DEFAULT_BASE_URL})
   --hash <url|hash>     (share only) Share an existing hash URL
 
 Input: JSON from file argument or stdin
 Format: { "objects": [...], "layers": [...] } or bare [...]
-Layers: [{ "id": "ui", "name": "UI Elements" }, ...]`);
+Layers: [{ "id": "ui", "name": "UI Elements" }, ...]
+
+JSON output (auto-enabled in non-TTY / piped contexts):
+  Success: { "ok": true, "url": "..." }                        (create/share)
+           { "ok": true, "ascii": "...", "width": N, ... }     (render)
+           { "ok": true, "dryRun": true, "valid": true, ... }  (share --dry-run)
+  Error:   { "ok": false, "error": "...", "code": "..." }
+
+Agent introspection:
+  wiretext schema       Full JSON Schema for the input format
+  wiretext context      Layout guide with sizing rules and gotchas`);
 }
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const command = args[0];
+// ---------------------------------------------------------------------------
+// Arg parsing (extracted for complexity budget)
+// ---------------------------------------------------------------------------
 
-  if (!command || command === "--help" || command === "-h") {
-    printHelp();
-    process.exit(0);
-  }
+interface ParsedArgs {
+  baseUrl: string;
+  cmd: string | undefined;
+  dryRun: boolean;
+  filePath: string | undefined;
+  hashValue: string | undefined;
+  jsonFlag: boolean;
+  shouldCopy: boolean;
+  shouldOpen: boolean;
+}
 
+const BOOLEAN_FLAGS: Record<string, keyof ParsedArgs> = {
+  "--json": "jsonFlag",
+  "--open": "shouldOpen",
+  "-o": "shouldOpen",
+  "--copy": "shouldCopy",
+  "-c": "shouldCopy",
+  "--dry-run": "dryRun",
+};
+
+function parseArgs(args: string[]): ParsedArgs {
   let baseUrl = DEFAULT_BASE_URL;
-  let shouldOpen = false;
-  let shouldCopy = false;
   let hashValue: string | undefined;
-  const filteredArgs: string[] = [];
+  const booleans: Record<string, boolean> = {};
+  const positional: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--base-url" && i + 1 < args.length) {
-      baseUrl = args[i + 1];
+    const arg = args[i];
+    const boolKey = BOOLEAN_FLAGS[arg];
+    if (boolKey) {
+      booleans[boolKey] = true;
+    } else if (arg === "--output" && args[i + 1] === "json") {
+      booleans.jsonFlag = true;
       i++;
-    } else if (args[i] === "--hash" && i + 1 < args.length) {
-      hashValue = args[i + 1];
-      i++;
-    } else if (args[i] === "--open" || args[i] === "-o") {
-      shouldOpen = true;
-    } else if (args[i] === "--copy" || args[i] === "-c") {
-      shouldCopy = true;
+    } else if (arg === "--base-url" && i + 1 < args.length) {
+      baseUrl = args[++i];
+    } else if (arg === "--hash" && i + 1 < args.length) {
+      hashValue = args[++i];
     } else {
-      filteredArgs.push(args[i]);
+      positional.push(arg);
     }
   }
 
-  const cmd = filteredArgs[0];
-  const filePath = filteredArgs[1];
+  return {
+    baseUrl,
+    cmd: positional[0],
+    dryRun: booleans.dryRun ?? false,
+    filePath: positional[1],
+    hashValue,
+    jsonFlag: booleans.jsonFlag ?? false,
+    shouldCopy: booleans.shouldCopy ?? false,
+    shouldOpen: booleans.shouldOpen ?? false,
+  };
+}
 
-  switch (cmd) {
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+async function main(): Promise<void> {
+  const parsed = parseArgs(process.argv.slice(2));
+  const mode = detectMode(parsed.jsonFlag);
+
+  if (!parsed.cmd || parsed.cmd === "--help" || parsed.cmd === "-h") {
+    printHelp(mode);
+    process.exit(0);
+  }
+
+  if (parsed.baseUrl !== DEFAULT_BASE_URL) {
+    validateBaseUrl(parsed.baseUrl);
+  }
+
+  const cmdOptions: CommandOptions = {
+    baseUrl: parsed.baseUrl,
+    copy: parsed.shouldCopy,
+    mode,
+    open: parsed.shouldOpen,
+  };
+
+  switch (parsed.cmd) {
     case "create":
-      cmdCreate(filePath, { baseUrl, open: shouldOpen, copy: shouldCopy });
+      cmdCreate(parsed.filePath, cmdOptions);
       break;
     case "share":
-      await cmdShare(filePath, {
-        baseUrl,
-        open: shouldOpen,
-        copy: shouldCopy,
-        hash: hashValue,
+      await cmdShare(parsed.filePath, {
+        ...cmdOptions,
+        dryRun: parsed.dryRun,
+        hash: parsed.hashValue,
       });
       break;
     case "render":
-      cmdRender(filePath);
+      cmdRender(parsed.filePath, { mode });
+      break;
+    case "schema":
+      cmdSchema();
+      break;
+    case "context":
+      cmdContext();
       break;
     default:
-      console.error(`Unknown command: ${cmd}`);
-      process.exit(1);
+      emitError(mode, `Unknown command: ${parsed.cmd}`, "UNKNOWN_COMMAND");
   }
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
+  const message = error instanceof Error ? error.message : String(error);
+  const mode = detectMode(process.argv.includes("--json"));
+  emitError(mode, message, "ERROR");
 });
