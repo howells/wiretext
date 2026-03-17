@@ -15,7 +15,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@upstash/ratelimit": "^2.0.8",
-    "@upstash/redis": "^1.36.2",
+    "@upstash/redis": "^1.36.3",
     "@use-gesture/react": "^10.3.1",
     "@vercel/analytics": "^1.6.1",
     "@wiretext/engine": "workspace:*",
@@ -23,18 +23,18 @@
     "lz-string": "^1.5.0",
     "nanoid": "^5.1.0",
     "next": "^16.1.6",
-    "posthog-js": "^1.352.0",
+    "posthog-js": "^1.359.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.0",
-    "@types/node": "^22.0.0",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/node": "^25.3.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "postcss": "^8.5.0",
-    "tailwindcss": "^4.0.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
   }

@@ -24,10 +24,10 @@
     "*.{js,ts,jsx,tsx,json,jsonc,css}": "biome format --write --no-errors-on-unmatched"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.4",
+    "@biomejs/biome": "^2.4.6",
     "husky": "9.1.7",
-    "lint-staged": "^16.2.7",
-    "turbo": "^2.0.0",
-    "ultracite": "7.2.3"
+    "lint-staged": "^16.3.2",
+    "turbo": "^2.8.14",
+    "ultracite": "7.2.5"
   }
 }

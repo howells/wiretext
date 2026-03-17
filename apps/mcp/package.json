@@ -16,12 +16,12 @@
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@types/node": "^25.3.5",
     "@wiretext/engine": "workspace:*",
     "@wiretext/schemas": "workspace:*",
-    "zod": "^4.3.6",
-    "@types/node": "^22.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "zod": "^4.3.6"
   }
 }
