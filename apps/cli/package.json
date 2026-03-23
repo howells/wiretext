@@ -16,14 +16,12 @@
     "lint": "biome check .",
     "prepublishOnly": "pnpm build"
   },
-  "dependencies": {
-    "@wiretext/engine": "workspace:*",
-    "@wiretext/schemas": "workspace:*",
-    "zod": "^4.3.6"
-  },
   "devDependencies": {
     "@types/node": "^25.3.5",
+    "@wiretext/engine": "workspace:*",
+    "@wiretext/schemas": "workspace:*",
     "tsup": "^8.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "zod": "^4.3.6"
   }
 }

@@ -315,7 +315,7 @@ async function cmdShare(
       });
     } else {
       const countMsg =
-        objectCount !== undefined ? `, ${objectCount} object(s)` : "";
+        objectCount === undefined ? "" : `, ${objectCount} object(s)`;
       console.log(
         `Dry run: valid input${countMsg}, ${encoded.length} bytes encoded. No URL created.`
       );

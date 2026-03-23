@@ -961,9 +961,9 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
         ...pushHistory(state),
         objects: state.objects.map((obj) => {
           const newZ = zIndexMap.get(obj.id);
-          return newZ !== undefined
-            ? ({ ...obj, zIndex: newZ } as WireObject)
-            : obj;
+          return newZ === undefined
+            ? obj
+            : ({ ...obj, zIndex: newZ } as WireObject);
         }),
       };
     });
