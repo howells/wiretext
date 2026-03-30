@@ -26,6 +26,7 @@ export interface RoutingRect {
 
 /** Direction a connector exits or enters a side. */
 type Direction = "up" | "down" | "left" | "right";
+const ALL_SIDES: readonly ConnectorSide[] = ["top", "bottom", "left", "right"];
 
 function getCenter(obj: RectObject): GridPoint {
   return {
@@ -41,6 +42,192 @@ function resolveClosestSide(dx: number, dy: number): ConnectorSide {
   return dy > 0 ? "bottom" : "top";
 }
 
+function sideAxis(side: ConnectorSide): "horizontal" | "vertical" {
+  return side === "left" || side === "right" ? "horizontal" : "vertical";
+}
+
+function getRect(obj: RectObject): RoutingRect {
+  return {
+    col: obj.position.col,
+    row: obj.position.row,
+    width: obj.width,
+    height: obj.height,
+  };
+}
+
+function getGapDistances(
+  fromRect: RoutingRect,
+  toRect: RoutingRect
+): { horizontalGap: number; verticalGap: number } {
+  const fromRight = fromRect.col + fromRect.width;
+  const toRight = toRect.col + toRect.width;
+  const fromBottom = fromRect.row + fromRect.height;
+  const toBottom = toRect.row + toRect.height;
+
+  const horizontalGap = Math.max(
+    0,
+    toRect.col - fromRight,
+    fromRect.col - toRight
+  );
+  const verticalGap = Math.max(
+    0,
+    toRect.row - fromBottom,
+    fromRect.row - toBottom
+  );
+
+  return { horizontalGap, verticalGap };
+}
+
+function rangesOverlap(
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number
+): boolean {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+function countBends(points: GridPoint[]): number {
+  let bends = 0;
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const next = points[i + 1];
+    const inVertical = prev.col === curr.col;
+    const outVertical = curr.col === next.col;
+    if (inVertical !== outVertical) {
+      bends++;
+    }
+  }
+  return bends;
+}
+
+function totalPathLength(points: GridPoint[]): number {
+  let length = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const from = points[i];
+    const to = points[i + 1];
+    length += Math.abs(to.col - from.col) + Math.abs(to.row - from.row);
+  }
+  return length;
+}
+
+function scorePathGeometry(points: GridPoint[]): number {
+  return totalPathLength(points) + countBends(points) * 8;
+}
+
+function scoreAxisPreference(
+  side: ConnectorSide,
+  axis: "horizontal" | "vertical"
+): number {
+  return sideAxis(side) === axis ? 0 : 20;
+}
+
+function scoreDirectionalPreference(
+  side: ConnectorSide,
+  preferredPositive: ConnectorSide,
+  preferredNegative: ConnectorSide,
+  delta: number
+): number {
+  const preferredSide = delta >= 0 ? preferredPositive : preferredNegative;
+  return side === preferredSide ? 0 : 10;
+}
+
+function scoreVerticalFlowPreference(
+  fromSide: ConnectorSide,
+  toSide: ConnectorSide,
+  dy: number
+): number {
+  return (
+    scoreAxisPreference(fromSide, "vertical") +
+    scoreAxisPreference(toSide, "vertical") +
+    scoreDirectionalPreference(fromSide, "bottom", "top", dy) +
+    scoreDirectionalPreference(toSide, "top", "bottom", dy)
+  );
+}
+
+function scoreHorizontalFlowPreference(
+  fromSide: ConnectorSide,
+  toSide: ConnectorSide,
+  dx: number
+): number {
+  return (
+    scoreAxisPreference(fromSide, "horizontal") +
+    scoreAxisPreference(toSide, "horizontal") +
+    scoreDirectionalPreference(fromSide, "right", "left", dx) +
+    scoreDirectionalPreference(toSide, "left", "right", dx)
+  );
+}
+
+function scoreFallbackPreference(
+  fromSide: ConnectorSide,
+  toSide: ConnectorSide,
+  dx: number,
+  dy: number
+): number {
+  const fallbackFrom = resolveClosestSide(dx, dy);
+  const fallbackTo = resolveClosestSide(-dx, -dy);
+  return (fromSide === fallbackFrom ? 0 : 6) + (toSide === fallbackTo ? 0 : 6);
+}
+
+function scoreSidePair(
+  fromObj: RectObject,
+  toObj: RectObject,
+  fromSide: ConnectorSide,
+  toSide: ConnectorSide
+): number {
+  const fromRect = getRect(fromObj);
+  const toRect = getRect(toObj);
+  const fromCenter = getCenter(fromObj);
+  const toCenter = getCenter(toObj);
+  const dx = toCenter.col - fromCenter.col;
+  const dy = toCenter.row - fromCenter.row;
+  const horizontalOverlap = rangesOverlap(
+    fromRect.col,
+    fromRect.col + fromRect.width,
+    toRect.col,
+    toRect.col + toRect.width
+  );
+  const verticalOverlap = rangesOverlap(
+    fromRect.row,
+    fromRect.row + fromRect.height,
+    toRect.row,
+    toRect.row + toRect.height
+  );
+  const { horizontalGap, verticalGap } = getGapDistances(fromRect, toRect);
+  const fromPoint = getAttachmentPoint(fromObj, fromSide);
+  const toPoint = getAttachmentPoint(toObj, toSide);
+  const path = computeConnectorPath(
+    fromPoint,
+    toPoint,
+    getExitDirection(fromSide),
+    getExitDirection(toSide),
+    fromRect,
+    toRect
+  );
+
+  let score = scorePathGeometry(path.points);
+
+  const expectVertical =
+    verticalGap > 0 && (horizontalOverlap || verticalGap >= horizontalGap);
+  const expectHorizontal =
+    horizontalGap > 0 && (verticalOverlap || horizontalGap > verticalGap);
+
+  if (expectVertical) {
+    score += scoreVerticalFlowPreference(fromSide, toSide, dy);
+  }
+
+  if (expectHorizontal) {
+    score += scoreHorizontalFlowPreference(fromSide, toSide, dx);
+  }
+
+  if (!(expectVertical || expectHorizontal)) {
+    score += scoreFallbackPreference(fromSide, toSide, dx, dy);
+  }
+
+  return score;
+}
+
 /** Resolve "auto" sides based on relative positions of two objects.
  *  Each side is computed independently — pinning one does not affect the other. */
 export function resolveAutoSides(
@@ -53,17 +240,44 @@ export function resolveAutoSides(
     return { fromSide, toSide };
   }
 
-  const fromCenter = getCenter(fromObj);
-  const toCenter = getCenter(toObj);
-  const dx = toCenter.col - fromCenter.col;
-  const dy = toCenter.row - fromCenter.row;
+  const fromCandidates = fromSide ? [fromSide] : ALL_SIDES;
+  const toCandidates = toSide ? [toSide] : ALL_SIDES;
 
-  const autoFromSide = resolveClosestSide(dx, dy);
-  const autoToSide = resolveClosestSide(-dx, -dy);
+  let best:
+    | {
+        fromSide: ConnectorSide;
+        score: number;
+        toSide: ConnectorSide;
+      }
+    | undefined;
+
+  for (const candidateFrom of fromCandidates) {
+    for (const candidateTo of toCandidates) {
+      const score = scoreSidePair(fromObj, toObj, candidateFrom, candidateTo);
+      if (!best || score < best.score) {
+        best = {
+          fromSide: candidateFrom,
+          toSide: candidateTo,
+          score,
+        };
+      }
+    }
+  }
+
+  if (!best) {
+    const fromCenter = getCenter(fromObj);
+    const toCenter = getCenter(toObj);
+    const dx = toCenter.col - fromCenter.col;
+    const dy = toCenter.row - fromCenter.row;
+    return {
+      fromSide: fromSide ?? resolveClosestSide(dx, dy),
+      toSide: toSide ?? resolveClosestSide(-dx, -dy),
+    };
+  }
 
   return {
-    fromSide: fromSide ?? autoFromSide,
-    toSide: toSide ?? autoToSide,
+    fromSide: best.fromSide,
+    toSide: best.toSide,
   };
 }
 
@@ -82,6 +296,46 @@ export function getAttachmentPoint(
       return { col: col - 1, row: row + Math.floor(obj.height / 2) };
     case "right":
       return { col: col + obj.width, row: row + Math.floor(obj.height / 2) };
+    default:
+      throw new Error(`Unexpected side: ${side satisfies never}`);
+  }
+}
+
+function getDistributedAttachmentPoint(
+  obj: RectObject,
+  side: ConnectorSide,
+  slotIndex: number,
+  slotCount: number
+): GridPoint {
+  if (slotCount <= 1) {
+    return getAttachmentPoint(obj, side);
+  }
+
+  const distribute = (start: number, end: number): number => {
+    if (end <= start) {
+      return Math.floor((start + end) / 2);
+    }
+    const span = end - start;
+    return start + Math.round(((slotIndex + 1) * span) / (slotCount + 1));
+  };
+
+  const { col, row } = obj.position;
+
+  switch (side) {
+    case "top":
+      return { col: distribute(col + 1, col + obj.width - 2), row: row - 1 };
+    case "bottom":
+      return {
+        col: distribute(col + 1, col + obj.width - 2),
+        row: row + obj.height,
+      };
+    case "left":
+      return { col: col - 1, row: distribute(row + 1, row + obj.height - 2) };
+    case "right":
+      return {
+        col: col + obj.width,
+        row: distribute(row + 1, row + obj.height - 2),
+      };
     default:
       throw new Error(`Unexpected side: ${side satisfies never}`);
   }
@@ -130,25 +384,24 @@ export function computeConnectorPath(
   fromRect?: RoutingRect,
   toRect?: RoutingRect
 ): ConnectorPath {
+  const normalize = (path: ConnectorPath): ConnectorPath => ({
+    points: normalizeConnectorPoints(path.points),
+  });
+
   // Case 1: Opposite directions on the same axis (facing each other)
   if (areOpposite(fromDir, toDir)) {
-    return computeOppositeRoute(from, to, fromDir);
+    return normalize(computeOppositeRoute(from, to, fromDir));
   }
 
   // Case 2: Perpendicular directions
   if (!sameAxis(fromDir, toDir)) {
-    return computePerpendicularRoute(
-      from,
-      to,
-      fromDir,
-      toDir,
-      fromRect,
-      toRect
+    return normalize(
+      computePerpendicularRoute(from, to, fromDir, toDir, fromRect, toRect)
     );
   }
 
   // Case 3: Same direction (U-route)
-  return computeParallelRoute(from, to, fromDir, toDir);
+  return normalize(computeParallelRoute(from, to, fromDir, toDir));
 }
 
 /**
@@ -217,7 +470,7 @@ function isAligned(
 }
 
 /** Clearance: how far past the attachment point to extend before turning. */
-const CLEARANCE = 1;
+const CLEARANCE = 2;
 
 /** Compute the midpoint column between two boxes' horizontal spans. */
 function gapMidCol(
@@ -382,6 +635,182 @@ function computeParallelRoute(
   };
 }
 
+function isSamePoint(a: GridPoint, b: GridPoint): boolean {
+  return a.col === b.col && a.row === b.row;
+}
+
+function areCollinear(a: GridPoint, b: GridPoint, c: GridPoint): boolean {
+  return (
+    (a.col === b.col && b.col === c.col) || (a.row === b.row && b.row === c.row)
+  );
+}
+
+function normalizeConnectorPoints(points: readonly GridPoint[]): GridPoint[] {
+  if (points.length <= 2) {
+    return [...points];
+  }
+
+  const deduped: GridPoint[] = [];
+  for (const point of points) {
+    const prev = deduped.at(-1);
+    if (!(prev && isSamePoint(prev, point))) {
+      deduped.push(point);
+    }
+  }
+
+  if (deduped.length <= 2) {
+    return deduped;
+  }
+
+  const [first, ...rest] = deduped;
+  if (!first) {
+    return [];
+  }
+
+  const normalized: GridPoint[] = [first];
+  for (let i = 0; i < rest.length - 1; i++) {
+    const prev = normalized.at(-1);
+    const curr = rest[i];
+    const next = rest[i + 1];
+
+    if (prev && curr && next && !areCollinear(prev, curr, next)) {
+      normalized.push(curr);
+    }
+  }
+
+  const last = deduped.at(-1);
+  if (last) {
+    normalized.push(last);
+  }
+
+  return normalized;
+}
+
+function connectorFamilyDirection(
+  anchor: RectObject,
+  peers: readonly RectObject[],
+  mode: "outgoing" | "incoming"
+): ConnectorSide | null {
+  if (peers.length < 2) {
+    return null;
+  }
+
+  const anchorCenter = getCenter(anchor);
+  const deltas = peers.map((peer) => {
+    const center = getCenter(peer);
+    return {
+      dx: center.col - anchorCenter.col,
+      dy: center.row - anchorCenter.row,
+    };
+  });
+
+  const allBelow = deltas.every(({ dy }) => dy > 0);
+  const allAbove = deltas.every(({ dy }) => dy < 0);
+  const allRight = deltas.every(({ dx }) => dx > 0);
+  const allLeft = deltas.every(({ dx }) => dx < 0);
+
+  if (allBelow) {
+    return mode === "outgoing" ? "bottom" : "top";
+  }
+  if (allAbove) {
+    return mode === "outgoing" ? "top" : "bottom";
+  }
+  if (allRight) {
+    return mode === "outgoing" ? "right" : "left";
+  }
+  if (allLeft) {
+    return mode === "outgoing" ? "left" : "right";
+  }
+
+  return null;
+}
+
+function sortFamilyBySide(
+  anchor: RectObject,
+  peers: readonly RectObject[],
+  side: ConnectorSide
+): RectObject[] {
+  const anchorCenter = getCenter(anchor);
+  const sorted = [...peers];
+
+  sorted.sort((a, b) => {
+    const centerA = getCenter(a);
+    const centerB = getCenter(b);
+
+    if (side === "top" || side === "bottom") {
+      if (centerA.col !== centerB.col) {
+        return centerA.col - centerB.col;
+      }
+      return centerA.row - centerB.row;
+    }
+
+    if (centerA.row !== centerB.row) {
+      return centerA.row - centerB.row;
+    }
+
+    return (
+      Math.abs(centerA.col - anchorCenter.col) -
+      Math.abs(centerB.col - anchorCenter.col)
+    );
+  });
+
+  return sorted;
+}
+
+function getOutgoingFamily(
+  connector: ConnectorObject,
+  objects: readonly WireObject[],
+  fromObj: RectObject
+): { peers: RectObject[]; side: ConnectorSide } | null {
+  if (connector.fromSide) {
+    return null;
+  }
+
+  const siblingConnectors = objects.filter(
+    (obj): obj is ConnectorObject =>
+      obj.type === "connector" &&
+      obj.fromId === connector.fromId &&
+      !obj.fromSide
+  );
+
+  const peers = siblingConnectors
+    .map((candidate) => findRectObject(candidate.toId, objects))
+    .filter((obj): obj is RectObject => Boolean(obj));
+
+  const side = connectorFamilyDirection(fromObj, peers, "outgoing");
+  if (!side) {
+    return null;
+  }
+
+  return { peers, side };
+}
+
+function getIncomingFamily(
+  connector: ConnectorObject,
+  objects: readonly WireObject[],
+  toObj: RectObject
+): { peers: RectObject[]; side: ConnectorSide } | null {
+  if (connector.toSide) {
+    return null;
+  }
+
+  const siblingConnectors = objects.filter(
+    (obj): obj is ConnectorObject =>
+      obj.type === "connector" && obj.toId === connector.toId && !obj.toSide
+  );
+
+  const peers = siblingConnectors
+    .map((candidate) => findRectObject(candidate.fromId, objects))
+    .filter((obj): obj is RectObject => Boolean(obj));
+
+  const side = connectorFamilyDirection(toObj, peers, "incoming");
+  if (!side) {
+    return null;
+  }
+
+  return { peers, side };
+}
+
 /** Find a rect-bounded object by ID. */
 function findRectObject(
   id: string,
@@ -407,15 +836,59 @@ export function resolveConnectorPath(
     return null;
   }
 
-  const { fromSide, toSide } = resolveAutoSides(
+  let { fromSide, toSide } = resolveAutoSides(
     fromObj,
     toObj,
     connector.fromSide,
     connector.toSide
   );
 
-  const fromPoint = getAttachmentPoint(fromObj, fromSide);
-  const toPoint = getAttachmentPoint(toObj, toSide);
+  const outgoingFamily = getOutgoingFamily(connector, objects, fromObj);
+  if (outgoingFamily) {
+    fromSide = outgoingFamily.side;
+  }
+
+  const incomingFamily = getIncomingFamily(connector, objects, toObj);
+  if (incomingFamily) {
+    toSide = incomingFamily.side;
+  }
+
+  let fromPoint = getAttachmentPoint(fromObj, fromSide);
+  if (outgoingFamily) {
+    const orderedPeers = sortFamilyBySide(
+      fromObj,
+      outgoingFamily.peers,
+      outgoingFamily.side
+    );
+    const slotIndex = orderedPeers.findIndex((peer) => peer.id === toObj.id);
+    if (slotIndex >= 0) {
+      fromPoint = getDistributedAttachmentPoint(
+        fromObj,
+        fromSide,
+        slotIndex,
+        orderedPeers.length
+      );
+    }
+  }
+
+  let toPoint = getAttachmentPoint(toObj, toSide);
+  if (incomingFamily) {
+    const orderedPeers = sortFamilyBySide(
+      toObj,
+      incomingFamily.peers,
+      incomingFamily.side
+    );
+    const slotIndex = orderedPeers.findIndex((peer) => peer.id === fromObj.id);
+    if (slotIndex >= 0) {
+      toPoint = getDistributedAttachmentPoint(
+        toObj,
+        toSide,
+        slotIndex,
+        orderedPeers.length
+      );
+    }
+  }
+
   const fromDir = getExitDirection(fromSide);
   const toDir = getExitDirection(toSide);
 

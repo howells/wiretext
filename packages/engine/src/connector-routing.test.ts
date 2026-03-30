@@ -97,6 +97,20 @@ describe("resolveAutoSides", () => {
     // When dx === dy, Math.abs(dx) > Math.abs(dy) is false, so falls to vertical
     expect(result).toEqual({ fromSide: "bottom", toSide: "top" });
   });
+
+  it("prefers bottom/top for hierarchical flow when boxes overlap horizontally", () => {
+    const from = makeBox("a", 0, 16, 34, 5);
+    const to = makeBox("b", 20, 24, 50, 5);
+    const result = resolveAutoSides(from, to);
+    expect(result).toEqual({ fromSide: "bottom", toSide: "top" });
+  });
+
+  it("keeps a pinned top entry while choosing a sensible auto exit", () => {
+    const from = makeBox("a", 21, 9, 50, 5);
+    const to = makeBox("b", 1, 17, 34, 5);
+    const result = resolveAutoSides(from, to, undefined, "top");
+    expect(result).toEqual({ fromSide: "left", toSide: "top" });
+  });
 });
 
 describe("getAttachmentPoint", () => {
@@ -356,7 +370,7 @@ describe("computeConnectorPath", () => {
       expect(path.points[3]?.row).toBe(midRow);
     });
 
-    it("uses 1-cell clearance from attachment point for first turn", () => {
+    it("uses 2-cell clearance from attachment point for first turn", () => {
       const fromRect: RoutingRect = { col: 0, row: 0, width: 20, height: 10 };
       const toRect: RoutingRect = { col: 30, row: 12, width: 15, height: 10 };
       const from = { col: 10, row: 10 }; // bottom of source
@@ -369,8 +383,8 @@ describe("computeConnectorPath", () => {
         fromRect,
         toRect
       );
-      // First turn should be 1 cell below attachment point
-      expect(path.points[1]).toEqual({ col: 10, row: 11 });
+      // First turn should be 2 cells below attachment point
+      expect(path.points[1]).toEqual({ col: 10, row: 12 });
     });
 
     it("falls back to attachment midpoint when boxes overlap horizontally", () => {
@@ -539,6 +553,113 @@ describe("resolveConnectorPath", () => {
     expect(path).not.toBeNull();
     expect(path?.points[0]).toEqual({ col: 10, row: 2 }); // right of A
     expect(path?.points[path?.points.length - 1]).toEqual({ col: 19, row: 2 }); // left of B
+  });
+
+  it("routes from bottom to top for upper-to-lower stage flows with horizontal overlap", () => {
+    const upperStage = makeBox("a", 0, 16, 34, 5);
+    const lowerStage = makeBox("b", 20, 24, 50, 5);
+    const connector = {
+      id: "c1",
+      type: "connector" as const,
+      fromId: "a",
+      toId: "b",
+      position: { col: 0, row: 0 },
+      zIndex: 2,
+      layerId: "layer-1",
+    };
+    const path = resolveConnectorPath(connector, [
+      upperStage,
+      lowerStage,
+      connector,
+    ]);
+    expect(path).not.toBeNull();
+    expect(path?.points[0]).toEqual({ col: 17, row: 21 });
+    expect(path?.points[path.points.length - 1]).toEqual({ col: 45, row: 23 });
+  });
+
+  it("normalizes pinned perpendicular routes so they do not emit duplicate waypoints", () => {
+    const inspiration = makeBox("inspiration", 21, 9, 50, 5);
+    const discovery = makeBox("discovery", 1, 17, 34, 5);
+    const intelligence = makeBox("intelligence", 57, 17, 34, 5);
+    const connector = {
+      id: "c1",
+      type: "connector" as const,
+      fromId: "inspiration",
+      toId: "discovery",
+      toSide: "top" as const,
+      position: { col: 0, row: 0 },
+      zIndex: 2,
+      layerId: "layer-1",
+    };
+
+    const path = resolveConnectorPath(connector, [
+      inspiration,
+      discovery,
+      intelligence,
+      {
+        id: "c2",
+        type: "connector" as const,
+        fromId: "inspiration",
+        toId: "intelligence",
+        toSide: "top" as const,
+        position: { col: 0, row: 0 },
+        zIndex: 3,
+        layerId: "layer-1",
+      },
+      connector,
+    ]);
+
+    expect(path).not.toBeNull();
+    expect(path?.points).toEqual([
+      { col: 38, row: 14 },
+      { col: 38, row: 15 },
+      { col: 18, row: 15 },
+      { col: 18, row: 16 },
+    ]);
+  });
+
+  it("fans out sibling connectors from the same parent along a shared bottom edge", () => {
+    const inspiration = makeBox("inspiration", 21, 9, 50, 5);
+    const discovery = makeBox("discovery", 1, 17, 34, 5);
+    const intelligence = makeBox("intelligence", 57, 17, 34, 5);
+    const leftConnector = {
+      id: "left",
+      type: "connector" as const,
+      fromId: "inspiration",
+      toId: "discovery",
+      toSide: "top" as const,
+      position: { col: 0, row: 0 },
+      zIndex: 1,
+      layerId: "layer-1",
+    };
+    const rightConnector = {
+      id: "right",
+      type: "connector" as const,
+      fromId: "inspiration",
+      toId: "intelligence",
+      toSide: "top" as const,
+      position: { col: 0, row: 0 },
+      zIndex: 2,
+      layerId: "layer-1",
+    };
+
+    const leftPath = resolveConnectorPath(leftConnector, [
+      inspiration,
+      discovery,
+      intelligence,
+      leftConnector,
+      rightConnector,
+    ]);
+    const rightPath = resolveConnectorPath(rightConnector, [
+      inspiration,
+      discovery,
+      intelligence,
+      leftConnector,
+      rightConnector,
+    ]);
+
+    expect(leftPath?.points[0]).toEqual({ col: 38, row: 14 });
+    expect(rightPath?.points[0]).toEqual({ col: 53, row: 14 });
   });
 });
 
