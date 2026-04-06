@@ -3,14 +3,16 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**"]
+      "outputs": [".next/**", "dist/**"],
+      "cache": false
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "cache": false
     },
     "typecheck": {
       "dependsOn": ["^build"],
@@ -18,6 +20,11 @@
     },
     "lint": {
       "cache": false
+    },
+    "clean": {
+      "cache": false
     }
-  }
+  },
+  "ui": "stream",
+  "globalDependencies": ["**/.env", "**/.env.local"]
 }

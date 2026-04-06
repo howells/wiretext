@@ -1,0 +1,67 @@
+{
+  "objects": [
+    {
+      "id": "taste",
+      "type": "box",
+      "position": { "col": 30, "row": 0 },
+      "width": 30,
+      "height": 5,
+      "label": "TASTE\nPreference capture\nand curation"
+    },
+    {
+      "id": "inspiration",
+      "type": "box",
+      "position": { "col": 20, "row": 8 },
+      "width": 50,
+      "height": 5,
+      "label": "INSPIRATION\nArchitizer / Designspiration / Colophon"
+    },
+    {
+      "id": "discovery",
+      "type": "box",
+      "position": { "col": 0, "row": 16 },
+      "width": 34,
+      "height": 5,
+      "label": "DISCOVERY\nMaterial Graph\nMCP Server"
+    },
+    {
+      "id": "intelligence",
+      "type": "box",
+      "position": { "col": 56, "row": 16 },
+      "width": 34,
+      "height": 5,
+      "label": "INTELLIGENCE\nField\nMarket signals"
+    },
+    {
+      "id": "specification",
+      "type": "box",
+      "position": { "col": 20, "row": 24 },
+      "width": 50,
+      "height": 5,
+      "label": "SPECIFICATION\nDesignround / Basis"
+    },
+    {
+      "id": "procurement",
+      "type": "box",
+      "position": { "col": 20, "row": 32 },
+      "width": 50,
+      "height": 5,
+      "label": "PROCUREMENT\nMaterial Bank / Agentic Commerce"
+    },
+    {
+      "id": "coordination",
+      "type": "box",
+      "position": { "col": 20, "row": 40 },
+      "width": 50,
+      "height": 5,
+      "label": "COORDINATION\nCompatibility / palettes / presentation"
+    },
+    { "type": "connector", "fromId": "taste", "toId": "inspiration" },
+    { "type": "connector", "fromId": "inspiration", "toId": "discovery" },
+    { "type": "connector", "fromId": "inspiration", "toId": "intelligence" },
+    { "type": "connector", "fromId": "discovery", "toId": "specification" },
+    { "type": "connector", "fromId": "intelligence", "toId": "specification" },
+    { "type": "connector", "fromId": "specification", "toId": "procurement" },
+    { "type": "connector", "fromId": "procurement", "toId": "coordination" }
+  ]
+}

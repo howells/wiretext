@@ -1,15 +1,18 @@
 {
   "name": "wiretext-monorepo",
   "private": true,
-  "packageManager": "pnpm@10.12.4",
+  "packageManager": "pnpm@10.23.0",
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev --filter=@wiretext/app",
-    "test": "turbo test",
-    "typecheck": "turbo typecheck",
-    "lint": "turbo lint",
-    "check": "turbo typecheck lint",
-    "prepare": "husky"
+    "build": "turbo run build",
+    "dev": "turbo run dev --filter=@wiretext/app",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "prepare": "husky",
+    "dev:all": "turbo run dev --parallel",
+    "clean": "turbo clean",
+    "check:affected": "turbo run build lint typecheck test --affected"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -27,7 +30,7 @@
     "@biomejs/biome": "^2.4.8",
     "husky": "9.1.7",
     "lint-staged": "^16.3.2",
-    "turbo": "^2.8.14",
+    "turbo": "2.9.3",
     "ultracite": "7.3.2"
   }
 }
