@@ -177,7 +177,7 @@ export function ContextMenu() {
         label: "Send to Back",
         shortcut: "⌘[",
         action: act(() => store.sendToBack([...selection])),
-      }
+      },
     );
 
     if (otherLayers.length > 0) {
@@ -189,7 +189,7 @@ export function ContextMenu() {
             label: l.name,
             action: act(() => store.moveObjectsToLayer([...selection], l.id)),
           })),
-        }
+        },
       );
     }
 
@@ -219,7 +219,7 @@ export function ContextMenu() {
         label: "Select All",
         shortcut: "⌘A",
         action: act(() => store.selectAll()),
-      }
+      },
     );
   }
 

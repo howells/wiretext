@@ -74,7 +74,7 @@ export async function POST(req: Request) {
         headers: {
           "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
         },
-      }
+      },
     );
   }
 

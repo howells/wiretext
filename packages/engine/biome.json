@@ -1,7 +1,7 @@
 {
   "root": false,
-  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
-  "extends": ["ultracite/biome/core"],
+  "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
+  "extends": ["@howells/lint/biome/core"],
   "vcs": {
     "useIgnoreFile": false
   },

@@ -72,7 +72,7 @@ export function useCanvasEvents() {
 
       getActiveHandler()?.onMouseDown?.(col, row, e);
     },
-    []
+    [],
   );
 
   const onMouseMove = useCallback(
@@ -89,14 +89,14 @@ export function useCanvasEvents() {
 
       getActiveHandler()?.onMouseMove?.(col, row, e);
     },
-    []
+    [],
   );
 
   const onMouseUp = useCallback(
     (col: number, row: number, e: ReactMouseEvent) => {
       getActiveHandler()?.onMouseUp?.(col, row, e);
     },
-    []
+    [],
   );
 
   const baseCursor = pendingComponent

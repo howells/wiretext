@@ -9,7 +9,7 @@ import {
 export function composeToText(
   objects: WireObject[],
   gridSize: GridSize,
-  layers?: Layer[]
+  layers?: Layer[],
 ): string {
   const grid = compose(objects, gridSize, layers);
   return gridToString(grid);
@@ -21,7 +21,7 @@ export function composeToText(
  */
 export function composeSelectionToText(
   objects: WireObject[],
-  selection: Set<ObjectId>
+  selection: Set<ObjectId>,
 ): string {
   const selected = objects.filter((obj) => selection.has(obj.id));
   if (selected.length === 0) {
@@ -67,7 +67,7 @@ export function composeSelectionToText(
 export function composeToMarkdown(
   objects: WireObject[],
   gridSize: GridSize,
-  layers?: Layer[]
+  layers?: Layer[],
 ): string {
   const text = composeToText(objects, gridSize, layers);
   return `\`\`\`\n${text}\n\`\`\``;
@@ -76,7 +76,7 @@ export function composeToMarkdown(
 export function composeToHtml(
   objects: WireObject[],
   gridSize: GridSize,
-  layers?: Layer[]
+  layers?: Layer[],
 ): string {
   const text = composeToText(objects, gridSize, layers);
   const escaped = text
@@ -90,7 +90,7 @@ export function composeToGitHub(
   objects: WireObject[],
   gridSize: GridSize,
   shareUrl?: string,
-  layers?: Layer[]
+  layers?: Layer[],
 ): string {
   const text = composeToText(objects, gridSize, layers);
   const lines = [

@@ -79,7 +79,7 @@ function forceSetChar(
   grid: string[][],
   col: number,
   row: number,
-  char: string
+  char: string,
 ) {
   if (row >= 0 && row < grid.length && col >= 0 && col < grid[0].length) {
     const maxCol = grid[0].length;
@@ -113,7 +113,7 @@ function stampFill(
   col: number,
   row: number,
   width: number,
-  height: number
+  height: number,
 ) {
   for (let r = 1; r < height - 1; r++) {
     for (let c = 1; c < width - 1; c++) {
@@ -134,7 +134,7 @@ function forceStampText(
   grid: string[][],
   col: number,
   row: number,
-  text: string
+  text: string,
 ) {
   let offset = 0;
   for (const ch of text) {
@@ -149,7 +149,7 @@ function stampBorder(
   row: number,
   width: number,
   height: number,
-  borderStyle: BorderStyle
+  borderStyle: BorderStyle,
 ) {
   const chars = getBoxChars(borderStyle);
 
@@ -202,7 +202,7 @@ function stampCenteredLabel(
   row: number,
   width: number,
   height: number,
-  label: string
+  label: string,
 ) {
   const maxLabelLen = width - 4;
   const lines = label.split("\n");
@@ -286,7 +286,7 @@ function walkLine(
   c1: number,
   r1: number,
   c2: number,
-  r2: number
+  r2: number,
 ): { col: number; row: number }[] {
   const points: { col: number; row: number }[] = [];
   const dc = c2 - c1;
@@ -338,7 +338,7 @@ function stampArrowHeads(
   c2: number,
   r2: number,
   showStart: boolean,
-  showEnd: boolean
+  showEnd: boolean,
 ) {
   const dc = c2 - c1;
   const dr = r2 - r1;
@@ -392,7 +392,7 @@ function stampComponentButton(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const label = obj.label ?? "Button";
   const icon = obj.icon;
@@ -440,7 +440,7 @@ function stampComponentInput(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const mid = row + Math.floor(obj.height / 2);
   let textCol = col + 2;
@@ -456,7 +456,7 @@ function stampComponentSelect(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const mid = row + Math.floor(obj.height / 2);
   const maxLen = obj.width - 6;
@@ -470,7 +470,7 @@ function stampComponentToggle(
   col: number,
   row: number,
   indicator: string,
-  defaultLabel: string
+  defaultLabel: string,
 ) {
   const mid = row + Math.floor(obj.height / 2);
   stampText(grid, col, mid, indicator);
@@ -486,7 +486,7 @@ function stampTableHeaders(
   row: number,
   colW: number,
   height: number,
-  filterable: boolean | undefined
+  filterable: boolean | undefined,
 ) {
   for (let i = 0; i < cols.length; i++) {
     const headerCol = col + 1 + i * colW;
@@ -495,7 +495,7 @@ function stampTableHeaders(
       grid,
       headerCol + 1,
       row + 1,
-      truncate(cols[i], colW - 3 - filterSpace)
+      truncate(cols[i], colW - 3 - filterSpace),
     );
     if (filterable) {
       setChar(grid, headerCol + colW - 3, row + 1, "▾");
@@ -520,7 +520,7 @@ function stampTableDataRows(
   row: number,
   numCols: number,
   colW: number,
-  maxVisibleRows: number
+  maxVisibleRows: number,
 ) {
   const visibleCount = Math.min(dataRows.length, maxVisibleRows);
   for (let r = 0; r < visibleCount; r++) {
@@ -541,7 +541,7 @@ function stampComponentTable(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   if (obj.height < 5) {
     return;
@@ -567,7 +567,7 @@ function stampComponentTitleBar(
   col: number,
   row: number,
   title: string,
-  showClose: boolean
+  showClose: boolean,
 ) {
   if (obj.height < 6) {
     return;
@@ -588,7 +588,7 @@ function stampCardBody(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   if (obj.height < 6 || !obj.body) {
     return;
@@ -612,7 +612,7 @@ function stampComponentBrowser(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   if (obj.height < 5) {
     return;
@@ -635,7 +635,7 @@ function stampComponentNavbar(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const mid = row + Math.floor(obj.height / 2);
   stampText(grid, col + 2, mid, "=");
@@ -648,7 +648,7 @@ function stampComponentTabs(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const mid = row + Math.floor(obj.height / 2);
   const text = (obj.tabs ?? []).join(" │ ");
@@ -660,7 +660,7 @@ function stampComponentProgress(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const mid = row + Math.floor(obj.height / 2);
   const innerW = obj.width - 4;
@@ -677,7 +677,7 @@ function stampComponentIcon(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const midCol = col + Math.floor(obj.width / 2);
   const midRow = row + Math.floor(obj.height / 2);
@@ -688,7 +688,7 @@ function stampComponentImage(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   // Fill interior with ░
   for (let r = 1; r < obj.height - 1; r++) {
@@ -715,7 +715,7 @@ function stampComponentDivider(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const label = obj.label;
   // Need at least 5 chars for "── L ─" pattern (2 dashes + space + 1 char + space)
@@ -744,7 +744,7 @@ function stampComponentToggleSwitch(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const on = obj.checked === true;
   const toggle = on ? "[●──]" : "[──●]";
@@ -758,7 +758,7 @@ function stampComponentAlert(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const icons: Record<string, string> = {
     info: "i",
@@ -777,7 +777,7 @@ function stampComponentBreadcrumb(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const items = obj.items ?? [];
   const sep = obj.separator ?? " > ";
@@ -789,7 +789,7 @@ function stampComponentAvatar(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const innerW = obj.width - 2;
   const midRow = row + Math.floor(obj.height / 2);
@@ -821,7 +821,7 @@ function stampComponentList(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const items = obj.items ?? [];
   const style = obj.listStyle ?? "bullet";
@@ -847,7 +847,7 @@ function stampComponentStepper(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const items = obj.items ?? [];
   const active = obj.activeStep ?? 0;
@@ -888,7 +888,7 @@ function stampComponentRating(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   const value = Math.max(0, obj.value ?? 0);
   const max = Math.max(1, obj.maxValue ?? 5);
@@ -906,7 +906,7 @@ function stampComponentSkeleton(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   for (let r = 0; r < obj.height; r++) {
     for (let c = 0; c < obj.width; c++) {
@@ -919,7 +919,7 @@ function stampComponentContent(
   grid: string[][],
   obj: ComponentObject,
   col: number,
-  row: number
+  row: number,
 ) {
   switch (obj.componentType) {
     case "button":
@@ -935,7 +935,7 @@ function stampComponentContent(
         col,
         row,
         obj.checked === true ? "[✓]" : "[ ]",
-        "Checkbox"
+        "Checkbox",
       );
     case "radio":
       return stampComponentToggle(
@@ -944,7 +944,7 @@ function stampComponentContent(
         col,
         row,
         obj.checked === true ? "(●)" : "( )",
-        "Radio"
+        "Radio",
       );
     case "table":
       return stampComponentTable(grid, obj, col, row);
@@ -1047,7 +1047,7 @@ function stampConnectorArrowHeads(
   grid: string[][],
   points: GridPoint[],
   showStart: boolean,
-  showEnd: boolean
+  showEnd: boolean,
 ) {
   if (showEnd && points.length >= 2) {
     const last = points.at(-1);
@@ -1115,7 +1115,7 @@ export function getConnectorMidpoint(points: GridPoint[]): {
 function stampConnectorLabel(
   grid: string[][],
   points: GridPoint[],
-  label: string
+  label: string,
 ) {
   const maxLabelWidth = 20;
   const lines = label.split("\n");
@@ -1149,7 +1149,7 @@ function stampConnectorLabel(
 function stampConnector(
   grid: string[][],
   obj: ConnectorObject,
-  allObjects: readonly WireObject[]
+  allObjects: readonly WireObject[],
 ) {
   const path = resolveConnectorPath(obj, allObjects);
   if (!path || path.points.length < 2) {
@@ -1187,7 +1187,7 @@ function getConnectorArrowHead(dir: string): string {
 /** Sort objects for rendering: layer order first, then zIndex within layer */
 function sortForRendering(
   objects: WireObject[],
-  layers: Layer[]
+  layers: Layer[],
 ): WireObject[] {
   const layerOrder = new Map<string, number>();
   for (let i = 0; i < layers.length; i++) {
@@ -1196,7 +1196,7 @@ function sortForRendering(
 
   // Filter out objects on hidden layers
   const hiddenLayerIds = new Set(
-    layers.filter((l) => !l.visible).map((l) => l.id)
+    layers.filter((l) => !l.visible).map((l) => l.id),
   );
   const visible = objects.filter((obj) => !hiddenLayerIds.has(obj.layerId));
 
@@ -1213,7 +1213,7 @@ function sortForRendering(
 export function compose(
   objects: WireObject[],
   gridSize: GridSize,
-  layers?: Layer[]
+  layers?: Layer[],
 ): string[][] {
   const grid = createGrid(gridSize);
   const sorted = layers

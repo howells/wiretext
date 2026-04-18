@@ -47,6 +47,6 @@ export default function OgImage() {
         Wireframe with text
       </div>
     </div>,
-    { ...size }
+    { ...size },
   );
 }

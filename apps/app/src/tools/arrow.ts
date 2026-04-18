@@ -13,7 +13,7 @@ function snapDirection(
   startCol: number,
   startRow: number,
   endCol: number,
-  endRow: number
+  endRow: number,
 ): { col: number; row: number } {
   const dx = endCol - startCol;
   const dy = endRow - startRow;

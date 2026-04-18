@@ -68,12 +68,12 @@ function handleCopy(e: KeyboardEvent, key: string): boolean {
       // No selection: copy full canvas to system clipboard
       const effectiveGridSize = getEffectiveGridSize(
         state.objects,
-        state.gridSize
+        state.gridSize,
       );
       const text = composeToText(
         state.objects,
         effectiveGridSize,
-        state.layers
+        state.layers,
       );
       copyToClipboard(text);
     }
@@ -117,7 +117,7 @@ function handleDuplicate(e: KeyboardEvent, key: string): boolean {
 function handleExport(
   e: KeyboardEvent,
   key: string,
-  onToggleExport?: () => void
+  onToggleExport?: () => void,
 ): boolean {
   if ((e.metaKey || e.ctrlKey) && key === "e") {
     e.preventDefault();

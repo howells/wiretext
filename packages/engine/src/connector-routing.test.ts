@@ -15,7 +15,7 @@ function makeBox(
   col: number,
   row: number,
   width = 10,
-  height = 5
+  height = 5,
 ): BoxObject {
   return {
     id,
@@ -152,7 +152,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 5, row: 15 },
         "down",
-        "up"
+        "up",
       );
       expect(path.points).toEqual([
         { col: 5, row: 5 },
@@ -165,7 +165,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 20, row: 5 },
         "right",
-        "left"
+        "left",
       );
       expect(path.points).toEqual([
         { col: 5, row: 5 },
@@ -180,7 +180,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 15, row: 15 },
         "down",
-        "up"
+        "up",
       );
       expect(path.points).toHaveLength(4);
       expect(path.points[0]).toEqual({ col: 5, row: 5 });
@@ -194,7 +194,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 20, row: 15 },
         "right",
-        "left"
+        "left",
       );
       expect(path.points).toHaveLength(4);
       expect(path.points[0]).toEqual({ col: 5, row: 5 });
@@ -210,7 +210,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 15, row: 15 },
         "down",
-        "right"
+        "right",
       );
       expect(path.points).toHaveLength(3);
       expect(path.points[0]).toEqual({ col: 5, row: 5 });
@@ -223,7 +223,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 15, row: 15 },
         "right",
-        "down"
+        "down",
       );
       expect(path.points).toHaveLength(3);
       expect(path.points[0]).toEqual({ col: 5, row: 5 });
@@ -240,7 +240,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 15, row: 15 },
         "up",
-        "down"
+        "down",
       );
       expect(path.points).toHaveLength(4); // opposite route, Z-shape
     });
@@ -252,7 +252,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 15, row: 15 },
         "up",
-        "right"
+        "right",
       );
       expect(path.points).toHaveLength(5);
       // First point exits upward
@@ -269,7 +269,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 5 },
         { col: 15, row: 15 },
         "left",
-        "down"
+        "down",
       );
       expect(path.points).toHaveLength(5);
       // First point exits leftward
@@ -286,7 +286,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 15 },
         { col: 15, row: 5 },
         "down",
-        "left"
+        "left",
       );
       expect(path.points).toHaveLength(5);
       // First point exits downward
@@ -301,7 +301,7 @@ describe("computeConnectorPath", () => {
         { col: 15, row: 5 },
         { col: 5, row: 15 },
         "right",
-        "up"
+        "up",
       );
       expect(path.points).toHaveLength(5);
       // First point exits rightward
@@ -324,7 +324,7 @@ describe("computeConnectorPath", () => {
         "down",
         "left",
         fromRect,
-        toRect
+        toRect,
       );
       expect(path.points).toHaveLength(5);
     });
@@ -342,7 +342,7 @@ describe("computeConnectorPath", () => {
         "down",
         "left",
         fromRect,
-        toRect
+        toRect,
       );
       // The vertical segment is at points[2] and points[3], both at midCol
       const midCol = path.points[2]?.col;
@@ -363,7 +363,7 @@ describe("computeConnectorPath", () => {
         "right",
         "up",
         fromRect,
-        toRect
+        toRect,
       );
       const midRow = path.points[2]?.row;
       expect(midRow).toBe(15); // floor((10 + 20) / 2)
@@ -381,7 +381,7 @@ describe("computeConnectorPath", () => {
         "down",
         "left",
         fromRect,
-        toRect
+        toRect,
       );
       // First turn should be 2 cells below attachment point
       expect(path.points[1]).toEqual({ col: 10, row: 12 });
@@ -399,7 +399,7 @@ describe("computeConnectorPath", () => {
         "down",
         "left",
         fromRect,
-        toRect
+        toRect,
       );
       // Should fall back to floor((10 + 9) / 2) = 9
       const midCol = path.points[2]?.col;
@@ -413,7 +413,7 @@ describe("computeConnectorPath", () => {
         { col: 10, row: 5 },
         { col: 10, row: 15 },
         "right",
-        "right"
+        "right",
       );
       expect(path.points).toHaveLength(4);
       expect(path.points[0]).toEqual({ col: 10, row: 5 });
@@ -430,7 +430,7 @@ describe("computeConnectorPath", () => {
         { col: 10, row: 5 },
         { col: 15, row: 15 },
         "left",
-        "left"
+        "left",
       );
       expect(path.points).toHaveLength(4);
       // Should go left to min col - 2
@@ -442,7 +442,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 10 },
         { col: 15, row: 10 },
         "down",
-        "down"
+        "down",
       );
       expect(path.points).toHaveLength(4);
       // Should go down to max row + 2
@@ -454,7 +454,7 @@ describe("computeConnectorPath", () => {
         { col: 5, row: 10 },
         { col: 15, row: 8 },
         "up",
-        "up"
+        "up",
       );
       expect(path.points).toHaveLength(4);
       // Should go up to min row - 2
@@ -700,22 +700,22 @@ describe("getCornerChar", () => {
 describe("getSegmentDirection", () => {
   it("right", () => {
     expect(getSegmentDirection({ col: 0, row: 0 }, { col: 5, row: 0 })).toBe(
-      "right"
+      "right",
     );
   });
   it("left", () => {
     expect(getSegmentDirection({ col: 5, row: 0 }, { col: 0, row: 0 })).toBe(
-      "left"
+      "left",
     );
   });
   it("down", () => {
     expect(getSegmentDirection({ col: 0, row: 0 }, { col: 0, row: 5 })).toBe(
-      "down"
+      "down",
     );
   });
   it("up", () => {
     expect(getSegmentDirection({ col: 0, row: 5 }, { col: 0, row: 0 })).toBe(
-      "up"
+      "up",
     );
   });
 });

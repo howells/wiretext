@@ -32,7 +32,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const layers = useEditorStore((s) => s.layers);
   const { objects: exportObjects, gridSize: exportGridSize } = useMemo(
     () => prepareForExport(objects, 1),
-    [objects]
+    [objects],
   );
   const [format, setFormat] = useState<ExportFormat>("text");
   const [copied, setCopied] = useState(false);
@@ -50,7 +50,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
           exportObjects,
           exportGridSize,
           objects.length > 0 ? getShareUrl(objects, layers) : undefined,
-          layers
+          layers,
         );
       default:
         return composeToText(exportObjects, exportGridSize, layers);
@@ -133,7 +133,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
               >
                 {FORMAT_LABELS[f]}
               </button>
-            )
+            ),
           )}
         </div>
 

@@ -18,7 +18,7 @@ function minWidth(
     separator: string;
     listStyle: string;
     maxValue: number;
-  }> = {}
+  }> = {},
 ): number {
   return getComponentMinWidth({ componentType, ...overrides });
 }
@@ -216,7 +216,7 @@ describe("getComponentMinWidth — label-based components", () => {
     it("should return label length plus padding of 12 for a long URL", () => {
       // "https://www.example.com/page" = 28 chars + 12 = 40
       expect(
-        minWidth("browser", { label: "https://www.example.com/page" })
+        minWidth("browser", { label: "https://www.example.com/page" }),
       ).toBe(40);
     });
   });
@@ -308,7 +308,7 @@ describe("getComponentMinWidth — items-based components", () => {
     it("should return joined length plus 7 for multiple items", () => {
       // "Home" + "  " + "About" + "  " + "Contact" = 4+2+5+2+7 = 20, + 7 = 27
       expect(
-        minWidth("navbar", { navItems: ["Home", "About", "Contact"] })
+        minWidth("navbar", { navItems: ["Home", "About", "Contact"] }),
       ).toBe(27);
     });
   });
@@ -375,14 +375,14 @@ describe("getComponentMinWidth — items-based components", () => {
     it("should use custom separator when provided", () => {
       // "Home" + " / " + "About" = 4+3+5 = 12
       expect(
-        minWidth("breadcrumb", { items: ["Home", "About"], separator: " / " })
+        minWidth("breadcrumb", { items: ["Home", "About"], separator: " / " }),
       ).toBe(12);
     });
 
     it("should use custom separator with different length", () => {
       // "Home" + ">" + "About" = 4+1+5 = 10
       expect(
-        minWidth("breadcrumb", { items: ["Home", "About"], separator: ">" })
+        minWidth("breadcrumb", { items: ["Home", "About"], separator: ">" }),
       ).toBe(10);
     });
   });
@@ -399,21 +399,21 @@ describe("getComponentMinWidth — items-based components", () => {
     it("should return prefix length 2 plus longest item for bullet style", () => {
       // prefix = 2, "Apple" = 5, total = 7
       expect(
-        minWidth("list", { items: ["Apple", "Fig"], listStyle: "bullet" })
+        minWidth("list", { items: ["Apple", "Fig"], listStyle: "bullet" }),
       ).toBe(7);
     });
 
     it("should return prefix length 2 plus longest item for dash style", () => {
       // prefix = 2, "Banana" = 6, total = 8
       expect(
-        minWidth("list", { items: ["Banana", "Date"], listStyle: "dash" })
+        minWidth("list", { items: ["Banana", "Date"], listStyle: "dash" }),
       ).toBe(8);
     });
 
     it("should return prefix length 3 plus longest item for number style", () => {
       // prefix = 3, "Cherry" = 6, total = 9
       expect(
-        minWidth("list", { items: ["Kiwi", "Cherry"], listStyle: "number" })
+        minWidth("list", { items: ["Kiwi", "Cherry"], listStyle: "number" }),
       ).toBe(9);
     });
 
@@ -425,7 +425,7 @@ describe("getComponentMinWidth — items-based components", () => {
     it("should use the longest item when items vary in length", () => {
       // prefix = 2, "Longest item here" = 17, total = 19
       expect(
-        minWidth("list", { items: ["Short", "Longest item here", "Mid"] })
+        minWidth("list", { items: ["Short", "Longest item here", "Mid"] }),
       ).toBe(19);
     });
   });

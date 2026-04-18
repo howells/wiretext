@@ -57,7 +57,7 @@ function getRect(obj: RectObject): RoutingRect {
 
 function getGapDistances(
   fromRect: RoutingRect,
-  toRect: RoutingRect
+  toRect: RoutingRect,
 ): { horizontalGap: number; verticalGap: number } {
   const fromRight = fromRect.col + fromRect.width;
   const toRight = toRect.col + toRect.width;
@@ -67,12 +67,12 @@ function getGapDistances(
   const horizontalGap = Math.max(
     0,
     toRect.col - fromRight,
-    fromRect.col - toRight
+    fromRect.col - toRight,
   );
   const verticalGap = Math.max(
     0,
     toRect.row - fromBottom,
-    fromRect.row - toBottom
+    fromRect.row - toBottom,
   );
 
   return { horizontalGap, verticalGap };
@@ -82,7 +82,7 @@ function rangesOverlap(
   aStart: number,
   aEnd: number,
   bStart: number,
-  bEnd: number
+  bEnd: number,
 ): boolean {
   return aStart < bEnd && bStart < aEnd;
 }
@@ -118,7 +118,7 @@ function scorePathGeometry(points: GridPoint[]): number {
 
 function scoreAxisPreference(
   side: ConnectorSide,
-  axis: "horizontal" | "vertical"
+  axis: "horizontal" | "vertical",
 ): number {
   return sideAxis(side) === axis ? 0 : 20;
 }
@@ -127,7 +127,7 @@ function scoreDirectionalPreference(
   side: ConnectorSide,
   preferredPositive: ConnectorSide,
   preferredNegative: ConnectorSide,
-  delta: number
+  delta: number,
 ): number {
   const preferredSide = delta >= 0 ? preferredPositive : preferredNegative;
   return side === preferredSide ? 0 : 10;
@@ -136,7 +136,7 @@ function scoreDirectionalPreference(
 function scoreVerticalFlowPreference(
   fromSide: ConnectorSide,
   toSide: ConnectorSide,
-  dy: number
+  dy: number,
 ): number {
   return (
     scoreAxisPreference(fromSide, "vertical") +
@@ -149,7 +149,7 @@ function scoreVerticalFlowPreference(
 function scoreHorizontalFlowPreference(
   fromSide: ConnectorSide,
   toSide: ConnectorSide,
-  dx: number
+  dx: number,
 ): number {
   return (
     scoreAxisPreference(fromSide, "horizontal") +
@@ -163,7 +163,7 @@ function scoreFallbackPreference(
   fromSide: ConnectorSide,
   toSide: ConnectorSide,
   dx: number,
-  dy: number
+  dy: number,
 ): number {
   const fallbackFrom = resolveClosestSide(dx, dy);
   const fallbackTo = resolveClosestSide(-dx, -dy);
@@ -174,7 +174,7 @@ function scoreSidePair(
   fromObj: RectObject,
   toObj: RectObject,
   fromSide: ConnectorSide,
-  toSide: ConnectorSide
+  toSide: ConnectorSide,
 ): number {
   const fromRect = getRect(fromObj);
   const toRect = getRect(toObj);
@@ -186,13 +186,13 @@ function scoreSidePair(
     fromRect.col,
     fromRect.col + fromRect.width,
     toRect.col,
-    toRect.col + toRect.width
+    toRect.col + toRect.width,
   );
   const verticalOverlap = rangesOverlap(
     fromRect.row,
     fromRect.row + fromRect.height,
     toRect.row,
-    toRect.row + toRect.height
+    toRect.row + toRect.height,
   );
   const { horizontalGap, verticalGap } = getGapDistances(fromRect, toRect);
   const fromPoint = getAttachmentPoint(fromObj, fromSide);
@@ -203,7 +203,7 @@ function scoreSidePair(
     getExitDirection(fromSide),
     getExitDirection(toSide),
     fromRect,
-    toRect
+    toRect,
   );
 
   let score = scorePathGeometry(path.points);
@@ -234,7 +234,7 @@ export function resolveAutoSides(
   fromObj: RectObject,
   toObj: RectObject,
   fromSide?: ConnectorSide,
-  toSide?: ConnectorSide
+  toSide?: ConnectorSide,
 ): { fromSide: ConnectorSide; toSide: ConnectorSide } {
   if (fromSide && toSide) {
     return { fromSide, toSide };
@@ -284,7 +284,7 @@ export function resolveAutoSides(
 /** Compute the attachment point one cell outside the box border. */
 export function getAttachmentPoint(
   obj: RectObject,
-  side: ConnectorSide
+  side: ConnectorSide,
 ): GridPoint {
   const { col, row } = obj.position;
   switch (side) {
@@ -305,7 +305,7 @@ function getDistributedAttachmentPoint(
   obj: RectObject,
   side: ConnectorSide,
   slotIndex: number,
-  slotCount: number
+  slotCount: number,
 ): GridPoint {
   if (slotCount <= 1) {
     return getAttachmentPoint(obj, side);
@@ -382,7 +382,7 @@ export function computeConnectorPath(
   fromDir: Direction,
   toDir: Direction,
   fromRect?: RoutingRect,
-  toRect?: RoutingRect
+  toRect?: RoutingRect,
 ): ConnectorPath {
   const normalize = (path: ConnectorPath): ConnectorPath => ({
     points: normalizeConnectorPoints(path.points),
@@ -396,7 +396,7 @@ export function computeConnectorPath(
   // Case 2: Perpendicular directions
   if (!sameAxis(fromDir, toDir)) {
     return normalize(
-      computePerpendicularRoute(from, to, fromDir, toDir, fromRect, toRect)
+      computePerpendicularRoute(from, to, fromDir, toDir, fromRect, toRect),
     );
   }
 
@@ -411,7 +411,7 @@ export function computeConnectorPath(
 function computeOppositeRoute(
   from: GridPoint,
   to: GridPoint,
-  fromDir: Direction
+  fromDir: Direction,
 ): ConnectorPath {
   const isVertical = fromDir === "up" || fromDir === "down";
 
@@ -453,7 +453,7 @@ function computeOppositeRoute(
 function isAligned(
   dir: Direction,
   from: GridPoint,
-  target: GridPoint
+  target: GridPoint,
 ): boolean {
   switch (dir) {
     case "up":
@@ -477,7 +477,7 @@ function gapMidCol(
   fromRect: RoutingRect,
   toRect: RoutingRect,
   fromCol: number,
-  toCol: number
+  toCol: number,
 ): number {
   const fromRight = fromRect.col + fromRect.width;
   const toLeft = toRect.col;
@@ -501,7 +501,7 @@ function gapMidRow(
   fromRect: RoutingRect,
   toRect: RoutingRect,
   fromRow: number,
-  toRow: number
+  toRow: number,
 ): number {
   const fromBottom = fromRect.row + fromRect.height;
   const toTop = toRect.row;
@@ -535,7 +535,7 @@ function computePerpendicularRoute(
   fromDir: Direction,
   _toDir: Direction,
   fromRect?: RoutingRect,
-  toRect?: RoutingRect
+  toRect?: RoutingRect,
 ): ConnectorPath {
   const fromVertical = fromDir === "up" || fromDir === "down";
 
@@ -600,7 +600,7 @@ function computeParallelRoute(
   from: GridPoint,
   to: GridPoint,
   fromDir: Direction,
-  _toDir: Direction
+  _toDir: Direction,
 ): ConnectorPath {
   const isVertical = fromDir === "up" || fromDir === "down";
   const isPositive = fromDir === "down" || fromDir === "right";
@@ -689,7 +689,7 @@ function normalizeConnectorPoints(points: readonly GridPoint[]): GridPoint[] {
 function connectorFamilyDirection(
   anchor: RectObject,
   peers: readonly RectObject[],
-  mode: "outgoing" | "incoming"
+  mode: "outgoing" | "incoming",
 ): ConnectorSide | null {
   if (peers.length < 2) {
     return null;
@@ -728,7 +728,7 @@ function connectorFamilyDirection(
 function sortFamilyBySide(
   anchor: RectObject,
   peers: readonly RectObject[],
-  side: ConnectorSide
+  side: ConnectorSide,
 ): RectObject[] {
   const anchorCenter = getCenter(anchor);
   const sorted = [...peers];
@@ -760,7 +760,7 @@ function sortFamilyBySide(
 function getOutgoingFamily(
   connector: ConnectorObject,
   objects: readonly WireObject[],
-  fromObj: RectObject
+  fromObj: RectObject,
 ): { peers: RectObject[]; side: ConnectorSide } | null {
   if (connector.fromSide) {
     return null;
@@ -770,7 +770,7 @@ function getOutgoingFamily(
     (obj): obj is ConnectorObject =>
       obj.type === "connector" &&
       obj.fromId === connector.fromId &&
-      !obj.fromSide
+      !obj.fromSide,
   );
 
   const peers = siblingConnectors
@@ -788,7 +788,7 @@ function getOutgoingFamily(
 function getIncomingFamily(
   connector: ConnectorObject,
   objects: readonly WireObject[],
-  toObj: RectObject
+  toObj: RectObject,
 ): { peers: RectObject[]; side: ConnectorSide } | null {
   if (connector.toSide) {
     return null;
@@ -796,7 +796,7 @@ function getIncomingFamily(
 
   const siblingConnectors = objects.filter(
     (obj): obj is ConnectorObject =>
-      obj.type === "connector" && obj.toId === connector.toId && !obj.toSide
+      obj.type === "connector" && obj.toId === connector.toId && !obj.toSide,
   );
 
   const peers = siblingConnectors
@@ -814,7 +814,7 @@ function getIncomingFamily(
 /** Find a rect-bounded object by ID. */
 function findRectObject(
   id: string,
-  objects: readonly WireObject[]
+  objects: readonly WireObject[],
 ): RectObject | undefined {
   for (const obj of objects) {
     if (obj.id === id && hasRectBounds(obj)) {
@@ -827,7 +827,7 @@ function findRectObject(
 /** Resolve a connector into a renderable path, or null if endpoints are missing. */
 export function resolveConnectorPath(
   connector: ConnectorObject,
-  objects: readonly WireObject[]
+  objects: readonly WireObject[],
 ): ConnectorPath | null {
   const fromObj = findRectObject(connector.fromId, objects);
   const toObj = findRectObject(connector.toId, objects);
@@ -840,7 +840,7 @@ export function resolveConnectorPath(
     fromObj,
     toObj,
     connector.fromSide,
-    connector.toSide
+    connector.toSide,
   );
 
   const outgoingFamily = getOutgoingFamily(connector, objects, fromObj);
@@ -858,7 +858,7 @@ export function resolveConnectorPath(
     const orderedPeers = sortFamilyBySide(
       fromObj,
       outgoingFamily.peers,
-      outgoingFamily.side
+      outgoingFamily.side,
     );
     const slotIndex = orderedPeers.findIndex((peer) => peer.id === toObj.id);
     if (slotIndex >= 0) {
@@ -866,7 +866,7 @@ export function resolveConnectorPath(
         fromObj,
         fromSide,
         slotIndex,
-        orderedPeers.length
+        orderedPeers.length,
       );
     }
   }
@@ -876,7 +876,7 @@ export function resolveConnectorPath(
     const orderedPeers = sortFamilyBySide(
       toObj,
       incomingFamily.peers,
-      incomingFamily.side
+      incomingFamily.side,
     );
     const slotIndex = orderedPeers.findIndex((peer) => peer.id === fromObj.id);
     if (slotIndex >= 0) {
@@ -884,7 +884,7 @@ export function resolveConnectorPath(
         toObj,
         toSide,
         slotIndex,
-        orderedPeers.length
+        orderedPeers.length,
       );
     }
   }
@@ -911,7 +911,7 @@ export function resolveConnectorPath(
     fromDir,
     toDir,
     fromRect,
-    toRect
+    toRect,
   );
 }
 

@@ -186,7 +186,7 @@ describe("validateContentWidth", () => {
         width: 5,
       });
       expect(errors[0].message).toBe(
-        "box width 5 is too small for label 'Settings' (minimum: 12)"
+        "box width 5 is too small for label 'Settings' (minimum: 12)",
       );
     });
 

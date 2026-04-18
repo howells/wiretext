@@ -1512,12 +1512,12 @@ describe("compose", () => {
     });
 
     const errorResult = gridToString(
-      compose([makeAlert("error")], { cols: 35, rows: 8 })
+      compose([makeAlert("error")], { cols: 35, rows: 8 }),
     );
     expect(errorResult.split("\n")[1]).toContain("x");
 
     const successResult = gridToString(
-      compose([makeAlert("success")], { cols: 35, rows: 8 })
+      compose([makeAlert("success")], { cols: 35, rows: 8 }),
     );
     expect(successResult.split("\n")[1]).toContain("✓");
   });
@@ -1882,7 +1882,7 @@ describe("compose", () => {
       componentType: ComponentObject["componentType"],
       width: number,
       height: number,
-      overrides: Partial<ComponentObject> = {}
+      overrides: Partial<ComponentObject> = {},
     ): ComponentObject => ({
       id: "1",
       type: "component",
@@ -2145,7 +2145,7 @@ describe("compose", () => {
         componentType: ComponentObject["componentType"],
         width: number,
         height: number,
-        overrides: Partial<ComponentObject> = {}
+        overrides: Partial<ComponentObject> = {},
       ): ComponentObject => ({
         id: "1",
         type: "component",
@@ -2205,7 +2205,7 @@ describe("compose", () => {
         componentType: ComponentObject["componentType"],
         width: number,
         height: number,
-        overrides: Partial<ComponentObject> = {}
+        overrides: Partial<ComponentObject> = {},
       ): ComponentObject => ({
         id: "1",
         type: "component",
@@ -2232,7 +2232,7 @@ describe("compose", () => {
         componentType: ComponentObject["componentType"],
         width: number,
         height: number,
-        overrides: Partial<ComponentObject> = {}
+        overrides: Partial<ComponentObject> = {},
       ): ComponentObject => ({
         id: "1",
         type: "component",
@@ -2513,7 +2513,7 @@ describe("compose", () => {
     };
 
     function makeConnector(
-      overrides: Partial<ConnectorObject> = {}
+      overrides: Partial<ConnectorObject> = {},
     ): ConnectorObject {
       return {
         id: "c1",
@@ -2530,7 +2530,7 @@ describe("compose", () => {
     it("renders a straight vertical connector between vertically stacked boxes", () => {
       const connector = makeConnector();
       const result = gridToString(
-        compose([boxA, boxB, connector], { cols: 20, rows: 20 })
+        compose([boxA, boxB, connector], { cols: 20, rows: 20 }),
       );
       // Connector should be vertical between row 5 (bottom of A) and row 9 (top of B)
       expect(result).toContain("│");
@@ -2572,7 +2572,7 @@ describe("compose", () => {
       };
       const connector = makeConnector();
       const result = gridToString(
-        compose([boxA, rightBox, connector], { cols: 40, rows: 20 })
+        compose([boxA, rightBox, connector], { cols: 40, rows: 20 }),
       );
       // Should contain both horizontal and vertical segments
       expect(result).toContain("─");

@@ -122,7 +122,7 @@ export function useViewportGestures() {
       pinch: {
         eventOptions: { passive: false },
       },
-    }
+    },
   );
 
   return { bind, isPanning, spaceHeld };

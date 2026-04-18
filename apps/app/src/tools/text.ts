@@ -10,10 +10,10 @@ function hitTestText(
   col: number,
   row: number,
   objects: WireObject[],
-  layers: Layer[]
+  layers: Layer[],
 ): TextObject | null {
   const excluded = new Set(
-    layers.filter((l) => !l.visible || l.locked).map((l) => l.id)
+    layers.filter((l) => !l.visible || l.locked).map((l) => l.id),
   );
   const sorted = [...objects].sort((a, b) => b.zIndex - a.zIndex);
   for (const obj of sorted) {

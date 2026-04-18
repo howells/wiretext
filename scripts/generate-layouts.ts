@@ -1996,7 +1996,7 @@ ${results
           <pre class="preview">${escapeHtml(r.ascii)}</pre>
         </div>
       </div>
-    </div>`
+    </div>`,
   )
   .join("\n")}
   </div>

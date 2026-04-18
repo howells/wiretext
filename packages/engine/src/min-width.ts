@@ -65,7 +65,7 @@ function minWidthTabs(obj: MinWidthInput): number {
 function minWidthTable(obj: MinWidthInput): number {
   const total = (obj.columns ?? []).reduce(
     (sum, c) => sum + displayWidth(c) + 2,
-    0
+    0,
   );
   return total > 0 ? total + 2 : 3;
 }
@@ -80,7 +80,7 @@ function minWidthList(obj: MinWidthInput): number {
   const prefixLen = obj.listStyle === "number" ? 3 : 2;
   const maxItem = (obj.items ?? []).reduce(
     (max, item) => Math.max(max, displayWidth(item)),
-    0
+    0,
   );
   return maxItem > 0 ? prefixLen + maxItem : 1;
 }

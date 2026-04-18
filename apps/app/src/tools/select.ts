@@ -89,7 +89,7 @@ export function hitTest(
   col: number,
   row: number,
   objects: WireObject[],
-  layers: Layer[]
+  layers: Layer[],
 ): WireObject | null {
   const excluded = getExcludedLayerIds(layers);
   const interactable = objects.filter((obj) => !excluded.has(obj.layerId));
@@ -109,7 +109,7 @@ function isPointOnSegment(
   row: number,
   a: GridPoint,
   b: GridPoint,
-  tolerance = 0
+  tolerance = 0,
 ): boolean {
   if (a.row === b.row) {
     return (
@@ -133,7 +133,7 @@ function isPointInRect(
   row: number,
   pos: { col: number; row: number },
   width: number,
-  height: number
+  height: number,
 ): boolean {
   return (
     col >= pos.col &&
@@ -146,7 +146,7 @@ function isPointInRect(
 function isPointOnLine(
   col: number,
   row: number,
-  obj: LineObject | ArrowObject
+  obj: LineObject | ArrowObject,
 ): boolean {
   const { col: c1, row: r1 } = obj.position;
   const { col: c2, row: r2 } = obj.endPosition;
@@ -173,7 +173,7 @@ function isPointOnConnector(
   col: number,
   row: number,
   obj: ConnectorObject,
-  allObjects: readonly WireObject[]
+  allObjects: readonly WireObject[],
 ): boolean {
   const path = resolveConnectorPath(obj, allObjects);
   if (!path || path.points.length < 2) {
@@ -191,7 +191,7 @@ function isPointInObject(
   col: number,
   row: number,
   obj: WireObject,
-  allObjects?: readonly WireObject[]
+  allObjects?: readonly WireObject[],
 ): boolean {
   switch (obj.type) {
     case "box":
@@ -227,7 +227,7 @@ function computeEdgeFlags(
   bCol: number,
   bRow: number,
   right: number,
-  bottom: number
+  bottom: number,
 ): EdgeFlags {
   return {
     onLeft: col >= bCol - 1 && col <= bCol,
@@ -274,7 +274,7 @@ function resolveEdge(f: EdgeFlags): ResizeHandle | null {
 export function getResizeHandle(
   col: number,
   row: number,
-  obj: WireObject
+  obj: WireObject,
 ): ResizeHandle | null {
   if (!hasRectBounds(obj)) {
     return null;
@@ -290,7 +290,7 @@ export function getResizeHandle(
     bCol,
     bRow,
     bCol + obj.width - 1,
-    bRow + obj.height - 1
+    bRow + obj.height - 1,
   );
   const handle = resolveCorner(flags) ?? resolveEdge(flags);
   if (!handle) {
@@ -320,7 +320,7 @@ export function getResizeCursor(handle: ResizeHandle): string {
 /** Get the bounding rect for any object in grid coordinates */
 function getLocalObjectBounds(
   obj: WireObject,
-  allObjects?: readonly WireObject[]
+  allObjects?: readonly WireObject[],
 ) {
   switch (obj.type) {
     case "box":
@@ -373,7 +373,7 @@ function objectIntersectsRect(
   minRow: number,
   maxCol: number,
   maxRow: number,
-  allObjects?: readonly WireObject[]
+  allObjects?: readonly WireObject[],
 ): boolean {
   const b = getLocalObjectBounds(obj, allObjects);
   return (
@@ -392,7 +392,7 @@ function hasLineEnds(obj: WireObject): obj is LineObject | ArrowObject {
 function getEndpointHandle(
   col: number,
   row: number,
-  obj: LineObject | ArrowObject
+  obj: LineObject | ArrowObject,
 ): "start" | "end" | null {
   const { col: c1, row: r1 } = obj.position;
   const { col: c2, row: r2 } = obj.endPosition;
@@ -409,7 +409,7 @@ function getEndpointHandle(
 /** Check if a grid point is over a resize/endpoint handle of any selected object */
 export function getHoveredHandle(
   col: number,
-  row: number
+  row: number,
 ): ResizeHandle | "endpoint" | null {
   const state = useEditorStore.getState();
   if (state.activeTool !== "select") {
@@ -442,7 +442,7 @@ export function getHoveredHandle(
 function tryHandleDrag(
   col: number,
   row: number,
-  state: ReturnType<typeof useEditorStore.getState>
+  state: ReturnType<typeof useEditorStore.getState>,
 ): boolean {
   const excluded = getExcludedLayerIds(state.layers);
   for (const obj of state.objects) {
@@ -480,7 +480,7 @@ const NO_INLINE_EDIT = new Set(["tabs", "navbar", "table", "progress"]);
 /** Handle double-click editing on text/box/component objects */
 function tryDoubleClickEdit(
   hit: WireObject,
-  state: ReturnType<typeof useEditorStore.getState>
+  state: ReturnType<typeof useEditorStore.getState>,
 ): boolean {
   if (hit.type === "text") {
     state.setEditingTextId(hit.id);
@@ -509,7 +509,7 @@ function startMarquee(
   col: number,
   row: number,
   e: ReactMouseEvent,
-  state: ReturnType<typeof useEditorStore.getState>
+  state: ReturnType<typeof useEditorStore.getState>,
 ) {
   if (!e.shiftKey) {
     state.clearSelection();
@@ -603,7 +603,7 @@ function handleEndpointMove(col: number, row: number) {
 function expandHitsToGroups(
   hits: WireObject[],
   allObjects: WireObject[],
-  excluded: Set<string>
+  excluded: Set<string>,
 ): Set<string> {
   const ids = new Set(hits.map((o) => o.id));
   const groupIds = new Set<string>();
@@ -645,8 +645,8 @@ function finalizeMarquee() {
             minRow,
             maxCol + 1,
             maxRow + 1,
-            state.objects
-          )
+            state.objects,
+          ),
       );
       const ids = expandHitsToGroups(hits, state.objects, excluded);
       if (marqueeShift) {
@@ -680,7 +680,7 @@ function finalizeResize() {
     state.moveObject(
       dragTarget,
       draft.position.col - obj.position.col,
-      draft.position.row - obj.position.row
+      draft.position.row - obj.position.row,
     );
   }
 }
@@ -769,7 +769,7 @@ export const selectTool: ToolHandler = {
     // Capture selection bounds for snap
     const snapState = useEditorStore.getState();
     const selObjects = snapState.objects.filter(
-      (o) => snapState.selection.has(o.id) && o.type !== "connector"
+      (o) => snapState.selection.has(o.id) && o.type !== "connector",
     );
     if (selObjects.length > 0) {
       dragOriginBounds = getSelectionBounds(selObjects);

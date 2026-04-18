@@ -5,7 +5,7 @@ function rect(
   col: number,
   row: number,
   width: number,
-  height: number
+  height: number,
 ): BoundingRect {
   return { col, row, width, height };
 }

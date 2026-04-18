@@ -122,7 +122,7 @@ function SortableObjectRow({
       setEditName(obj.name || getDefaultLabel(obj));
       setEditing(true);
     },
-    [obj]
+    [obj],
   );
 
   const handleRenameSubmit = useCallback(() => {
@@ -279,7 +279,7 @@ function SortableLayerRow({
   const isActive = layer.id === activeLayerId;
   const objectCount = objects.filter((o) => o.layerId === layer.id).length;
   const selectedInLayer = objects.filter(
-    (o) => o.layerId === layer.id && selection.has(o.id)
+    (o) => o.layerId === layer.id && selection.has(o.id),
   ).length;
 
   const dragId = layerDragId(layer.id);
@@ -444,7 +444,7 @@ function handleLayerDrag(
   overId: string,
   reversedLayers: Layer[],
   totalLayers: number,
-  reorderLayer: (id: string, newIndex: number) => void
+  reorderLayer: (id: string, newIndex: number) => void,
 ) {
   const overVisualIdx = reversedLayers.findIndex((l) => l.id === overId);
   if (overVisualIdx === -1) {
@@ -457,7 +457,7 @@ function handleLayerDrag(
 function handleObjectDrag(
   activeId: string,
   overId: string,
-  reorderObjectZIndex: (objectId: string, newPosition: number) => void
+  reorderObjectZIndex: (objectId: string, newPosition: number) => void,
 ) {
   const objects = useEditorStore.getState().objects;
   const activeObj = objects.find((o) => o.id === activeId);
@@ -505,7 +505,7 @@ export function LayersPanel() {
   const reversedLayers = useMemo(() => [...layers].reverse(), [layers]);
   const sortableLayerIds = useMemo(
     () => reversedLayers.map((l) => layerDragId(l.id)),
-    [reversedLayers]
+    [reversedLayers],
   );
 
   const sensors = useSensors(
@@ -514,7 +514,7 @@ export function LayersPanel() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = useCallback(
@@ -536,13 +536,13 @@ export function LayersPanel() {
           overParsed.id,
           reversedLayers,
           layers.length,
-          reorderLayer
+          reorderLayer,
         );
       } else if (activeParsed.type === "obj" && overParsed.type === "obj") {
         handleObjectDrag(activeParsed.id, overParsed.id, reorderObjectZIndex);
       }
     },
-    [layers, reversedLayers, reorderLayer, reorderObjectZIndex]
+    [layers, reversedLayers, reorderLayer, reorderObjectZIndex],
   );
 
   const handleMoveToActive = useCallback(() => {

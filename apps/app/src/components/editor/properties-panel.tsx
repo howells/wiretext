@@ -133,7 +133,7 @@ function EditableItemList({
                 className="flex-1 rounded border border-border bg-bg px-1.5 py-0.5 text-text text-xs outline-none focus:border-accent"
                 onChange={(e) => {
                   const next = items.map((v, j) =>
-                    j === idx ? e.target.value : v
+                    j === idx ? e.target.value : v,
                   );
                   onChange(next);
                 }}
@@ -277,7 +277,7 @@ function IconPicker({
                   >
                     {icon.char}
                   </button>
-                )
+                ),
               )}
             </div>
           </div>
@@ -323,7 +323,7 @@ function StepperEditor({
                 className="flex-1 rounded border border-border bg-bg px-1.5 py-0.5 text-text text-xs outline-none focus:border-accent"
                 onChange={(e) => {
                   const next = items.map((v, j) =>
-                    j === stepIdx ? e.target.value : v
+                    j === stepIdx ? e.target.value : v,
                   );
                   updateObject(obj.id, {
                     items: next,
@@ -515,7 +515,7 @@ export function PropertiesPanel() {
   if (selectedObjects.length > 1) {
     // Check if selection forms a single group
     const groupIds = new Set(
-      selectedObjects.map((o) => o.groupId).filter(Boolean)
+      selectedObjects.map((o) => o.groupId).filter(Boolean),
     );
     const isSingleGroup =
       groupIds.size === 1 &&

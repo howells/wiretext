@@ -40,7 +40,7 @@ export function TextEditorOverlay({ metrics }: TextEditorOverlayProps) {
     textObj.position.col,
     textObj.position.row,
     viewport,
-    metrics
+    metrics,
   );
 
   const handleBlur = () => {

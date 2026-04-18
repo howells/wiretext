@@ -31,7 +31,7 @@ export function ExamplesDialog({ open, onClose }: ExamplesDialogProps) {
   useEffect(() => {
     if (open && !layouts) {
       import("@/data/showcase-layouts").then((m) =>
-        setLayouts(m.SHOWCASE_LAYOUTS)
+        setLayouts(m.SHOWCASE_LAYOUTS),
       );
     }
   }, [open, layouts]);
@@ -42,7 +42,7 @@ export function ExamplesDialog({ open, onClose }: ExamplesDialogProps) {
       useEditorStore.getState().loadDocument(filled, [layer]);
       onClose();
     },
-    [onClose]
+    [onClose],
   );
 
   if (!open) {

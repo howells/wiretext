@@ -123,7 +123,7 @@ export interface EditorActions {
       startRow: number;
       endCol: number;
       endRow: number;
-    } | null
+    } | null,
   ) => void;
   setPendingComponent: (type: ComponentType | null) => void;
   setSelection: (ids: Set<ObjectId>) => void;
@@ -158,7 +158,7 @@ function pushHistory(state: EditorState): {
 /** Given a set of object IDs, expand to include all objects sharing a groupId with any of them */
 function expandToGroups(
   ids: Set<ObjectId>,
-  objects: WireObject[]
+  objects: WireObject[],
 ): Set<ObjectId> {
   const groupIds = new Set<string>();
   for (const obj of objects) {
@@ -181,7 +181,7 @@ function expandToGroups(
 /** Given a set of object IDs, expand to include any connectors attached to them */
 function expandWithConnectors(
   ids: Set<ObjectId>,
-  objects: WireObject[]
+  objects: WireObject[],
 ): Set<ObjectId> {
   const result = new Set(ids);
   for (const obj of objects) {
@@ -257,7 +257,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     set((state) => ({
       ...pushHistory(state),
       objects: state.objects.map((obj) =>
-        obj.id === id ? ({ ...obj, ...patch } as WireObject) : obj
+        obj.id === id ? ({ ...obj, ...patch } as WireObject) : obj,
       ),
     }));
   },
@@ -427,7 +427,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     }
     // Exclude connectors — their fromId/toId references break on paste
     const copied = objects.filter(
-      (obj) => selection.has(obj.id) && obj.type !== "connector"
+      (obj) => selection.has(obj.id) && obj.type !== "connector",
     );
     set({ clipboard: copied });
   },
@@ -439,7 +439,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     }
     // Exclude connectors from clipboard — their references break on paste
     const copied = objects.filter(
-      (obj) => selection.has(obj.id) && obj.type !== "connector"
+      (obj) => selection.has(obj.id) && obj.type !== "connector",
     );
     set((state) => {
       const idsToDelete = expandWithConnectors(state.selection, state.objects);
@@ -488,12 +488,12 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
 
     set((state) => {
       const layerObjs = state.objects.filter(
-        (o) => o.layerId === activeLayerId
+        (o) => o.layerId === activeLayerId,
       );
       const maxZ = layerObjs.reduce((m, o) => Math.max(m, o.zIndex), -1);
       let nextZ = maxZ + 1;
       const raised = newObjects.map(
-        (obj) => ({ ...obj, zIndex: nextZ++ }) as WireObject
+        (obj) => ({ ...obj, zIndex: nextZ++ }) as WireObject,
       );
       return {
         ...pushHistory(state),
@@ -511,7 +511,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     }
     // Exclude connectors — their fromId/toId references break with new IDs
     const copied = state.objects.filter(
-      (obj) => state.selection.has(obj.id) && obj.type !== "connector"
+      (obj) => state.selection.has(obj.id) && obj.type !== "connector",
     );
     const newIds = new Set<ObjectId>();
     const rawObjects = copied.map((obj) => {
@@ -541,12 +541,12 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
 
     set((state) => {
       const layerObjs = state.objects.filter(
-        (o) => o.layerId === state.activeLayerId
+        (o) => o.layerId === state.activeLayerId,
       );
       const maxZ = layerObjs.reduce((m, o) => Math.max(m, o.zIndex), -1);
       let nextZ = maxZ + 1;
       const raised = newObjects.map(
-        (obj) => ({ ...obj, zIndex: nextZ++ }) as WireObject
+        (obj) => ({ ...obj, zIndex: nextZ++ }) as WireObject,
       );
       return {
         ...pushHistory(state),
@@ -572,7 +572,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     set((state) => ({
       ...pushHistory(state),
       objects: state.objects.map((obj) =>
-        state.selection.has(obj.id) ? ({ ...obj, groupId } as WireObject) : obj
+        state.selection.has(obj.id) ? ({ ...obj, groupId } as WireObject) : obj,
       ),
     }));
   },
@@ -597,7 +597,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       objects: state.objects.map((obj) =>
         obj.groupId && groupIds.has(obj.groupId)
           ? ({ ...obj, groupId: undefined } as WireObject)
-          : obj
+          : obj,
       ),
     }));
   },
@@ -605,12 +605,12 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   selectAll: () => {
     set((state) => {
       const excludedLayers = new Set(
-        state.layers.filter((l) => !l.visible || l.locked).map((l) => l.id)
+        state.layers.filter((l) => !l.visible || l.locked).map((l) => l.id),
       );
       const ids = new Set(
         state.objects
           .filter((o) => !excludedLayers.has(o.layerId))
-          .map((o) => o.id)
+          .map((o) => o.id),
       );
       return { selection: ids };
     });
@@ -706,7 +706,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     };
     set((state) => {
       const activeIdx = state.layers.findIndex(
-        (l) => l.id === state.activeLayerId
+        (l) => l.id === state.activeLayerId,
       );
       const insertIdx = activeIdx + 1;
       const newLayers = [...state.layers];
@@ -735,7 +735,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       ...pushHistory(s),
       layers: s.layers.filter((l) => l.id !== id),
       objects: s.objects.map((obj) =>
-        obj.layerId === id ? { ...obj, layerId: targetLayer.id } : obj
+        obj.layerId === id ? { ...obj, layerId: targetLayer.id } : obj,
       ),
       activeLayerId: s.activeLayerId === id ? targetLayer.id : s.activeLayerId,
     }));
@@ -772,7 +772,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     set((state) => ({
       ...pushHistory(state),
       layers: state.layers.map((l) =>
-        l.id === id ? { ...l, visible: !l.visible } : l
+        l.id === id ? { ...l, visible: !l.visible } : l,
       ),
     }));
   },
@@ -781,7 +781,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
     set((state) => ({
       ...pushHistory(state),
       layers: state.layers.map((l) =>
-        l.id === id ? { ...l, locked: !l.locked } : l
+        l.id === id ? { ...l, locked: !l.locked } : l,
       ),
     }));
   },
@@ -792,7 +792,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       return {
         ...pushHistory(state),
         objects: state.objects.map((obj) =>
-          idSet.has(obj.id) ? { ...obj, layerId } : obj
+          idSet.has(obj.id) ? { ...obj, layerId } : obj,
         ),
       };
     });
@@ -808,7 +808,7 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       }
       const layerId = targetObjs[0].layerId;
       const layerObjs = state.objects.filter(
-        (o) => o.layerId === layerId && !idSet.has(o.id)
+        (o) => o.layerId === layerId && !idSet.has(o.id),
       );
       const maxZ = layerObjs.reduce((m, o) => Math.max(m, o.zIndex), -1);
       let nextZ = maxZ + 1;
@@ -833,11 +833,11 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
       }
       const layerId = targetObjs[0].layerId;
       const layerObjs = state.objects.filter(
-        (o) => o.layerId === layerId && !idSet.has(o.id)
+        (o) => o.layerId === layerId && !idSet.has(o.id),
       );
       const minZ = layerObjs.reduce(
         (m, o) => Math.min(m, o.zIndex),
-        Number.POSITIVE_INFINITY
+        Number.POSITIVE_INFINITY,
       );
       const startZ = Math.max(0, minZ - targetObjs.length);
       let nextZ = startZ;
@@ -864,11 +864,11 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
             (o) =>
               o.layerId === obj.layerId &&
               !idSet.has(o.id) &&
-              o.zIndex > obj.zIndex
+              o.zIndex > obj.zIndex,
           );
           if (sameLayer.length > 0) {
             const nextUp = sameLayer.reduce((min, o) =>
-              o.zIndex < min.zIndex ? o : min
+              o.zIndex < min.zIndex ? o : min,
             );
             // Swap zIndex values
             const objIdx = newObjects.indexOf(obj);
@@ -901,11 +901,11 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
             (o) =>
               o.layerId === obj.layerId &&
               !idSet.has(o.id) &&
-              o.zIndex < obj.zIndex
+              o.zIndex < obj.zIndex,
           );
           if (sameLayer.length > 0) {
             const nextDown = sameLayer.reduce((max, o) =>
-              o.zIndex > max.zIndex ? o : max
+              o.zIndex > max.zIndex ? o : max,
             );
             const objIdx = newObjects.indexOf(obj);
             const nextIdx = newObjects.indexOf(nextDown);

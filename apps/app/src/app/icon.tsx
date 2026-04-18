@@ -29,6 +29,6 @@ export default function Icon() {
         W
       </span>
     </div>,
-    { ...size }
+    { ...size },
   );
 }

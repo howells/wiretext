@@ -217,7 +217,7 @@ describe("fillDefaults", () => {
       if (objects[0].type === "component") {
         // "Home  About  Contact Us  Blog" = 30 chars + 7 padding = 37
         expect(objects[0].width).toBe(
-          Math.max(COMPONENT_BY_TYPE.navbar.defaultWidth, 37)
+          Math.max(COMPONENT_BY_TYPE.navbar.defaultWidth, 37),
         );
       }
     });

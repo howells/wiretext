@@ -1718,7 +1718,7 @@ function generateUrl(layout: DemoLayout): string {
   const { objects: finalObjects, layers } = resolveLayers(
     filled,
     defaultLayer,
-    layout.layers
+    layout.layers,
   );
   const encoded = encodeDocument(finalObjects, layers);
   return `${BASE_URL}/#${encoded}`;
@@ -1747,7 +1747,7 @@ async function main() {
     await page.goto(BASE_URL, { waitUntil: "networkidle", timeout: 10000 });
   } catch {
     console.error(
-      `Could not connect to ${BASE_URL}. Is the dev server running?`
+      `Could not connect to ${BASE_URL}. Is the dev server running?`,
     );
     console.error("Start it with: npm run dev");
     await browser.close();
@@ -1781,7 +1781,7 @@ async function main() {
             }
             return false;
           },
-          { timeout: 5000 }
+          { timeout: 5000 },
         )
         .then(() => true)
         .catch(() => false);
@@ -1789,7 +1789,7 @@ async function main() {
 
     if (!loaded) {
       console.warn(
-        `    WARNING: ${layout.name} still shows 0 objects after ${MAX_RETRIES} attempts`
+        `    WARNING: ${layout.name} still shows 0 objects after ${MAX_RETRIES} attempts`,
       );
     }
 
@@ -1839,7 +1839,7 @@ async function main() {
   const lastFile = files[files.length - 1];
   writeFileSync(
     listFile,
-    `${concatList}\nfile '${join(OUTPUT_DIR, lastFile)}'`
+    `${concatList}\nfile '${join(OUTPUT_DIR, lastFile)}'`,
   );
 
   try {
@@ -1852,7 +1852,7 @@ async function main() {
         `-movflags +faststart`,
         `"${MP4_PATH}"`,
       ].join(" "),
-      { stdio: "pipe" }
+      { stdio: "pipe" },
     );
     console.log(`\nMP4 created: ${MP4_PATH}`);
   } catch (err) {
@@ -1868,7 +1868,7 @@ async function main() {
         `-vf "fps=1,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"`,
         `"${GIF_PATH}"`,
       ].join(" "),
-      { stdio: "pipe" }
+      { stdio: "pipe" },
     );
     console.log(`GIF created: ${GIF_PATH}`);
   } catch (err) {

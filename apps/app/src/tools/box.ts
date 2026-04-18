@@ -8,7 +8,7 @@ function makeDraftBox(
   startCol: number,
   startRow: number,
   endCol: number,
-  endRow: number
+  endRow: number,
 ): Omit<BoxObject, "id"> {
   const state = useEditorStore.getState();
   return {

@@ -17,7 +17,7 @@ function comp(
   row: number,
   width: number,
   height: number,
-  overrides: Partial<ComponentObject> = {}
+  overrides: Partial<ComponentObject> = {},
 ): ComponentObject {
   return {
     id,
@@ -43,7 +43,7 @@ function buildShowcase(): { objects: WireObject[]; rows: number } {
     row: number,
     width: number,
     height: number,
-    overrides: Partial<ComponentObject> = {}
+    overrides: Partial<ComponentObject> = {},
   ) => {
     objects.push(comp(id(), componentType, col, row, width, height, overrides));
   };

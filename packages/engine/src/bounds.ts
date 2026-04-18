@@ -17,7 +17,7 @@ export interface ContentBounds {
 
 /** Get the tight bounding box enclosing all objects. Returns null for empty arrays. */
 export function getContentBounds(
-  objects: readonly WireObject[]
+  objects: readonly WireObject[],
 ): ContentBounds | null {
   if (objects.length === 0) {
     return null;
@@ -99,7 +99,7 @@ export function getObjectBounds(obj: WireObject): ObjectBounds {
 /** Compute accurate bounds for a connector by resolving its path. */
 export function getConnectorBounds(
   connector: ConnectorObject,
-  objects: readonly WireObject[]
+  objects: readonly WireObject[],
 ): ObjectBounds {
   const path = resolveConnectorPath(connector, objects);
   if (!path || path.points.length === 0) {

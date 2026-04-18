@@ -11,7 +11,7 @@ const MAX_GRID_DIMENSION = 2000;
 export function getEffectiveGridSize(
   objects: WireObject[],
   minSize: GridSize,
-  padding = DEFAULT_PADDING
+  padding = DEFAULT_PADDING,
 ): GridSize {
   if (objects.length === 0) {
     return minSize;
@@ -34,11 +34,11 @@ export function getEffectiveGridSize(
 
   const cols = Math.min(
     Math.max(maxCol + padding, minSize.cols),
-    MAX_GRID_DIMENSION
+    MAX_GRID_DIMENSION,
   );
   const rows = Math.min(
     Math.max(maxRow + padding, minSize.rows),
-    MAX_GRID_DIMENSION
+    MAX_GRID_DIMENSION,
   );
 
   return { cols, rows };

@@ -13,7 +13,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
+    "lint": "howells-lint",
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
@@ -23,5 +23,8 @@
     "tsup": "^8.0.0",
     "typescript": "^5.7.0",
     "zod": "^4.3.6"
+  },
+  "dependencies": {
+    "@howells/cli": "^0.1.0"
   }
 }

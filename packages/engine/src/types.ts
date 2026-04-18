@@ -147,7 +147,7 @@ export type NewWireObject =
 
 /** Type guard for objects with rectangular bounds (box, component) */
 export function hasRectBounds(
-  obj: WireObject
+  obj: WireObject,
 ): obj is BoxObject | ComponentObject {
   return obj.type === "box" || obj.type === "component";
 }

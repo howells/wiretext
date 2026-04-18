@@ -35,7 +35,7 @@ ${LAYOUT_GUIDE}`,
       .array(layerSchema)
       .optional()
       .describe(
-        "Named layers for organizing objects. Objects reference layers via layerId. If omitted, a single default layer is created."
+        "Named layers for organizing objects. Objects reference layers via layerId. If omitted, a single default layer is created.",
       ),
     baseUrl: z
       .string()
@@ -48,7 +48,7 @@ ${LAYOUT_GUIDE}`,
       const { objects: resolved, layers } = resolveLayers(
         filled,
         defaultLayer,
-        userLayers
+        userLayers,
       );
       const finalObjects = addPadding(resolved, 1);
       const encoded = encodeDocument(finalObjects, layers);
@@ -63,7 +63,7 @@ ${LAYOUT_GUIDE}`,
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(
-          `Share API error (${res.status}): ${(body as { error?: string }).error ?? res.statusText}`
+          `Share API error (${res.status}): ${(body as { error?: string }).error ?? res.statusText}`,
         );
       }
 
@@ -80,7 +80,7 @@ ${LAYOUT_GUIDE}`,
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -94,7 +94,7 @@ ${LAYOUT_GUIDE}`,
       .array(layerSchema)
       .optional()
       .describe(
-        "Named layers for organizing objects. Objects reference layers via layerId. If omitted, a single default layer is created."
+        "Named layers for organizing objects. Objects reference layers via layerId. If omitted, a single default layer is created.",
       ),
   },
   ({ objects, layers: userLayers }) => {
@@ -103,7 +103,7 @@ ${LAYOUT_GUIDE}`,
       const { objects: resolved, layers } = resolveLayers(
         filled,
         defaultLayer,
-        userLayers
+        userLayers,
       );
       const finalObjects = addPadding(resolved, 1);
       const gridSize = computeRenderGridSize(finalObjects);
@@ -120,7 +120,7 @@ ${LAYOUT_GUIDE}`,
         isError: true,
       };
     }
-  }
+  },
 );
 
 async function main() {

@@ -1818,7 +1818,7 @@ for (const layout of allLayouts) {
   const { objects: finalObjects, layers } = resolveLayers(
     filled,
     defaultLayer,
-    layout.layers
+    layout.layers,
   );
   const encoded = encodeDocument(finalObjects, layers);
   const url = `${BASE_URL}/#${encoded}`;

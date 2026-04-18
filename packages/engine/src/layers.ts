@@ -13,7 +13,7 @@ import type { Layer, WireObject } from "./types";
 export function resolveLayers(
   filled: WireObject[],
   defaultLayer: Layer,
-  userLayers?: readonly { id: string; name: string }[]
+  userLayers?: readonly { id: string; name: string }[],
 ): { objects: WireObject[]; layers: Layer[] } {
   if (!userLayers || userLayers.length === 0) {
     return { objects: filled, layers: [defaultLayer] };
@@ -30,7 +30,7 @@ export function resolveLayers(
   const objects = filled.map((obj) =>
     obj.layerId === defaultLayer.id || !validIds.has(obj.layerId)
       ? { ...obj, layerId: layers[0].id }
-      : obj
+      : obj,
   );
 
   return { objects, layers };

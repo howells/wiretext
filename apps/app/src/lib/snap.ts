@@ -32,7 +32,7 @@ const LABELS: readonly RefLabel[] = ["start", "end", "center"];
 
 function refPoints(
   b: BoundingRect,
-  axis: Axis
+  axis: Axis,
 ): { start: number; end: number; center: number } {
   if (axis === "col") {
     return {
@@ -62,7 +62,7 @@ function findBestSnap(
   dragged: BoundingRect,
   others: readonly BoundingRect[],
   axis: Axis,
-  threshold: number
+  threshold: number,
 ): { delta: number; position: number } | null {
   const dragRef = refPoints(dragged, axis);
   let best: { delta: number; position: number; kind: AlignKind } | null = null;
@@ -95,7 +95,7 @@ function collectGuides(
   dragged: BoundingRect,
   others: readonly BoundingRect[],
   axis: Axis,
-  chosenDelta: number
+  chosenDelta: number,
 ): SnapGuide[] {
   const dragRef = refPoints(dragged, axis);
   const positions = new Set<number>();
@@ -122,7 +122,7 @@ function collectGuides(
 export function computeSnap(
   draggedBounds: BoundingRect,
   otherBounds: readonly BoundingRect[],
-  threshold: number
+  threshold: number,
 ): SnapResult {
   if (otherBounds.length === 0) {
     return { deltaCol: 0, deltaRow: 0, guides: [] };

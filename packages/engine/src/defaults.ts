@@ -220,7 +220,7 @@ export function fillDefaults(objects: MinimalObject[]): {
 /** Compute tight grid bounds for rendering, with configurable padding. */
 export function computeRenderGridSize(
   objects: WireObject[],
-  padding = 2
+  padding = 2,
 ): GridSize {
   let maxCol = 0;
   let maxRow = 0;

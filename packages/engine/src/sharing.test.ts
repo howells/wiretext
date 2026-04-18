@@ -12,7 +12,7 @@ const makeLayer = (overrides: Partial<Layer> = {}): Layer => ({
 });
 
 const makeBox = (
-  overrides: Partial<Extract<WireObject, { type: "box" }>> = {}
+  overrides: Partial<Extract<WireObject, { type: "box" }>> = {},
 ): Extract<WireObject, { type: "box" }> => ({
   id: "box-1",
   type: "box",
@@ -197,7 +197,7 @@ describe("encodeDocument / decodeDocument", () => {
 
     it("should return null for a compressed object without a version field", () => {
       const hash = compressToEncodedURIComponent(
-        JSON.stringify({ foo: "bar" })
+        JSON.stringify({ foo: "bar" }),
       );
       const result = decodeDocument(hash);
       expect(result).toBeNull();
@@ -205,7 +205,7 @@ describe("encodeDocument / decodeDocument", () => {
 
     it("should return null for a compressed V2 object with wrong version number", () => {
       const hash = compressToEncodedURIComponent(
-        JSON.stringify({ version: 99, objects: [], layers: [] })
+        JSON.stringify({ version: 99, objects: [], layers: [] }),
       );
       const result = decodeDocument(hash);
       expect(result).toBeNull();

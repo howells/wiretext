@@ -35,7 +35,7 @@ function makeArrow(
   startCol: number,
   startRow: number,
   endCol: number,
-  endRow: number
+  endRow: number,
 ): WireObject {
   return {
     id: `arrow-${startCol}-${startRow}`,
@@ -51,7 +51,7 @@ function makeLine(
   startCol: number,
   startRow: number,
   endCol: number,
-  endRow: number
+  endRow: number,
 ): WireObject {
   return {
     id: `line-${startCol}-${startRow}`,
@@ -145,7 +145,7 @@ describe("shiftObjects", () => {
     const shifted = shiftObjects([makeArrow(5, 3, 15, 10)], 3, 2);
     expect(shifted[0].position).toEqual({ col: 8, row: 5 });
     expect(
-      (shifted[0] as { endPosition: { col: number; row: number } }).endPosition
+      (shifted[0] as { endPosition: { col: number; row: number } }).endPosition,
     ).toEqual({
       col: 18,
       row: 12,
@@ -156,7 +156,7 @@ describe("shiftObjects", () => {
     const shifted = shiftObjects([makeLine(0, 0, 10, 5)], 5, 5);
     expect(shifted[0].position).toEqual({ col: 5, row: 5 });
     expect(
-      (shifted[0] as { endPosition: { col: number; row: number } }).endPosition
+      (shifted[0] as { endPosition: { col: number; row: number } }).endPosition,
     ).toEqual({
       col: 15,
       row: 10,
@@ -199,13 +199,13 @@ describe("shiftObjects", () => {
     const shifted = shiftObjects(
       [makeBox(0, 0), makeText(5, 5), makeArrow(10, 10, 20, 20)],
       3,
-      2
+      2,
     );
     expect(shifted[0].position).toEqual({ col: 3, row: 2 });
     expect(shifted[1].position).toEqual({ col: 8, row: 7 });
     expect(shifted[2].position).toEqual({ col: 13, row: 12 });
     expect(
-      (shifted[2] as { endPosition: { col: number; row: number } }).endPosition
+      (shifted[2] as { endPosition: { col: number; row: number } }).endPosition,
     ).toEqual({
       col: 23,
       row: 22,
@@ -265,7 +265,7 @@ describe("addPadding", () => {
     const result = addPadding([makeArrow(0, 0, 10, 5)], 1);
     expect(result[0].position).toEqual({ col: 1, row: 1 });
     expect(
-      (result[0] as { endPosition: { col: number; row: number } }).endPosition
+      (result[0] as { endPosition: { col: number; row: number } }).endPosition,
     ).toEqual({
       col: 11,
       row: 6,
@@ -311,7 +311,7 @@ describe("prepareForExport", () => {
   it("handles multiple objects with spread-out positions", () => {
     const result = prepareForExport(
       [makeBox(10, 10, 10, 5), makeBox(30, 20, 10, 5)],
-      1
+      1,
     );
     // Content: col 10-40, row 10-25 → size 30x15
     // With padding 1 on each side: 32x17
@@ -347,7 +347,7 @@ describe("prepareForExport", () => {
   it("handles objects with mixed types", () => {
     const result = prepareForExport(
       [makeBox(0, 0, 10, 5), makeText(12, 6, "note"), makeArrow(0, 8, 20, 8)],
-      1
+      1,
     );
     // minCol=0, minRow=0, maxCol=21 (arrow endCol+1), maxRow=9 (arrow endRow+1)
     // Content: 21 x 9

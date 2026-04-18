@@ -23,7 +23,7 @@ function makeBox(
   col: number,
   row: number,
   width: number,
-  height: number
+  height: number,
 ): BoxObject {
   return {
     id: `box-${col}-${row}`,
@@ -41,7 +41,7 @@ function makeLine(
   col: number,
   row: number,
   endCol: number,
-  endRow: number
+  endRow: number,
 ): LineObject {
   return {
     id: `line-${col}-${row}`,
@@ -57,7 +57,7 @@ function makeArrow(
   col: number,
   row: number,
   endCol: number,
-  endRow: number
+  endRow: number,
 ): ArrowObject {
   return {
     id: `arrow-${col}-${row}`,
@@ -159,7 +159,7 @@ describe("gridToScreen", () => {
       screen.x + halfCellX,
       screen.y + halfCellY,
       viewport,
-      METRICS
+      METRICS,
     );
     expect(grid).toEqual({ col, row });
   });
@@ -328,7 +328,7 @@ describe("fitViewport", () => {
       contentCenterCol,
       contentCenterRow,
       vp,
-      METRICS
+      METRICS,
     );
 
     expect(screenCenter.x).toBeCloseTo(CANVAS_W / 2, 0);
@@ -489,7 +489,7 @@ describe("pre position consistency", () => {
           origPos.col,
           origPos.row,
           viewport,
-          METRICS
+          METRICS,
         );
 
         expect(textX).toBeCloseTo(screen.x, 5);

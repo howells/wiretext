@@ -57,12 +57,12 @@ export function Canvas({
 
   const { renderObjects, originCol, originRow } = useMemo(
     () => shiftObjectsForRender(allObjects),
-    [allObjects]
+    [allObjects],
   );
 
   const effectiveGridSize = useMemo(
     () => getEffectiveGridSize(renderObjects, gridSize),
-    [renderObjects, gridSize]
+    [renderObjects, gridSize],
   );
   const grid = compose(renderObjects, effectiveGridSize, layers);
   const text = gridToString(grid);
@@ -77,10 +77,10 @@ export function Canvas({
         e.clientX - rect.left,
         e.clientY - rect.top,
         viewport,
-        metrics
+        metrics,
       );
     },
-    [metrics, viewport]
+    [metrics, viewport],
   );
 
   const handleMouseDown = useCallback(
@@ -93,7 +93,7 @@ export function Canvas({
         onMouseDown?.(pt.col, pt.row, e);
       }
     },
-    [getGridPoint, onMouseDown, isPanning, spaceHeld]
+    [getGridPoint, onMouseDown, isPanning, spaceHeld],
   );
 
   const handleMouseMove = useCallback(
@@ -107,7 +107,7 @@ export function Canvas({
         onGridHover?.(pt.col, pt.row);
       }
     },
-    [getGridPoint, onMouseMove, onGridHover, isPanning]
+    [getGridPoint, onMouseMove, onGridHover, isPanning],
   );
 
   const handleMouseUp = useCallback(
@@ -120,7 +120,7 @@ export function Canvas({
         onMouseUp?.(pt.col, pt.row, e);
       }
     },
-    [getGridPoint, onMouseUp, isPanning]
+    [getGridPoint, onMouseUp, isPanning],
   );
 
   if (!metrics) {
@@ -159,20 +159,20 @@ export function Canvas({
   const endpointHandles = selectedObjects
     .filter(
       (obj): obj is Extract<WireObject, { type: "line" | "arrow" }> =>
-        obj.type === "line" || obj.type === "arrow"
+        obj.type === "line" || obj.type === "arrow",
     )
     .flatMap((obj) => {
       const startPos = gridToScreen(
         obj.position.col,
         obj.position.row,
         viewport,
-        metrics
+        metrics,
       );
       const endPos = gridToScreen(
         obj.endPosition.col,
         obj.endPosition.row,
         viewport,
-        metrics
+        metrics,
       );
       return [
         { key: `${obj.id}-start`, x: startPos.x, y: startPos.y },
@@ -299,13 +299,13 @@ export function Canvas({
             marquee.startCol,
             marquee.startRow,
             viewport,
-            metrics
+            metrics,
           );
           const p2 = gridToScreen(
             marquee.endCol,
             marquee.endRow,
             viewport,
-            metrics
+            metrics,
           );
           const x = Math.min(p1.x, p2.x);
           const y = Math.min(p1.y, p2.y);

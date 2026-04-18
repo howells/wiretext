@@ -10,7 +10,7 @@ export function screenToGrid(
   screenX: number,
   screenY: number,
   viewport: Viewport,
-  metrics: CharMetrics
+  metrics: CharMetrics,
 ): GridPoint {
   const worldX = (screenX - viewport.panX) / viewport.zoom;
   const worldY = (screenY - viewport.panY) / viewport.zoom;
@@ -24,7 +24,7 @@ export function gridToScreen(
   col: number,
   row: number,
   viewport: Viewport,
-  metrics: CharMetrics
+  metrics: CharMetrics,
 ): { x: number; y: number } {
   return {
     x: col * metrics.charWidth * viewport.zoom + viewport.panX,
@@ -84,7 +84,7 @@ export function fitViewport(
   objects: WireObject[],
   canvasWidth: number,
   canvasHeight: number,
-  metrics: CharMetrics
+  metrics: CharMetrics,
 ): Viewport {
   if (objects.length === 0) {
     return { panX: 0, panY: 0, zoom: 1 };
@@ -116,7 +116,7 @@ export function fitViewport(
   // Only zoom out if content doesn't fit; never zoom in past 1
   const zoom = Math.max(
     0.25,
-    Math.min(1, Math.min(availW / contentWidth, availH / contentHeight))
+    Math.min(1, Math.min(availW / contentWidth, availH / contentHeight)),
   );
 
   const scaledW = contentWidth * zoom;

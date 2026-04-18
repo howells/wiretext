@@ -77,7 +77,7 @@ function validateBaseUrl(baseUrl: string): void {
   }
   if (parsed.search || parsed.hash) {
     throw new Error(
-      "Invalid --base-url: must not contain query string or fragment"
+      "Invalid --base-url: must not contain query string or fragment",
     );
   }
 }
@@ -193,7 +193,7 @@ function openInBrowser(url: string): boolean {
 
 async function postShare(
   baseUrl: string,
-  data: string
+  data: string,
 ): Promise<{ id: string; url: string }> {
   const res = await fetch(`${baseUrl}/api/share`, {
     method: "POST",
@@ -203,7 +203,7 @@ async function postShare(
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(
-      `Share failed (${res.status}): ${(body as { error?: string }).error ?? res.statusText}`
+      `Share failed (${res.status}): ${(body as { error?: string }).error ?? res.statusText}`,
     );
   }
   return res.json() as Promise<{ id: string; url: string }>;
@@ -229,7 +229,7 @@ function emitUrl(
   mode: OutputMode,
   url: string,
   copyLabel: string,
-  options: { copy: boolean; open: boolean }
+  options: { copy: boolean; open: boolean },
 ): void {
   if (mode === "json") {
     emitJson({ ok: true, url });
@@ -260,7 +260,7 @@ function emitUrl(
 
 function cmdCreate(
   filePath: string | undefined,
-  options: CommandOptions
+  options: CommandOptions,
 ): void {
   const raw = readInput(filePath);
   const { objects: minimal, layers: userLayers } = parseInput(raw);
@@ -268,7 +268,7 @@ function cmdCreate(
   const { objects: resolved, layers } = resolveLayers(
     filled,
     defaultLayer,
-    userLayers
+    userLayers,
   );
   const objects = addPadding(resolved, 1);
   const encoded = encodeDocument(objects, layers);
@@ -278,7 +278,7 @@ function cmdCreate(
 
 async function cmdShare(
   filePath: string | undefined,
-  options: ShareCommandOptions
+  options: ShareCommandOptions,
 ): Promise<void> {
   let encoded: string;
   let objectCount: number | undefined;
@@ -297,7 +297,7 @@ async function cmdShare(
     const { objects: resolved, layers } = resolveLayers(
       filled,
       defaultLayer,
-      userLayers
+      userLayers,
     );
     const objects = addPadding(resolved, 1);
     encoded = encodeDocument(objects, layers);
@@ -317,7 +317,7 @@ async function cmdShare(
       const countMsg =
         objectCount === undefined ? "" : `, ${objectCount} object(s)`;
       console.log(
-        `Dry run: valid input${countMsg}, ${encoded.length} bytes encoded. No URL created.`
+        `Dry run: valid input${countMsg}, ${encoded.length} bytes encoded. No URL created.`,
       );
     }
     return;
@@ -329,7 +329,7 @@ async function cmdShare(
 
 function cmdRender(
   filePath: string | undefined,
-  options: { mode: OutputMode }
+  options: { mode: OutputMode },
 ): void {
   const raw = readInput(filePath);
   const { objects: minimal, layers: userLayers } = parseInput(raw);
@@ -337,7 +337,7 @@ function cmdRender(
   const { objects: resolved, layers } = resolveLayers(
     filled,
     defaultLayer,
-    userLayers
+    userLayers,
   );
   const objects = addPadding(resolved, 1);
   const gridSize = computeRenderGridSize(objects);
@@ -371,7 +371,7 @@ function cmdSchema(): void {
       .array(layerSchema)
       .optional()
       .describe(
-        "Named layers for organizing objects. Objects reference layers via layerId."
+        "Named layers for organizing objects. Objects reference layers via layerId.",
       ),
   });
   const jsonSchema = z.toJSONSchema(documentSchema);

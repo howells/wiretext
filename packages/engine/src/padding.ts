@@ -8,7 +8,7 @@ import type { GridSize, WireObject } from "./types";
 export function shiftObjects(
   objects: readonly WireObject[],
   deltaCol: number,
-  deltaRow: number
+  deltaRow: number,
 ): WireObject[] {
   if (deltaCol === 0 && deltaRow === 0) {
     return objects.map((o) => ({ ...o }));
@@ -41,7 +41,7 @@ export function shiftObjects(
  */
 export function addPadding(
   objects: readonly WireObject[],
-  padding = 1
+  padding = 1,
 ): WireObject[] {
   if (objects.length === 0) {
     return [];
@@ -68,7 +68,7 @@ export function addPadding(
  */
 export function prepareForExport(
   objects: readonly WireObject[],
-  padding = 1
+  padding = 1,
 ): { objects: WireObject[]; gridSize: GridSize } {
   if (objects.length === 0) {
     return { objects: [], gridSize: { cols: 1, rows: 1 } };
@@ -82,7 +82,7 @@ export function prepareForExport(
   const shifted = shiftObjects(
     objects,
     padding - bounds.minCol,
-    padding - bounds.minRow
+    padding - bounds.minRow,
   );
 
   return {
