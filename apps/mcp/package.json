@@ -1,9 +1,28 @@
 {
   "name": "@wiretext/mcp",
   "version": "0.3.3",
+  "description": "MCP server for generating editable Wiretext wireframes and terminal-rendered layouts.",
   "type": "module",
+  "license": "MIT",
+  "homepage": "https://wiretext.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/howells/wiretext.git",
+    "directory": "apps/mcp"
+  },
+  "keywords": [
+    "mcp",
+    "wireframes",
+    "ascii",
+    "unicode",
+    "ai-agents",
+    "design-tools"
+  ],
   "bin": {
     "wiretext-mcp": "./dist/server.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist"

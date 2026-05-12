@@ -1,9 +1,29 @@
 {
   "name": "wiretext",
   "version": "0.3.4",
+  "description": "Agent-first CLI for generating editable ASCII and Unicode wireframes from structured JSON.",
   "type": "module",
+  "license": "MIT",
+  "homepage": "https://wiretext.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/howells/wiretext.git",
+    "directory": "apps/cli"
+  },
+  "keywords": [
+    "wireframes",
+    "ascii",
+    "unicode",
+    "cli",
+    "mcp",
+    "ai-agents",
+    "design-tools"
+  ],
   "bin": {
     "wiretext": "./dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist",
