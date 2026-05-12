@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Wiretext — Wireframe with text",
     short_name: "Wiretext",
     description:
-      "A spatial design tool where everything renders as Unicode box-drawing characters. Share as text.",
+      "A Unicode wireframe design tool where everything renders as box-drawing characters. Share as text.",
     start_url: "/",
     display: "standalone",
     background_color: "#0a0a0f",

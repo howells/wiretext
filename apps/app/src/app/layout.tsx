@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://wiretext.app"),
   title: "Wiretext — Unicode Wireframe Design Tool",
   description:
-    "A spatial design tool where everything renders as Unicode box-drawing characters. Create wireframes, diagrams, and mockups. Share as text.",
+    "A Unicode wireframe design tool where everything renders as box-drawing characters. Create wireframes, diagrams, and mockups. Share as text.",
   alternates: {
     canonical: "/",
   },
@@ -26,13 +26,13 @@ export const metadata: Metadata = {
     siteName: "Wiretext",
     title: "Wiretext — Unicode Wireframe Design Tool",
     description:
-      "A spatial design tool where everything renders as Unicode box-drawing characters. Create wireframes, diagrams, and mockups. Share as text.",
+      "A Unicode wireframe design tool where everything renders as box-drawing characters. Create wireframes, diagrams, and mockups. Share as text.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Wiretext — Unicode Wireframe Design Tool",
     description:
-      "A spatial design tool where everything renders as Unicode box-drawing characters. Share as text.",
+      "A Unicode wireframe design tool where everything renders as box-drawing characters. Share as text.",
   },
 };
 
@@ -49,7 +49,7 @@ const jsonLd = {
   name: "Wiretext",
   applicationCategory: "DesignApplication",
   description:
-    "A spatial design tool where everything renders as Unicode box-drawing characters. Create wireframes, diagrams, and mockups. Share as text.",
+    "A Unicode wireframe design tool where everything renders as box-drawing characters. Create wireframes, diagrams, and mockups. Share as text.",
   url: "https://wiretext.app",
   operatingSystem: "Any (Web-based)",
   offers: {

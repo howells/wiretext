@@ -4,7 +4,7 @@ import { EditorShell } from "@/components/editor/editor-shell";
 export const metadata: Metadata = {
   title: "Wiretext — Unicode Wireframe Design Tool",
   description:
-    "A spatial design tool where everything renders as Unicode box-drawing characters. Create wireframes, diagrams, and mockups. Share as text.",
+    "A Unicode wireframe design tool where everything renders as box-drawing characters. Create wireframes, diagrams, and mockups. Share as text.",
   alternates: {
     canonical: "/",
   },

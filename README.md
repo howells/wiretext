@@ -1,6 +1,6 @@
 # Wiretext
 
-Wiretext is a spatial design tool for generating editable wireframes as plain text. It turns structured JSON into ASCII/Unicode layouts that can be rendered in a terminal, opened in the web editor, or created through an MCP server.
+Wiretext is a Unicode wireframe design tool for generating editable layouts as plain text. It turns structured JSON into ASCII/Unicode layouts that can be rendered in a terminal, opened in the web editor, or created through an MCP server.
 
 The public value is the reusable tooling:
 
