@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "lint": "howells-lint",
+    "lint": "howells-check .",
+    "lint:fix": "howells-fix .",
     "test": "vitest run"
   },
   "dependencies": {
@@ -15,27 +16,27 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@upstash/ratelimit": "^2.0.8",
-    "@upstash/redis": "^1.36.3",
+    "@upstash/redis": "^1.38.0",
     "@use-gesture/react": "^10.3.1",
-    "@vercel/analytics": "^1.6.1",
+    "@vercel/analytics": "^2.0.1",
     "@wiretext/engine": "workspace:*",
-    "immer": "^11.1.4",
+    "immer": "^11.1.11",
     "lz-string": "^1.5.0",
-    "nanoid": "^5.1.0",
-    "next": "^16.2.0",
-    "posthog-js": "^1.359.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "zustand": "^5.0.0"
+    "nanoid": "^5.1.16",
+    "next": "^16.2.10",
+    "posthog-js": "^1.399.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.2.1",
-    "@types/node": "^25.3.5",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "postcss": "^8.5.8",
-    "tailwindcss": "^4.2.1",
-    "typescript": "^5.7.0",
-    "vitest": "^4.0.18"
+    "@tailwindcss/postcss": "^4.3.2",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^4.3.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
   }
 }

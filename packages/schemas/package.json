@@ -6,15 +6,16 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "dependencies": {
-    "@wiretext/engine": "workspace:*",
-    "zod": "^4.3.6"
-  },
-  "devDependencies": {
-    "typescript": "^5.7.0"
-  },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "howells-lint"
+    "lint": "howells-check .",
+    "lint:fix": "howells-fix ."
+  },
+  "dependencies": {
+    "@wiretext/engine": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
   }
 }

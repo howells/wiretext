@@ -6,17 +6,18 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "dependencies": {
-    "lz-string": "^1.5.0",
-    "nanoid": "^5.1.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.7.0",
-    "vitest": "^4.0.18"
-  },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "howells-lint"
+    "lint": "howells-check .",
+    "lint:fix": "howells-fix ."
+  },
+  "dependencies": {
+    "lz-string": "^1.5.0",
+    "nanoid": "^5.1.16"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
   }
 }

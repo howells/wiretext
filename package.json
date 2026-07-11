@@ -1,35 +1,31 @@
 {
   "name": "wiretext-monorepo",
   "private": true,
-  "packageManager": "pnpm@10.23.0",
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --filter=@wiretext/app",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "lint": "howells-lint",
-    "format": "howells-format",
-    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "lint": "turbo run lint && howells-workspace-check",
+    "lint:fix": "turbo run lint:fix && howells-workspace-fix",
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
     "prepare": "howells-husky",
     "dev:all": "turbo run dev --parallel",
     "clean": "turbo clean",
     "check:affected": "turbo run build lint typecheck test --affected"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@biomejs/biome",
-      "core-js",
-      "esbuild",
-      "protobufjs",
-      "sharp"
-    ]
+  "devDependencies": {
+    "@howells/husky": "^0.1.1",
+    "@howells/lint": "^1.1.0",
+    "@howells/typescript-config": "^0.1.6",
+    "turbo": "2.10.4"
   },
   "lint-staged": {
-    "*.{js,ts,jsx,tsx,json,jsonc,css}": "howells-format"
+    "*.{js,ts,jsx,tsx,json,jsonc,css}": "howells-fix"
   },
-  "devDependencies": {
-    "@howells/husky": "^0.1.0",
-    "@howells/lint": "^0.1.3",
-    "turbo": "2.9.3"
-  }
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "packageManager": "pnpm@11.11.0"
 }

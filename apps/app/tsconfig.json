@@ -1,8 +1,6 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@howells/typescript-config/nextjs",
   "compilerOptions": {
-    "jsx": "preserve",
-    "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./src/*"]
     }

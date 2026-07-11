@@ -2,45 +2,46 @@
   "name": "@wiretext/mcp",
   "version": "0.3.3",
   "description": "MCP server for generating editable Wiretext wireframes and terminal-rendered layouts.",
-  "type": "module",
-  "license": "MIT",
+  "keywords": [
+    "ai-agents",
+    "ascii",
+    "design-tools",
+    "mcp",
+    "unicode",
+    "wireframes"
+  ],
   "homepage": "https://wiretext.app",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/howells/wiretext.git",
     "directory": "apps/mcp"
   },
-  "keywords": [
-    "mcp",
-    "wireframes",
-    "ascii",
-    "unicode",
-    "ai-agents",
-    "design-tools"
-  ],
   "bin": {
     "wiretext-mcp": "./dist/server.js"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "files": [
     "dist"
   ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "howells-lint",
+    "lint": "howells-check .",
+    "lint:fix": "howells-fix .",
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
-    "@types/node": "^25.3.5",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@types/node": "^26.1.1",
     "@wiretext/engine": "workspace:*",
     "@wiretext/schemas": "workspace:*",
-    "tsup": "^8.0.0",
-    "typescript": "^5.7.0",
-    "zod": "^4.3.6"
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
   }
 }

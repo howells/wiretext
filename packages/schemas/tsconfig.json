@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@howells/typescript-config/bundler-no-dom-library-monorepo",
   "compilerOptions": {
     "rootDir": "src"
   },

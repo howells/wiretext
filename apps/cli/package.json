@@ -2,49 +2,47 @@
   "name": "wiretext",
   "version": "0.3.4",
   "description": "Agent-first CLI for generating editable ASCII and Unicode wireframes from structured JSON.",
-  "type": "module",
-  "license": "MIT",
+  "keywords": [
+    "ai-agents",
+    "ascii",
+    "cli",
+    "design-tools",
+    "mcp",
+    "unicode",
+    "wireframes"
+  ],
   "homepage": "https://wiretext.app",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/howells/wiretext.git",
     "directory": "apps/cli"
   },
-  "keywords": [
-    "wireframes",
-    "ascii",
-    "unicode",
-    "cli",
-    "mcp",
-    "ai-agents",
-    "design-tools"
-  ],
   "bin": {
     "wiretext": "./dist/index.js"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "files": [
     "dist",
     "CONTEXT.md"
   ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "howells-lint",
+    "lint": "howells-check .",
+    "lint:fix": "howells-fix .",
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
-    "@types/node": "^25.3.5",
+    "@types/node": "^26.1.1",
     "@wiretext/engine": "workspace:*",
     "@wiretext/schemas": "workspace:*",
-    "tsup": "^8.0.0",
-    "typescript": "^5.7.0",
-    "zod": "^4.3.6"
-  },
-  "dependencies": {
-    "@howells/cli": "^0.1.0"
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
   }
 }
