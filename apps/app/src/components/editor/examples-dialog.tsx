@@ -1,7 +1,6 @@
 "use client";
 
 import { fillDefaults } from "@wiretext/engine";
-import Link from "next/link";
 import { useEffect, useEffectEvent, useRef } from "react";
 
 import { SHOWCASE_LAYOUTS } from "@/data/showcase-layouts";
@@ -81,29 +80,21 @@ export const ExamplesDialog = ({ open, onClose }: ExamplesDialogProps) => {
 
       {/* Layout list */}
       <div className="flex-1 overflow-y-auto">
-        {SHOWCASE_LAYOUTS.map((layout) => {
-          const href =
-            layout.shortId !== undefined && layout.shortId !== ""
-              ? `/w/${layout.shortId}`
-              : undefined;
-
-          return (
-            <Link
-              className="block border-border border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-surface-hover"
-              href={href ?? "/"}
-              key={layout.name}
-              onClick={(e) => {
-                e.preventDefault();
-                handleLoadLayout(layout);
-              }}
-            >
-              <span className="text-sm text-text">{layout.name}</span>
-              <span className="mt-0.5 block text-[11px] text-text-dim leading-snug">
-                {layout.description}
-              </span>
-            </Link>
-          );
-        })}
+        {SHOWCASE_LAYOUTS.map((layout) => (
+          <button
+            className="block w-full border-border border-b px-5 py-3 text-left transition-colors last:border-b-0 hover:bg-surface-hover"
+            key={layout.name}
+            onClick={() => {
+              handleLoadLayout(layout);
+            }}
+            type="button"
+          >
+            <span className="text-sm text-text">{layout.name}</span>
+            <span className="mt-0.5 block text-[11px] text-text-dim leading-snug">
+              {layout.description}
+            </span>
+          </button>
+        ))}
       </div>
     </dialog>
   );

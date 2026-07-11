@@ -1,29 +1,40 @@
-// Named wrappers over posthog.capture, one per product event. When PostHog was
-// never initialized (no key — see posthog.ts), capture is a silent no-op, so
-// these are safe to call unconditionally from actions and components.
+// Named wrappers over posthog.capture, one per product event. Every helper
+// routes through `capture`, which no-ops unless PostHog was initialized with a
+// key (see posthog.ts). This keeps the helpers safe to call unconditionally
+// from actions and components, and keeps a keyless clone free of posthog-js
+// "not initialized" warnings.
 import type { ToolType } from "@wiretext/engine";
 import posthog from "posthog-js";
 
+import { isPostHogEnabled } from "./posthog";
+
+const capture = (event: string, properties?: Record<string, unknown>): void => {
+  if (!isPostHogEnabled()) {
+    return;
+  }
+  posthog.capture(event, properties);
+};
+
 export const trackToolSelected = (tool: ToolType) => {
-  posthog.capture("tool_selected", { tool });
+  capture("tool_selected", { tool });
 };
 
 export const trackObjectCreated = (objectType: string) => {
-  posthog.capture("object_created", { object_type: objectType });
+  capture("object_created", { object_type: objectType });
 };
 
 export const trackExport = (format: string) => {
-  posthog.capture("document_exported", { format });
+  capture("document_exported", { format });
 };
 
 export const trackShare = () => {
-  posthog.capture("document_shared");
+  capture("document_shared");
 };
 
 export const trackClearAll = () => {
-  posthog.capture("canvas_cleared");
+  capture("canvas_cleared");
 };
 
 export const trackDocumentLoaded = () => {
-  posthog.capture("shared_document_loaded");
+  capture("shared_document_loaded");
 };

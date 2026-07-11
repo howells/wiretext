@@ -4,7 +4,6 @@ export interface ShowcaseLayout {
   description: string;
   name: string;
   objects: MinimalObject[];
-  shortId?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════

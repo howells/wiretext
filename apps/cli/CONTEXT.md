@@ -43,8 +43,19 @@ All commands return a consistent JSON envelope when in JSON mode:
 { "ok": true, "dryRun": true, "valid": true, "objectCount": 3, "encodedBytes": 184 }
 
 // Error
-{ "ok": false, "error": "Invalid input: ...", "code": "ERROR" }
+{ "ok": false, "error": "Invalid input: ...", "code": "INVALID_INPUT" }
 ```
+
+Failures exit `1` and carry a distinct `code` so agents can branch on the failure kind without parsing `error` text:
+
+| Code               | Meaning                                            |
+| ------------------ | -------------------------------------------------- |
+| `INVALID_INPUT`    | JSON did not match the wire object schema          |
+| `FILE_NOT_FOUND`   | The input file argument does not exist             |
+| `INVALID_ARGUMENT` | A flag value was malformed (e.g. bad `--base-url`) |
+| `SHARE_FAILED`     | The share API rejected the request                 |
+| `NETWORK_ERROR`    | The share request could not reach the API          |
+| `UNKNOWN_COMMAND`  | The first positional was not a known command       |
 
 ## Input Schema
 

@@ -13,3 +13,15 @@ export const serverEnv = {
   upstashRedisRestToken: env.UPSTASH_REDIS_REST_TOKEN,
   upstashRedisRestUrl: env.UPSTASH_REDIS_REST_URL,
 };
+
+/**
+ * Whether the hosted short-link store is available. Both Upstash credentials
+ * must be present and non-empty; a self-hosted fork without them keeps the
+ * editor and the `#…` fragment share (lib/sharing.ts) working, while `/api/share`
+ * and `/w/:id` degrade gracefully instead of throwing (see lib/redis.ts).
+ */
+export const isRedisConfigured =
+  serverEnv.upstashRedisRestUrl !== undefined &&
+  serverEnv.upstashRedisRestUrl !== "" &&
+  serverEnv.upstashRedisRestToken !== undefined &&
+  serverEnv.upstashRedisRestToken !== "";

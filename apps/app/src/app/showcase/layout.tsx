@@ -3,12 +3,12 @@ import { Fragment } from "react";
 
 export const metadata: Metadata = {
   robots: { index: false },
-  title: "Component Test — Wiretext",
+  title: "Component Showcase — Wiretext",
 };
 
 // Keyed fragment keeps this a pure pass-through with a stable identity
-const TestLayout = ({ children }: { children: React.ReactNode }) => (
-  <Fragment key="test">{children}</Fragment>
+const ShowcaseLayout = ({ children }: { children: React.ReactNode }) => (
+  <Fragment key="showcase">{children}</Fragment>
 );
 
-export default TestLayout;
+export default ShowcaseLayout;

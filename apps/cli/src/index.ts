@@ -40,6 +40,29 @@ const QUERY_OR_HASH_RE = /[?#]/u;
 // human-friendly only at an interactive terminal.
 // ---------------------------------------------------------------------------
 
+/**
+ * Error carrying a machine-readable `code` for the JSON failure envelope.
+ * Distinct codes let agents branch on failure type without parsing messages:
+ *   INVALID_INPUT     malformed JSON or schema-invalid document
+ *   FILE_NOT_FOUND    input path does not exist (ENOENT)
+ *   INVALID_ARGUMENT  a guard rejected --base-url / --hash / a file path
+ *   SHARE_FAILED      the share API returned a non-2xx response
+ *   NETWORK_ERROR     the request never reached the share API (DNS/offline)
+ * Anything thrown without a code falls back to "ERROR" in the top-level handler.
+ */
+class CliError extends Error {
+  readonly code: string;
+  constructor(message: string, code: string) {
+    super(message);
+    this.name = "CliError";
+    this.code = code;
+  }
+}
+
+/** True for Node's ErrnoException (an Error carrying a string `code`). */
+const isErrnoException = (value: unknown): value is NodeJS.ErrnoException =>
+  value instanceof Error && "code" in value;
+
 type OutputMode = "human" | "json";
 
 /**
@@ -87,10 +110,16 @@ const emitError = (mode: OutputMode, message: string, code: string): never => {
  */
 const validateFilePath = (filePath: string): void => {
   if (CONTROL_CHARS_RE.test(filePath)) {
-    throw new Error("Invalid file path: contains control characters");
+    throw new CliError(
+      "Invalid file path: contains control characters",
+      "INVALID_ARGUMENT"
+    );
   }
   if (ENCODED_TRAVERSAL_RE.test(filePath)) {
-    throw new Error("Invalid file path: contains encoded path segments");
+    throw new CliError(
+      "Invalid file path: contains encoded path segments",
+      "INVALID_ARGUMENT"
+    );
   }
 };
 
@@ -104,14 +133,21 @@ const validateBaseUrl = (baseUrl: string): void => {
   try {
     parsed = new URL(baseUrl);
   } catch {
-    throw new Error(`Invalid --base-url: "${baseUrl}" is not a valid URL`);
+    throw new CliError(
+      `Invalid --base-url: "${baseUrl}" is not a valid URL`,
+      "INVALID_ARGUMENT"
+    );
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error("Invalid --base-url: must use http or https protocol");
+    throw new CliError(
+      "Invalid --base-url: must use http or https protocol",
+      "INVALID_ARGUMENT"
+    );
   }
   if (parsed.search || parsed.hash) {
-    throw new Error(
-      "Invalid --base-url: must not contain query string or fragment"
+    throw new CliError(
+      "Invalid --base-url: must not contain query string or fragment",
+      "INVALID_ARGUMENT"
     );
   }
 };
@@ -124,10 +160,16 @@ const validateBaseUrl = (baseUrl: string): void => {
  */
 const validateHashValue = (hash: string): void => {
   if (CONTROL_CHARS_RE.test(hash)) {
-    throw new Error("Invalid --hash: contains control characters");
+    throw new CliError(
+      "Invalid --hash: contains control characters",
+      "INVALID_ARGUMENT"
+    );
   }
   if (QUERY_OR_HASH_RE.test(hash.replace(HASH_FRAGMENT_PREFIX_RE, ""))) {
-    throw new Error("Invalid --hash: contains embedded query params");
+    throw new CliError(
+      "Invalid --hash: contains embedded query params",
+      "INVALID_ARGUMENT"
+    );
   }
 };
 
@@ -163,7 +205,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const readInput = (filePath?: string): string => {
   if (filePath !== undefined && filePath !== "" && filePath !== "-") {
     validateFilePath(filePath);
-    return readFileSync(filePath, "utf-8");
+    try {
+      return readFileSync(filePath, "utf-8");
+    } catch (error) {
+      if (isErrnoException(error) && error.code === "ENOENT") {
+        throw new CliError(`File not found: ${filePath}`, "FILE_NOT_FOUND");
+      }
+      throw error;
+    }
   }
   return readFileSync(0, "utf-8");
 };
@@ -174,12 +223,20 @@ interface ParsedInput {
 }
 
 const parseInput = (raw: string): ParsedInput => {
-  const parsed: unknown = JSON.parse(raw);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new CliError("Invalid input: not valid JSON", "INVALID_INPUT");
+  }
   const source = isRecord(parsed) ? parsed : undefined;
 
   const arr = Array.isArray(parsed) ? parsed : source?.objects;
   if (!Array.isArray(arr)) {
-    throw new TypeError('Input must be a JSON array or { "objects": [...] }');
+    throw new CliError(
+      'Input must be a JSON array or { "objects": [...] }',
+      "INVALID_INPUT"
+    );
   }
 
   const result = objectsArraySchema.safeParse(arr);
@@ -191,7 +248,7 @@ const parseInput = (raw: string): ParsedInput => {
           : "root";
       return `  - ${path}: ${i.message}`;
     });
-    throw new Error(`Invalid input:\n${issues.join("\n")}`);
+    throw new CliError(`Invalid input:\n${issues.join("\n")}`, "INVALID_INPUT");
   }
 
   let layers: z.infer<typeof layerSchema>[] | undefined;
@@ -276,23 +333,33 @@ const parseShareResponse = (body: unknown): { id: string; url: string } => {
 
 /**
  * POST an encoded document to the share API and return its short id + URL.
- * A non-2xx response throws with the API's own `error` field when present,
- * falling back to the HTTP status text; a 2xx body missing `id`/`url` is
- * treated as malformed ({@link parseShareResponse}).
+ * A transport failure (DNS/offline/refused connection) throws NETWORK_ERROR; a
+ * non-2xx response throws SHARE_FAILED with the API's own `error` field when
+ * present, falling back to the HTTP status text; a 2xx body missing `id`/`url`
+ * is treated as malformed ({@link parseShareResponse}).
  */
 const postShare = async (
   baseUrl: string,
   data: string
 ): Promise<{ id: string; url: string }> => {
-  const res = await fetch(`${baseUrl}/api/share`, {
-    body: JSON.stringify({ data }),
-    headers: { "Content-Type": "application/json" },
-    method: "POST",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/api/share`, {
+      body: JSON.stringify({ data }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  } catch {
+    throw new CliError(
+      `Could not reach the Wiretext API at ${baseUrl}`,
+      "NETWORK_ERROR"
+    );
+  }
   if (!res.ok) {
     const body = await tryParseJson(res);
-    throw new Error(
-      `Share failed (${res.status}): ${getErrorMessage(body) ?? res.statusText}`
+    throw new CliError(
+      `Share failed (${res.status}): ${getErrorMessage(body) ?? res.statusText}`,
+      "SHARE_FAILED"
     );
   }
   const body = await tryParseJson(res);
@@ -492,6 +559,15 @@ const printHelp = (mode: OutputMode): void => {
         schema: "Print JSON Schema for the wire object input format",
         share: "Generate a short Wiretext URL via the share API",
       },
+      errorCodes: {
+        ERROR: "Uncategorized failure",
+        FILE_NOT_FOUND: "Input file path does not exist",
+        INVALID_ARGUMENT: "A flag or path failed validation",
+        INVALID_INPUT: "Malformed JSON or schema-invalid document",
+        NETWORK_ERROR: "The share API was unreachable",
+        SHARE_FAILED: "The share API returned a non-2xx response",
+        UNKNOWN_COMMAND: "Unrecognized command",
+      },
       input: '{ "objects": [...], "layers": [...] } or bare [...]',
       ok: true,
       options: {
@@ -685,6 +761,7 @@ try {
   await main();
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
+  const code = error instanceof CliError ? error.code : "ERROR";
   const mode = detectMode(process.argv.includes("--json"));
-  emitError(mode, message, "ERROR");
+  emitError(mode, message, code);
 }

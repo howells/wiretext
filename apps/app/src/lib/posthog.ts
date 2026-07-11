@@ -1,5 +1,13 @@
 import posthog from "posthog-js";
 
+// Flipped to true once init succeeds. Read by lib/analytics.ts so capture
+// helpers no-op cleanly on a keyless clone instead of triggering posthog-js
+// "not initialized" warnings.
+let initialized = false;
+
+/** Whether PostHog was initialized with a key on this client. */
+export const isPostHogEnabled = (): boolean => initialized;
+
 /**
  * Initialize PostHog on the client, but only when a key is present.
  *
@@ -13,6 +21,7 @@ export const initPostHog = (key: string | undefined) => {
     return;
   }
 
+  initialized = true;
   posthog.init(key, {
     api_host: "/ingest",
     capture_exceptions: true,

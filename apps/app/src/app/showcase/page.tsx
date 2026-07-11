@@ -668,7 +668,7 @@ const buildShowcase = (): { objects: WireObject[]; rows: number } => {
   return { objects: showcase.objects, rows: r + 8 };
 };
 
-export default function TestPage() {
+export default function ShowcasePage() {
   const { objects, rows } = buildShowcase();
   const grid = compose(objects, { cols: 110, rows });
   const text = gridToString(grid);
