@@ -60,7 +60,7 @@ Generate an editable Wiretext URL from wire objects.
 "Create a wireframe with a navbar, a sidebar with navigation links, and a main content area with a card grid"
 ```
 
-Returns a URL like `https://wiretext.app/#...` that opens in the editor.
+Returns a short URL like `https://wiretext.app/w/abc12345` that opens in the editor for further editing.
 
 ### `render_wireframe`
 
@@ -68,9 +68,11 @@ Render wire objects as ASCII art. Useful for previewing layouts inline.
 
 ## Object Types
 
-**Primitives:** `box`, `text`, `line`, `arrow`
+Every object has a top-level `type`: one of `box`, `text`, `line`, `arrow`, `connector`, or `component`. A `connector` links two objects by id (`from`/`to`); a `component` selects a UI element via `componentType` (see the table below).
 
-**Components:**
+**Primitives:** `box`, `text`, `line`, `arrow`, `connector`
+
+**Components** (`type: "component"` with a `componentType`):
 
 | Type         | Description             | Key Props                       |
 | ------------ | ----------------------- | ------------------------------- |
