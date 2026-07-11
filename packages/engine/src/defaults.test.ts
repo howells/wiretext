@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
+
 import { COMPONENT_BY_TYPE } from "./components";
 import { computeRenderGridSize, fillDefaults } from "./defaults";
+import {
+  must,
+  mustBeArrow,
+  mustBeBox,
+  mustBeComponent,
+  mustBeLine,
+  mustBeText,
+} from "./test-utils";
 import type { WireObject } from "./types";
 
 describe("fillDefaults", () => {
@@ -23,257 +32,235 @@ describe("fillDefaults", () => {
   describe("when given a box object", () => {
     it("should apply default width of 10", () => {
       const { objects } = fillDefaults([{ type: "box" }]);
-      expect(objects[0].type).toBe("box");
-      if (objects[0].type === "box") {
-        expect(objects[0].width).toBe(10);
-      }
+      const box = mustBeBox(objects[0]);
+      expect(box.type).toBe("box");
+      expect(box.width).toBe(10);
     });
 
     it("should apply default height of 5", () => {
       const { objects } = fillDefaults([{ type: "box" }]);
-      if (objects[0].type === "box") {
-        expect(objects[0].height).toBe(5);
-      }
+      const box = mustBeBox(objects[0]);
+      expect(box.height).toBe(5);
     });
 
     it("should apply default borderStyle of single", () => {
       const { objects } = fillDefaults([{ type: "box" }]);
-      if (objects[0].type === "box") {
-        expect(objects[0].borderStyle).toBe("single");
-      }
+      const box = mustBeBox(objects[0]);
+      expect(box.borderStyle).toBe("single");
     });
 
     it("should preserve explicit width when larger than minimum", () => {
       const { objects } = fillDefaults([{ type: "box", width: 20 }]);
-      if (objects[0].type === "box") {
-        expect(objects[0].width).toBe(20);
-      }
+      const box = mustBeBox(objects[0]);
+      expect(box.width).toBe(20);
     });
 
     it("should preserve explicit height", () => {
-      const { objects } = fillDefaults([{ type: "box", height: 8 }]);
-      if (objects[0].type === "box") {
-        expect(objects[0].height).toBe(8);
-      }
+      const { objects } = fillDefaults([{ height: 8, type: "box" }]);
+      const box = mustBeBox(objects[0]);
+      expect(box.height).toBe(8);
     });
 
     it("should preserve explicit borderStyle", () => {
       const { objects } = fillDefaults([
-        { type: "box", borderStyle: "double" },
+        { borderStyle: "double", type: "box" },
       ]);
-      if (objects[0].type === "box") {
-        expect(objects[0].borderStyle).toBe("double");
-      }
+      const box = mustBeBox(objects[0]);
+      expect(box.borderStyle).toBe("double");
     });
   });
 
   describe("when a box has a label", () => {
     it("should apply default width regardless of label", () => {
-      const { objects } = fillDefaults([{ type: "box", label: "Hello" }]);
-      if (objects[0].type === "box") {
-        expect(objects[0].width).toBe(10);
-      }
+      const { objects } = fillDefaults([{ label: "Hello", type: "box" }]);
+      const box = mustBeBox(objects[0]);
+      expect(box.width).toBe(10);
     });
 
     it("should preserve explicit width even when smaller than label", () => {
       const { objects } = fillDefaults([
-        { type: "box", label: "Long Label Text", width: 5 },
+        { label: "Long Label Text", type: "box", width: 5 },
       ]);
-      if (objects[0].type === "box") {
-        expect(objects[0].width).toBe(5);
-      }
+      const box = mustBeBox(objects[0]);
+      expect(box.width).toBe(5);
     });
 
     it("should keep a larger explicit width even with a label", () => {
       const label = "Hi";
-      const { objects } = fillDefaults([{ type: "box", label, width: 30 }]);
-      if (objects[0].type === "box") {
-        expect(objects[0].width).toBe(30);
-      }
+      const { objects } = fillDefaults([{ label, type: "box", width: 30 }]);
+      const box = mustBeBox(objects[0]);
+      expect(box.width).toBe(30);
     });
   });
 
   describe("when given a text object", () => {
     it("should preserve the content field", () => {
       const { objects } = fillDefaults([
-        { type: "text", content: "Hello\nWorld" },
+        { content: "Hello\nWorld", type: "text" },
       ]);
-      expect(objects[0].type).toBe("text");
-      if (objects[0].type === "text") {
-        expect(objects[0].content).toBe("Hello\nWorld");
-      }
+      const text = mustBeText(objects[0]);
+      expect(text.type).toBe("text");
+      expect(text.content).toBe("Hello\nWorld");
     });
   });
 
   describe("when given a line object", () => {
     it("should preserve the endPosition", () => {
       const endPosition = { col: 5, row: 10 };
-      const { objects } = fillDefaults([{ type: "line", endPosition }]);
-      expect(objects[0].type).toBe("line");
-      if (objects[0].type === "line") {
-        expect(objects[0].endPosition).toEqual(endPosition);
-      }
+      const { objects } = fillDefaults([{ endPosition, type: "line" }]);
+      const line = mustBeLine(objects[0]);
+      expect(line.type).toBe("line");
+      expect(line.endPosition).toEqual(endPosition);
     });
   });
 
   describe("when given an arrow object", () => {
     it("should preserve the endPosition", () => {
       const endPosition = { col: 8, row: 3 };
-      const { objects } = fillDefaults([{ type: "arrow", endPosition }]);
-      expect(objects[0].type).toBe("arrow");
-      if (objects[0].type === "arrow") {
-        expect(objects[0].endPosition).toEqual(endPosition);
-      }
+      const { objects } = fillDefaults([{ endPosition, type: "arrow" }]);
+      const arrow = mustBeArrow(objects[0]);
+      expect(arrow.type).toBe("arrow");
+      expect(arrow.endPosition).toEqual(endPosition);
     });
 
     it("should preserve startHead when provided", () => {
       const { objects } = fillDefaults([
-        { type: "arrow", endPosition: { col: 5, row: 5 }, startHead: true },
+        { endPosition: { col: 5, row: 5 }, startHead: true, type: "arrow" },
       ]);
-      if (objects[0].type === "arrow") {
-        expect(objects[0].startHead).toBe(true);
-      }
+      const arrow = mustBeArrow(objects[0]);
+      expect(arrow.startHead).toBe(true);
     });
 
     it("should preserve endHead when provided", () => {
       const { objects } = fillDefaults([
-        { type: "arrow", endPosition: { col: 5, row: 5 }, endHead: false },
+        { endHead: false, endPosition: { col: 5, row: 5 }, type: "arrow" },
       ]);
-      if (objects[0].type === "arrow") {
-        expect(objects[0].endHead).toBe(false);
-      }
+      const arrow = mustBeArrow(objects[0]);
+      expect(arrow.endHead).toBe(false);
     });
   });
 
   describe("when given a component object", () => {
     it("should apply default width from COMPONENT_BY_TYPE", () => {
       const { objects } = fillDefaults([
-        { type: "component", componentType: "button" },
+        { componentType: "button", type: "component" },
       ]);
-      expect(objects[0].type).toBe("component");
-      if (objects[0].type === "component") {
-        expect(objects[0].width).toBe(COMPONENT_BY_TYPE.button.defaultWidth);
-      }
+      const component = mustBeComponent(objects[0]);
+      expect(component.type).toBe("component");
+      expect(component.width).toBe(COMPONENT_BY_TYPE.button.defaultWidth);
     });
 
     it("should apply default height from COMPONENT_BY_TYPE", () => {
       const { objects } = fillDefaults([
-        { type: "component", componentType: "card" },
+        { componentType: "card", type: "component" },
       ]);
-      if (objects[0].type === "component") {
-        expect(objects[0].height).toBe(COMPONENT_BY_TYPE.card.defaultHeight);
-      }
+      const component = mustBeComponent(objects[0]);
+      expect(component.height).toBe(COMPONENT_BY_TYPE.card.defaultHeight);
     });
 
     it("should auto-size width to fit label when wider than default", () => {
       const { objects } = fillDefaults([
         {
-          type: "component",
           componentType: "button",
           label: "Download Everything",
+          type: "component",
         },
       ]);
-      if (objects[0].type === "component") {
-        // "Download Everything" = 19 chars + 4 padding = 23
-        expect(objects[0].width).toBe(23);
-      }
+      const component = mustBeComponent(objects[0]);
+      // "Download Everything" = 19 chars + 4 padding = 23
+      expect(component.width).toBe(23);
     });
 
     it("should use default width when label fits within it", () => {
       const { objects } = fillDefaults([
         {
-          type: "component",
           componentType: "button",
           label: "OK",
+          type: "component",
         },
       ]);
-      if (objects[0].type === "component") {
-        expect(objects[0].width).toBe(COMPONENT_BY_TYPE.button.defaultWidth);
-      }
+      const component = mustBeComponent(objects[0]);
+      expect(component.width).toBe(COMPONENT_BY_TYPE.button.defaultWidth);
     });
 
     it("should auto-size toggle width to fit label", () => {
       const { objects } = fillDefaults([
         {
-          type: "component",
           componentType: "toggle",
           label: "Push notifications",
+          type: "component",
         },
       ]);
-      if (objects[0].type === "component") {
-        // "Push notifications" = 18 chars + 6 padding = 24
-        expect(objects[0].width).toBe(24);
-      }
+      const component = mustBeComponent(objects[0]);
+      // "Push notifications" = 18 chars + 6 padding = 24
+      expect(component.width).toBe(24);
     });
 
     it("should auto-size navbar width to fit nav items", () => {
       const { objects } = fillDefaults([
         {
-          type: "component",
           componentType: "navbar",
           navItems: ["Home", "About", "Contact Us", "Blog"],
+          type: "component",
         },
       ]);
-      if (objects[0].type === "component") {
-        // "Home  About  Contact Us  Blog" = 30 chars + 7 padding = 37
-        expect(objects[0].width).toBe(
-          Math.max(COMPONENT_BY_TYPE.navbar.defaultWidth, 37),
-        );
-      }
+      const component = mustBeComponent(objects[0]);
+      // "Home  About  Contact Us  Blog" = 30 chars + 7 padding = 37
+      expect(component.width).toBe(
+        Math.max(COMPONENT_BY_TYPE.navbar.defaultWidth, 37)
+      );
     });
 
     it("should preserve explicit width when larger than component minimum", () => {
       const { objects } = fillDefaults([
-        { type: "component", componentType: "input", width: 40 },
+        { componentType: "input", type: "component", width: 40 },
       ]);
-      if (objects[0].type === "component") {
-        expect(objects[0].width).toBe(40);
-      }
+      const component = mustBeComponent(objects[0]);
+      expect(component.width).toBe(40);
     });
 
     it("should preserve explicit height", () => {
       const { objects } = fillDefaults([
-        { type: "component", componentType: "card", height: 20 },
+        { componentType: "card", height: 20, type: "component" },
       ]);
-      if (objects[0].type === "component") {
-        expect(objects[0].height).toBe(20);
-      }
+      const component = mustBeComponent(objects[0]);
+      expect(component.height).toBe(20);
     });
 
     it("should preserve optional component fields", () => {
       const { objects } = fillDefaults([
         {
-          type: "component",
-          componentType: "checkbox",
-          label: "Accept terms",
           checked: true,
+          componentType: "checkbox",
           icon: "check",
+          label: "Accept terms",
+          type: "component",
         },
       ]);
-      if (objects[0].type === "component") {
-        expect(objects[0].label).toBe("Accept terms");
-        expect(objects[0].checked).toBe(true);
-        expect(objects[0].icon).toBe("check");
-      }
+      const component = mustBeComponent(objects[0]);
+      expect(component.label).toBe("Accept terms");
+      expect(component.checked).toBe(true);
+      expect(component.icon).toBe("check");
     });
   });
 
   describe("ID assignment", () => {
     it("should assign a nanoid when object has no id", () => {
       const { objects } = fillDefaults([{ type: "box" }]);
-      expect(typeof objects[0].id).toBe("string");
-      expect(objects[0].id.length).toBeGreaterThan(0);
+      const object = must(objects[0]);
+      expect(typeof object.id).toBe("string");
+      expect(object.id.length).toBeGreaterThan(0);
     });
 
     it("should preserve an explicitly provided id", () => {
-      const { objects } = fillDefaults([{ type: "box", id: "custom-id-123" }]);
-      expect(objects[0].id).toBe("custom-id-123");
+      const { objects } = fillDefaults([{ id: "custom-id-123", type: "box" }]);
+      expect(must(objects[0]).id).toBe("custom-id-123");
     });
 
     it("should generate unique ids for multiple objects", () => {
       const { objects } = fillDefaults([
         { type: "box" },
-        { type: "text", content: "hello" },
+        { content: "hello", type: "text" },
         { type: "box" },
       ]);
       const ids = objects.map((o) => o.id);
@@ -285,39 +272,39 @@ describe("fillDefaults", () => {
   describe("layer assignment", () => {
     it("should assign objects to the returned layer by default", () => {
       const { objects, layer } = fillDefaults([{ type: "box" }]);
-      expect(objects[0].layerId).toBe(layer.id);
+      expect(must(objects[0]).layerId).toBe(layer.id);
     });
 
     it("should preserve an explicitly provided layerId", () => {
       const { objects } = fillDefaults([
-        { type: "box", layerId: "existing-layer" },
+        { layerId: "existing-layer", type: "box" },
       ]);
-      expect(objects[0].layerId).toBe("existing-layer");
+      expect(must(objects[0]).layerId).toBe("existing-layer");
     });
   });
 
   describe("position and zIndex defaults", () => {
     it("should default position to col 0 row 0", () => {
       const { objects } = fillDefaults([{ type: "box" }]);
-      expect(objects[0].position).toEqual({ col: 0, row: 0 });
+      expect(must(objects[0]).position).toEqual({ col: 0, row: 0 });
     });
 
     it("should preserve an explicit position", () => {
       const { objects } = fillDefaults([
-        { type: "box", position: { col: 3, row: 7 } },
+        { position: { col: 3, row: 7 }, type: "box" },
       ]);
-      expect(objects[0].position).toEqual({ col: 3, row: 7 });
+      expect(must(objects[0]).position).toEqual({ col: 3, row: 7 });
     });
 
     it("should use array index as default zIndex", () => {
       const { objects } = fillDefaults([
         { type: "box" },
-        { type: "text", content: "hi" },
+        { content: "hi", type: "text" },
         { type: "box" },
       ]);
-      expect(objects[0].zIndex).toBe(0);
-      expect(objects[1].zIndex).toBe(1);
-      expect(objects[2].zIndex).toBe(2);
+      expect(must(objects[0]).zIndex).toBe(0);
+      expect(must(objects[1]).zIndex).toBe(1);
+      expect(must(objects[2]).zIndex).toBe(2);
     });
   });
 });
@@ -334,14 +321,14 @@ describe("computeRenderGridSize", () => {
   describe("when given objects with known bounds", () => {
     it("should return tight bounds plus default padding of 2", () => {
       const box: WireObject = {
-        id: "b1",
-        type: "box",
-        position: { col: 0, row: 0 },
-        width: 10,
-        height: 5,
         borderStyle: "single",
-        zIndex: 0,
+        height: 5,
+        id: "b1",
         layerId: "l1",
+        position: { col: 0, row: 0 },
+        type: "box",
+        width: 10,
+        zIndex: 0,
       };
       const size = computeRenderGridSize([box]);
       // bounds: col=0, row=0, width=10, height=5 → maxCol=10, maxRow=5
@@ -352,14 +339,14 @@ describe("computeRenderGridSize", () => {
 
     it("should account for object position in bounds", () => {
       const box: WireObject = {
-        id: "b1",
-        type: "box",
-        position: { col: 5, row: 3 },
-        width: 10,
-        height: 5,
         borderStyle: "single",
-        zIndex: 0,
+        height: 5,
+        id: "b1",
         layerId: "l1",
+        position: { col: 5, row: 3 },
+        type: "box",
+        width: 10,
+        zIndex: 0,
       };
       const size = computeRenderGridSize([box]);
       // maxCol = 5 + 10 = 15, maxRow = 3 + 5 = 8
@@ -370,24 +357,24 @@ describe("computeRenderGridSize", () => {
 
     it("should use the furthest-reaching object when multiple objects exist", () => {
       const box1: WireObject = {
-        id: "b1",
-        type: "box",
-        position: { col: 0, row: 0 },
-        width: 10,
-        height: 5,
         borderStyle: "single",
-        zIndex: 0,
+        height: 5,
+        id: "b1",
         layerId: "l1",
+        position: { col: 0, row: 0 },
+        type: "box",
+        width: 10,
+        zIndex: 0,
       };
       const box2: WireObject = {
-        id: "b2",
-        type: "box",
-        position: { col: 20, row: 10 },
-        width: 8,
-        height: 4,
         borderStyle: "single",
-        zIndex: 1,
+        height: 4,
+        id: "b2",
         layerId: "l1",
+        position: { col: 20, row: 10 },
+        type: "box",
+        width: 8,
+        zIndex: 1,
       };
       const size = computeRenderGridSize([box1, box2]);
       // box2 extends furthest: maxCol=28, maxRow=14
@@ -400,14 +387,14 @@ describe("computeRenderGridSize", () => {
   describe("when custom padding is specified", () => {
     it("should apply the provided padding value", () => {
       const box: WireObject = {
-        id: "b1",
-        type: "box",
-        position: { col: 0, row: 0 },
-        width: 10,
-        height: 5,
         borderStyle: "single",
-        zIndex: 0,
+        height: 5,
+        id: "b1",
         layerId: "l1",
+        position: { col: 0, row: 0 },
+        type: "box",
+        width: 10,
+        zIndex: 0,
       };
       const size = computeRenderGridSize([box], 5);
       // maxCol=10, maxRow=5, padding=5 → cols=15, rows=10
@@ -417,14 +404,14 @@ describe("computeRenderGridSize", () => {
 
     it("should apply zero padding when explicitly set to 0", () => {
       const box: WireObject = {
-        id: "b1",
-        type: "box",
-        position: { col: 0, row: 0 },
-        width: 10,
-        height: 5,
         borderStyle: "single",
-        zIndex: 0,
+        height: 5,
+        id: "b1",
         layerId: "l1",
+        position: { col: 0, row: 0 },
+        type: "box",
+        width: 10,
+        zIndex: 0,
       };
       const size = computeRenderGridSize([box], 0);
       expect(size.cols).toBe(10);

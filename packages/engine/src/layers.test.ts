@@ -1,29 +1,32 @@
 import { describe, expect, it } from "vitest";
+
 import { fillDefaults } from "./defaults";
 import { resolveLayers } from "./layers";
-import type { Layer, WireObject } from "./types";
+import { must, mustBeBox, mustBeComponent } from "./test-utils";
+import type { BoxObject, Layer, WireObject } from "./types";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeDefaultLayer(id = "default-layer"): Layer {
-  return { id, name: "Layer 1", visible: true, locked: false };
-}
+const makeDefaultLayer = (id = "default-layer"): Layer => ({
+  id,
+  locked: false,
+  name: "Layer 1",
+  visible: true,
+});
 
-function makeObject(overrides: Partial<WireObject> = {}): WireObject {
-  return {
-    id: "obj-1",
-    type: "box",
-    position: { col: 0, row: 0 },
-    zIndex: 0,
-    layerId: "default-layer",
-    width: 10,
-    height: 5,
-    borderStyle: "single",
-    ...overrides,
-  } as WireObject;
-}
+const makeObject = (overrides: Partial<BoxObject> = {}): WireObject => ({
+  borderStyle: "single",
+  height: 5,
+  id: "obj-1",
+  layerId: "default-layer",
+  position: { col: 0, row: 0 },
+  type: "box",
+  width: 10,
+  zIndex: 0,
+  ...overrides,
+});
 
 // ---------------------------------------------------------------------------
 // resolveLayers — no user layers (fallback to default)
@@ -34,7 +37,7 @@ describe("resolveLayers — no user layers", () => {
     const defaultLayer = makeDefaultLayer();
     const objects = [makeObject()];
 
-    const result = resolveLayers(objects, defaultLayer, undefined);
+    const result = resolveLayers(objects, defaultLayer);
 
     expect(result.layers).toEqual([defaultLayer]);
     expect(result.objects).toEqual(objects);
@@ -55,7 +58,7 @@ describe("resolveLayers — no user layers", () => {
     const original = [makeObject()];
     const copy = [...original];
 
-    resolveLayers(original, defaultLayer, undefined);
+    resolveLayers(original, defaultLayer);
 
     expect(original).toEqual(copy);
   });
@@ -76,8 +79,8 @@ describe("resolveLayers — with user layers", () => {
     ]);
 
     expect(result.layers).toEqual([
-      { id: "ui", name: "UI Elements", visible: true, locked: false },
-      { id: "flow", name: "Flow Arrows", visible: true, locked: false },
+      { id: "ui", locked: false, name: "UI Elements", visible: true },
+      { id: "flow", locked: false, name: "Flow Arrows", visible: true },
     ]);
   });
 
@@ -92,8 +95,8 @@ describe("resolveLayers — with user layers", () => {
       { id: "ui", name: "UI" },
     ]);
 
-    expect(result.objects[0].layerId).toBe("ui");
-    expect(result.objects[1].layerId).toBe("ui");
+    expect(must(result.objects[0]).layerId).toBe("ui");
+    expect(must(result.objects[1]).layerId).toBe("ui");
   });
 
   it("preserves objects that reference a valid user layer", () => {
@@ -108,8 +111,8 @@ describe("resolveLayers — with user layers", () => {
       { id: "flow", name: "Flow" },
     ]);
 
-    expect(result.objects[0].layerId).toBe("flow");
-    expect(result.objects[1].layerId).toBe("ui");
+    expect(must(result.objects[0]).layerId).toBe("flow");
+    expect(must(result.objects[1]).layerId).toBe("ui");
   });
 
   it("reassigns objects with unknown layerId to first user layer", () => {
@@ -120,7 +123,7 @@ describe("resolveLayers — with user layers", () => {
       { id: "ui", name: "UI" },
     ]);
 
-    expect(result.objects[0].layerId).toBe("ui");
+    expect(must(result.objects[0]).layerId).toBe("ui");
   });
 
   it("handles mix of default, valid, and unknown layer IDs", () => {
@@ -137,10 +140,14 @@ describe("resolveLayers — with user layers", () => {
       { id: "flow", name: "Flow" },
     ]);
 
-    expect(result.objects[0].layerId).toBe("ui"); // default → first user
-    expect(result.objects[1].layerId).toBe("ui"); // valid, kept
-    expect(result.objects[2].layerId).toBe("flow"); // valid, kept
-    expect(result.objects[3].layerId).toBe("ui"); // unknown → first user
+    // default → first user
+    expect(must(result.objects[0]).layerId).toBe("ui");
+    // valid, kept
+    expect(must(result.objects[1]).layerId).toBe("ui");
+    // valid, kept
+    expect(must(result.objects[2]).layerId).toBe("flow");
+    // unknown → first user
+    expect(must(result.objects[3]).layerId).toBe("ui");
   });
 
   it("does not mutate original objects", () => {
@@ -171,8 +178,8 @@ describe("resolveLayers — with user layers", () => {
     ]);
 
     expect(result.layers).toHaveLength(1);
-    expect(result.layers[0].id).toBe("main");
-    expect(result.objects[0].layerId).toBe("main");
+    expect(must(result.layers[0]).id).toBe("main");
+    expect(must(result.objects[0]).layerId).toBe("main");
   });
 
   it("handles many user layers", () => {
@@ -185,12 +192,12 @@ describe("resolveLayers — with user layers", () => {
     const result = resolveLayers([], defaultLayer, layers);
 
     expect(result.layers).toHaveLength(10);
-    result.layers.forEach((layer, i) => {
+    for (const [i, layer] of result.layers.entries()) {
       expect(layer.id).toBe(`layer-${i}`);
       expect(layer.name).toBe(`Layer ${i}`);
       expect(layer.visible).toBe(true);
       expect(layer.locked).toBe(false);
-    });
+    }
   });
 });
 
@@ -201,7 +208,7 @@ describe("resolveLayers — with user layers", () => {
 describe("resolveLayers — empty objects", () => {
   it("handles empty objects with no user layers", () => {
     const defaultLayer = makeDefaultLayer();
-    const result = resolveLayers([], defaultLayer, undefined);
+    const result = resolveLayers([], defaultLayer);
 
     expect(result.objects).toEqual([]);
     expect(result.layers).toEqual([defaultLayer]);
@@ -213,7 +220,7 @@ describe("resolveLayers — empty objects", () => {
 
     expect(result.objects).toEqual([]);
     expect(result.layers).toHaveLength(1);
-    expect(result.layers[0].id).toBe("ui");
+    expect(must(result.layers[0]).id).toBe("ui");
   });
 });
 
@@ -224,49 +231,51 @@ describe("resolveLayers — empty objects", () => {
 describe("resolveLayers — integration with fillDefaults", () => {
   it("correctly reassigns fillDefaults auto-generated layerIds", () => {
     const { objects: filled, layer: defaultLayer } = fillDefaults([
-      { type: "box", width: 10, height: 5 },
-      { type: "text", content: "hello" },
+      { height: 5, type: "box", width: 10 },
+      { content: "hello", type: "text" },
     ]);
 
     // All objects should have the default layer's ID
-    expect(filled[0].layerId).toBe(defaultLayer.id);
-    expect(filled[1].layerId).toBe(defaultLayer.id);
+    expect(must(filled[0]).layerId).toBe(defaultLayer.id);
+    expect(must(filled[1]).layerId).toBe(defaultLayer.id);
 
     const result = resolveLayers(filled, defaultLayer, [
       { id: "main", name: "Main Layer" },
     ]);
 
     // After resolve, all should be on the user layer
-    expect(result.objects[0].layerId).toBe("main");
-    expect(result.objects[1].layerId).toBe("main");
-    expect(result.layers[0].name).toBe("Main Layer");
+    expect(must(result.objects[0]).layerId).toBe("main");
+    expect(must(result.objects[1]).layerId).toBe("main");
+    expect(must(result.layers[0]).name).toBe("Main Layer");
   });
 
   it("assigns objects with explicit layerId to correct user layer", () => {
     const { objects: filled, layer: defaultLayer } = fillDefaults([
-      { type: "box", width: 10, height: 5, layerId: "annotations" },
-      { type: "text", content: "note" },
+      { height: 5, layerId: "annotations", type: "box", width: 10 },
+      { content: "note", type: "text" },
     ]);
 
     // First object kept its explicit layerId, second got the default
-    expect(filled[0].layerId).toBe("annotations");
-    expect(filled[1].layerId).toBe(defaultLayer.id);
+    expect(must(filled[0]).layerId).toBe("annotations");
+    expect(must(filled[1]).layerId).toBe(defaultLayer.id);
 
     const result = resolveLayers(filled, defaultLayer, [
       { id: "ui", name: "UI" },
       { id: "annotations", name: "Notes" },
     ]);
 
-    expect(result.objects[0].layerId).toBe("annotations"); // kept
-    expect(result.objects[1].layerId).toBe("ui"); // default → first user
+    // kept
+    expect(must(result.objects[0]).layerId).toBe("annotations");
+    // default → first user
+    expect(must(result.objects[1]).layerId).toBe("ui");
   });
 
   it("works end-to-end with multiple layers and object types", () => {
     const { objects: filled, layer: defaultLayer } = fillDefaults([
-      { type: "box", width: 20, height: 10, layerId: "bg" },
-      { type: "text", content: "Title", layerId: "ui" },
-      { type: "arrow", endPosition: { col: 20, row: 5 }, layerId: "flow" },
-      { type: "component", componentType: "button", label: "Click" },
+      { height: 10, layerId: "bg", type: "box", width: 20 },
+      { content: "Title", layerId: "ui", type: "text" },
+      { endPosition: { col: 20, row: 5 }, layerId: "flow", type: "arrow" },
+      { componentType: "button", label: "Click", type: "component" },
     ]);
 
     const result = resolveLayers(filled, defaultLayer, [
@@ -275,21 +284,23 @@ describe("resolveLayers — integration with fillDefaults", () => {
       { id: "flow", name: "Flow Arrows" },
     ]);
 
-    expect(result.objects[0].layerId).toBe("bg");
-    expect(result.objects[1].layerId).toBe("ui");
-    expect(result.objects[2].layerId).toBe("flow");
-    expect(result.objects[3].layerId).toBe("bg"); // no explicit → first user layer
+    expect(must(result.objects[0]).layerId).toBe("bg");
+    expect(must(result.objects[1]).layerId).toBe("ui");
+    expect(must(result.objects[2]).layerId).toBe("flow");
+    // no explicit → first user layer
+    expect(must(result.objects[3]).layerId).toBe("bg");
     expect(result.layers).toHaveLength(3);
   });
 
   it("without user layers, fillDefaults output is unchanged", () => {
     const { objects: filled, layer: defaultLayer } = fillDefaults([
-      { type: "box", width: 10, height: 5 },
+      { height: 5, type: "box", width: 10 },
     ]);
 
     const result = resolveLayers(filled, defaultLayer);
 
-    expect(result.objects).toBe(filled); // same reference
+    // same reference
+    expect(result.objects).toBe(filled);
     expect(result.layers).toEqual([defaultLayer]);
   });
 });
@@ -302,26 +313,26 @@ describe("resolveLayers — property preservation", () => {
   it("preserves all object properties when reassigning layer", () => {
     const defaultLayer = makeDefaultLayer();
     const obj: WireObject = {
-      id: "test-obj",
-      type: "box",
-      position: { col: 5, row: 10 },
-      zIndex: 42,
-      layerId: "default-layer",
-      width: 30,
-      height: 15,
+      annotation: "This is annotated",
       borderStyle: "double",
       fill: "solid",
-      label: "My Box",
-      name: "Named Box",
-      annotation: "This is annotated",
       groupId: "group-1",
+      height: 15,
+      id: "test-obj",
+      label: "My Box",
+      layerId: "default-layer",
+      name: "Named Box",
+      position: { col: 5, row: 10 },
+      type: "box",
+      width: 30,
+      zIndex: 42,
     };
 
     const result = resolveLayers([obj], defaultLayer, [
       { id: "new-layer", name: "New" },
     ]);
 
-    const updated = result.objects[0];
+    const updated = mustBeBox(result.objects[0]);
     expect(updated.layerId).toBe("new-layer");
     expect(updated.id).toBe("test-obj");
     expect(updated.position).toEqual({ col: 5, row: 10 });
@@ -329,42 +340,38 @@ describe("resolveLayers — property preservation", () => {
     expect(updated.name).toBe("Named Box");
     expect(updated.annotation).toBe("This is annotated");
     expect(updated.groupId).toBe("group-1");
-    if (updated.type === "box") {
-      expect(updated.width).toBe(30);
-      expect(updated.height).toBe(15);
-      expect(updated.borderStyle).toBe("double");
-      expect(updated.fill).toBe("solid");
-      expect(updated.label).toBe("My Box");
-    }
+    expect(updated.width).toBe(30);
+    expect(updated.height).toBe(15);
+    expect(updated.borderStyle).toBe("double");
+    expect(updated.fill).toBe("solid");
+    expect(updated.label).toBe("My Box");
   });
 
   it("preserves component-specific properties", () => {
     const defaultLayer = makeDefaultLayer();
     const obj: WireObject = {
-      id: "comp-1",
-      type: "component",
-      componentType: "table",
-      position: { col: 0, row: 0 },
-      zIndex: 0,
-      layerId: "default-layer",
-      width: 40,
-      height: 10,
       borderStyle: "single",
       columns: ["Name", "Value"],
-      rows: [["a", "1"]],
+      componentType: "table",
       filterable: true,
+      height: 10,
+      id: "comp-1",
+      layerId: "default-layer",
+      position: { col: 0, row: 0 },
+      rows: [["a", "1"]],
+      type: "component",
+      width: 40,
+      zIndex: 0,
     };
 
     const result = resolveLayers([obj], defaultLayer, [
       { id: "data", name: "Data" },
     ]);
 
-    const updated = result.objects[0];
+    const updated = mustBeComponent(result.objects[0]);
     expect(updated.layerId).toBe("data");
-    if (updated.type === "component") {
-      expect(updated.columns).toEqual(["Name", "Value"]);
-      expect(updated.rows).toEqual([["a", "1"]]);
-      expect(updated.filterable).toBe(true);
-    }
+    expect(updated.columns).toEqual(["Name", "Value"]);
+    expect(updated.rows).toEqual([["a", "1"]]);
+    expect(updated.filterable).toBe(true);
   });
 });

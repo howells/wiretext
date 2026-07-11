@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { ARROW_CHARS, BOX_CHARS, getBoxChars, LINE_CHARS } from "./characters";
 import type { BorderStyle } from "./types";
 
@@ -32,53 +33,53 @@ describe("BOX_CHARS", () => {
 
   it("should have correct chars for the single border style", () => {
     expect(BOX_CHARS.single).toEqual({
-      topLeft: "┌",
-      topRight: "┐",
       bottomLeft: "└",
       bottomRight: "┘",
       horizontal: "─",
-      vertical: "│",
-      teeRight: "├",
       teeLeft: "┤",
+      teeRight: "├",
+      topLeft: "┌",
+      topRight: "┐",
+      vertical: "│",
     });
   });
 
   it("should have correct chars for the double border style", () => {
     expect(BOX_CHARS.double).toEqual({
-      topLeft: "╔",
-      topRight: "╗",
       bottomLeft: "╚",
       bottomRight: "╝",
       horizontal: "═",
-      vertical: "║",
-      teeRight: "╠",
       teeLeft: "╣",
+      teeRight: "╠",
+      topLeft: "╔",
+      topRight: "╗",
+      vertical: "║",
     });
   });
 
   it("should have correct chars for the rounded border style", () => {
     expect(BOX_CHARS.rounded).toEqual({
-      topLeft: "╭",
-      topRight: "╮",
       bottomLeft: "╰",
       bottomRight: "╯",
       horizontal: "─",
-      vertical: "│",
-      teeRight: "├",
       teeLeft: "┤",
+      teeRight: "├",
+      topLeft: "╭",
+      topRight: "╮",
+      vertical: "│",
     });
   });
 
   it("should have correct chars for the heavy border style", () => {
     expect(BOX_CHARS.heavy).toEqual({
-      topLeft: "┏",
-      topRight: "┓",
       bottomLeft: "┗",
       bottomRight: "┛",
       horizontal: "━",
-      vertical: "┃",
-      teeRight: "┣",
       teeLeft: "┫",
+      teeRight: "┣",
+      topLeft: "┏",
+      topRight: "┓",
+      vertical: "┃",
     });
   });
 

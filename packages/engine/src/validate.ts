@@ -8,7 +8,9 @@ export interface ContentWidthError {
 }
 
 /** Validate that an explicitly provided width can fit the object's content. */
-export function validateContentWidth(obj: MinimalObject): ContentWidthError[] {
+export const validateContentWidth = (
+  obj: MinimalObject
+): ContentWidthError[] => {
   if (
     obj.type === "text" ||
     obj.type === "line" ||
@@ -23,7 +25,7 @@ export function validateContentWidth(obj: MinimalObject): ContentWidthError[] {
   }
 
   if (obj.type === "box") {
-    if (!obj.label) {
+    if (obj.label === undefined || obj.label.length === 0) {
       return [];
     }
     const lines = obj.label.split("\n");
@@ -32,8 +34,8 @@ export function validateContentWidth(obj: MinimalObject): ContentWidthError[] {
     if (obj.width < minWidth) {
       return [
         {
-          path: ["width"],
           message: `box width ${obj.width} is too small for label '${obj.label}' (minimum: ${minWidth})`,
+          path: ["width"],
         },
       ];
     }
@@ -43,16 +45,17 @@ export function validateContentWidth(obj: MinimalObject): ContentWidthError[] {
   // component
   const minWidth = getComponentMinWidth(obj);
   if (obj.width < minWidth) {
-    const context = obj.label
-      ? `label '${obj.label}'`
-      : `${obj.componentType} content`;
+    const context =
+      obj.label !== undefined && obj.label.length > 0
+        ? `label '${obj.label}'`
+        : `${obj.componentType} content`;
     return [
       {
-        path: ["width"],
         message: `${obj.componentType} width ${obj.width} is too small for ${context} (minimum: ${minWidth})`,
+        path: ["width"],
       },
     ];
   }
 
   return [];
-}
+};

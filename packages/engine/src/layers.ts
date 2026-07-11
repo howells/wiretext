@@ -10,28 +10,31 @@ import type { Layer, WireObject } from "./types";
  *
  * When no user layers are provided, the default layer is used as-is.
  */
-export function resolveLayers(
+export const resolveLayers = (
   filled: WireObject[],
   defaultLayer: Layer,
-  userLayers?: readonly { id: string; name: string }[],
-): { objects: WireObject[]; layers: Layer[] } {
+  userLayers?: readonly { id: string; name: string }[]
+): { objects: WireObject[]; layers: Layer[] } => {
   if (!userLayers || userLayers.length === 0) {
-    return { objects: filled, layers: [defaultLayer] };
+    return { layers: [defaultLayer], objects: filled };
   }
 
   const layers: Layer[] = userLayers.map((l) => ({
     id: l.id,
+    locked: false,
     name: l.name,
     visible: true,
-    locked: false,
   }));
 
   const validIds = new Set(userLayers.map((l) => l.id));
+  // userLayers is non-empty (guarded above), so layers always has a first entry
+  const [firstLayer] = layers;
+  const fallbackLayerId = firstLayer ? firstLayer.id : defaultLayer.id;
   const objects = filled.map((obj) =>
     obj.layerId === defaultLayer.id || !validIds.has(obj.layerId)
-      ? { ...obj, layerId: layers[0].id }
-      : obj,
+      ? { ...obj, layerId: fallbackLayerId }
+      : obj
   );
 
-  return { objects, layers };
-}
+  return { layers, objects };
+};

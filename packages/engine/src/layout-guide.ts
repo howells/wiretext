@@ -1,3 +1,4 @@
+/** Layout rules written for LLM consumers: the grid coordinate system, border sizing, and container-nesting conventions. */
 export const LAYOUT_GUIDE = `
 CRITICAL LAYOUT RULES — read carefully to avoid rendering bugs:
 

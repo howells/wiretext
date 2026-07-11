@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+
 import { charWidth, displayWidth, isWide, SHADOW } from "./char-width";
 
 describe("SHADOW constant", () => {
   it("is the null character", () => {
-    expect(SHADOW).toBe("\x00");
+    expect(SHADOW).toBe("\u0000");
   });
 });
 
@@ -54,8 +55,10 @@ describe("charWidth", () => {
   });
 
   it("returns 1 for replacement icon chars (⍥ and ♩)", () => {
-    expect(charWidth("⍥")).toBe(1); // User icon (replaces ☺)
-    expect(charWidth("♩")).toBe(1); // Music icon (replaces ♫)
+    // User icon (replaces ☺)
+    expect(charWidth("⍥")).toBe(1);
+    // Music icon (replaces ♫)
+    expect(charWidth("♩")).toBe(1);
   });
 
   it("returns 1 for Misc Symbols (not in ENGINE_SINGLE_WIDTH)", () => {
@@ -75,7 +78,8 @@ describe("charWidth", () => {
   });
 
   it("returns 2 for fullwidth forms", () => {
-    expect(charWidth("Ａ")).toBe(2); // U+FF21 Fullwidth Latin Capital Letter A
+    // U+FF21 Fullwidth Latin Capital Letter A
+    expect(charWidth("Ａ")).toBe(2);
   });
 
   it("returns 1 for empty string", () => {
@@ -91,19 +95,21 @@ describe("displayWidth", () => {
   });
 
   it("returns correct width for Misc Symbols (all 1x)", () => {
-    expect(displayWidth("A⍥B")).toBe(3); // 1 + 1 + 1
-    expect(displayWidth("hi★")).toBe(3); // 1 + 1 + 1
+    expect(displayWidth("A⍥B")).toBe(3);
+    expect(displayWidth("hi★")).toBe(3);
   });
 
   it("returns correct width for engine-internal chars", () => {
-    expect(displayWidth("●○●")).toBe(3); // all single-width
+    expect(displayWidth("●○●")).toBe(3);
     expect(displayWidth("─────")).toBe(5);
     expect(displayWidth("[✓]")).toBe(3);
   });
 
   it("returns correct width for CJK text", () => {
-    expect(displayWidth("中文")).toBe(4); // 2 + 2
-    expect(displayWidth("A中B")).toBe(4); // 1 + 2 + 1
+    // 2 + 2
+    expect(displayWidth("中文")).toBe(4);
+    // 1 + 2 + 1
+    expect(displayWidth("A中B")).toBe(4);
   });
 });
 

@@ -1,9 +1,11 @@
 import { nanoid } from "nanoid";
+
 import { getObjectBounds } from "./bounds";
 import { COMPONENT_BY_TYPE } from "./components";
 import { getComponentMinWidth } from "./min-width";
 import type {
   AlertType,
+  BaseObject,
   BorderStyle,
   ComponentType,
   ConnectorSide,
@@ -101,127 +103,139 @@ export type MinimalObject =
   | MinimalComponent
   | MinimalConnector;
 
-/** Fill default values for minimal wire objects and create a default layer. */
-export function fillDefaults(objects: MinimalObject[]): {
-  objects: WireObject[];
-  layer: Layer;
-} {
+/** Build a single fully-defaulted wire object from its minimal form. */
+const fillObject = (
+  obj: MinimalObject,
+  base: BaseObject
+): WireObject | null => {
+  switch (obj.type) {
+    case "box": {
+      return {
+        ...base,
+        borderStyle: obj.borderStyle ?? "single",
+        fill: obj.fill,
+        height: obj.height ?? 5,
+        label: obj.label,
+        type: "box",
+        width: obj.width ?? 10,
+      };
+    }
+    case "text": {
+      return { ...base, content: obj.content, type: "text" };
+    }
+    case "line": {
+      return { ...base, endPosition: obj.endPosition, type: "line" };
+    }
+    case "arrow": {
+      return {
+        ...base,
+        endHead: obj.endHead,
+        endPosition: obj.endPosition,
+        startHead: obj.startHead,
+        type: "arrow",
+      };
+    }
+    case "component": {
+      const def = COMPONENT_BY_TYPE[obj.componentType];
+      return {
+        ...base,
+        activeStep: obj.activeStep,
+        alertType: obj.alertType,
+        align: obj.align,
+        body: obj.body,
+        borderStyle: obj.borderStyle ?? "single",
+        checked: obj.checked,
+        columns: obj.columns,
+        componentType: obj.componentType,
+        fill: obj.fill,
+        filterable: obj.filterable,
+        height: obj.height ?? def.defaultHeight,
+        icon: obj.icon,
+        iconPosition: obj.iconPosition,
+        items: obj.items,
+        label: obj.label,
+        listStyle: obj.listStyle,
+        maxValue: obj.maxValue,
+        navItems: obj.navItems,
+        progress: obj.progress,
+        rows: obj.rows,
+        separator: obj.separator,
+        tabs: obj.tabs,
+        type: "component",
+        value: obj.value,
+        width:
+          obj.width ?? Math.max(def.defaultWidth, getComponentMinWidth(obj)),
+      };
+    }
+    case "connector": {
+      return {
+        ...base,
+        endHead: obj.endHead,
+        fromId: obj.fromId,
+        fromSide: obj.fromSide,
+        label: obj.label,
+        startHead: obj.startHead,
+        toId: obj.toId,
+        toSide: obj.toSide,
+        type: "connector",
+      };
+    }
+    default: {
+      return null;
+    }
+  }
+};
+
+/**
+ * Expand minimal wire objects into fully-defaulted ones under a fresh layer.
+ *
+ * Missing `id`s are generated, `position` defaults to the origin, and `zIndex`
+ * defaults to the object's index so declaration order becomes paint order.
+ * Component sizes fall back to the per-type defaults (never below the content
+ * min width). All objects are assigned the returned default layer.
+ */
+export const fillDefaults = (
+  objects: MinimalObject[]
+): { objects: WireObject[]; layer: Layer } => {
   const layerId = nanoid();
   const layer: Layer = {
     id: layerId,
+    locked: false,
     name: "Layer 1",
     visible: true,
-    locked: false,
   };
 
   const filled: WireObject[] = [];
 
-  for (let index = 0; index < objects.length; index++) {
+  for (let index = 0; index < objects.length; index += 1) {
     const obj = objects[index];
-    const base = {
-      id: obj.id ?? nanoid(),
-      position: obj.position ?? { col: 0, row: 0 },
-      zIndex: obj.zIndex ?? index,
-      layerId: obj.layerId ?? layerId,
-      name: obj.name,
+    if (!obj) {
+      continue;
+    }
+    const base: BaseObject = {
       annotation: obj.annotation,
       groupId: obj.groupId,
+      id: obj.id ?? nanoid(),
+      layerId: obj.layerId ?? layerId,
+      name: obj.name,
+      position: obj.position ?? { col: 0, row: 0 },
+      zIndex: obj.zIndex ?? index,
     };
 
-    switch (obj.type) {
-      case "box":
-        filled.push({
-          ...base,
-          type: "box",
-          width: obj.width ?? 10,
-          height: obj.height ?? 5,
-          borderStyle: obj.borderStyle ?? "single",
-          fill: obj.fill,
-          label: obj.label,
-        });
-        break;
-      case "text":
-        filled.push({
-          ...base,
-          type: "text",
-          content: obj.content,
-        });
-        break;
-      case "line":
-        filled.push({
-          ...base,
-          type: "line",
-          endPosition: obj.endPosition,
-        });
-        break;
-      case "arrow":
-        filled.push({
-          ...base,
-          type: "arrow",
-          endPosition: obj.endPosition,
-          startHead: obj.startHead,
-          endHead: obj.endHead,
-        });
-        break;
-      case "component": {
-        const def = COMPONENT_BY_TYPE[obj.componentType];
-        filled.push({
-          ...base,
-          type: "component",
-          componentType: obj.componentType,
-          width:
-            obj.width ?? Math.max(def.defaultWidth, getComponentMinWidth(obj)),
-          height: obj.height ?? def.defaultHeight,
-          borderStyle: obj.borderStyle ?? "single",
-          fill: obj.fill,
-          label: obj.label,
-          icon: obj.icon,
-          align: obj.align,
-          iconPosition: obj.iconPosition,
-          checked: obj.checked,
-          progress: obj.progress,
-          columns: obj.columns,
-          rows: obj.rows,
-          filterable: obj.filterable,
-          tabs: obj.tabs,
-          navItems: obj.navItems,
-          alertType: obj.alertType,
-          items: obj.items,
-          separator: obj.separator,
-          listStyle: obj.listStyle,
-          activeStep: obj.activeStep,
-          value: obj.value,
-          maxValue: obj.maxValue,
-          body: obj.body,
-        });
-        break;
-      }
-      case "connector":
-        filled.push({
-          ...base,
-          type: "connector",
-          fromId: obj.fromId,
-          toId: obj.toId,
-          fromSide: obj.fromSide,
-          toSide: obj.toSide,
-          startHead: obj.startHead,
-          endHead: obj.endHead,
-          label: obj.label,
-        });
-        break;
-      default:
-        break;
+    const result = fillObject(obj, base);
+    if (result) {
+      filled.push(result);
     }
   }
 
-  return { objects: filled, layer };
-}
+  return { layer, objects: filled };
+};
 
 /** Compute tight grid bounds for rendering, with configurable padding. */
-export function computeRenderGridSize(
+export const computeRenderGridSize = (
   objects: WireObject[],
-  padding = 2,
-): GridSize {
+  padding = 2
+): GridSize => {
   let maxCol = 0;
   let maxRow = 0;
 
@@ -235,4 +249,4 @@ export function computeRenderGridSize(
     cols: Math.max(maxCol + padding, 1),
     rows: Math.max(maxRow + padding, 1),
   };
-}
+};

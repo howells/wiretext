@@ -13,12 +13,7 @@ export {
 export { charWidth, displayWidth, isWide, SHADOW } from "./char-width";
 // Characters
 export type { BoxChars } from "./characters";
-export {
-  ARROW_CHARS,
-  BOX_CHARS,
-  getBoxChars,
-  LINE_CHARS,
-} from "./characters";
+export { ARROW_CHARS, BOX_CHARS, getBoxChars, LINE_CHARS } from "./characters";
 // Components
 export type { ComponentCategory, ComponentDef } from "./components";
 export {
@@ -31,6 +26,7 @@ export { compose, getConnectorMidpoint, gridToString } from "./compose";
 // Connector routing
 export type {
   ConnectorPath,
+  Direction,
   RectObject,
   RoutingRect,
 } from "./connector-routing";
@@ -39,9 +35,9 @@ export {
   getAttachmentPoint,
   getCornerChar,
   getSegmentDirection,
-  resolveAutoSides,
-  resolveConnectorPath,
 } from "./connector-routing";
+// Connector scoring
+export { resolveAutoSides, resolveConnectorPath } from "./connector-scoring";
 // Defaults
 export type {
   MinimalArrow,

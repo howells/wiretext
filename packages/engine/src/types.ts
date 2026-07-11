@@ -1,6 +1,7 @@
 export type ObjectId = string;
 export type LayerId = string;
 
+/** A cell on the character grid. Coordinates are 0-based; `col` is the x-axis, `row` the y-axis. */
 export interface GridPoint {
   col: number;
   row: number;
@@ -146,11 +147,10 @@ export type NewWireObject =
   | Omit<ConnectorObject, "id">;
 
 /** Type guard for objects with rectangular bounds (box, component) */
-export function hasRectBounds(
-  obj: WireObject,
-): obj is BoxObject | ComponentObject {
-  return obj.type === "box" || obj.type === "component";
-}
+export const hasRectBounds = (
+  obj: WireObject
+): obj is BoxObject | ComponentObject =>
+  obj.type === "box" || obj.type === "component";
 
 export type ResizeConstraint = "both" | "horizontal" | "none";
 
@@ -171,7 +171,7 @@ const FIXED_HEIGHT_COMPONENTS = new Set([
 ]);
 
 /** Determine what resize axes are allowed for an object */
-export function getResizeConstraint(obj: WireObject): ResizeConstraint {
+export const getResizeConstraint = (obj: WireObject): ResizeConstraint => {
   if (obj.type === "connector") {
     return "none";
   }
@@ -185,7 +185,7 @@ export function getResizeConstraint(obj: WireObject): ResizeConstraint {
     return "horizontal";
   }
   return "both";
-}
+};
 
 export type ToolType =
   | "select"
@@ -201,6 +201,7 @@ export interface Viewport {
   zoom: number;
 }
 
+/** Pixel dimensions of one grid cell, used to map grid coordinates to screen space (distinct from the display-column widths in char-width.ts). */
 export interface CharMetrics {
   charWidth: number;
   lineHeight: number;

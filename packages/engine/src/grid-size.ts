@@ -6,13 +6,15 @@ const MAX_GRID_DIMENSION = 2000;
 
 /**
  * Compute the effective grid size needed to contain all objects plus padding.
- * Returns the larger of the computed size and the provided minimum.
+ *
+ * Never smaller than `minSize`, never larger than 2000 cells per axis, so a
+ * stray far-flung object can't blow the grid up unboundedly.
  */
-export function getEffectiveGridSize(
+export const getEffectiveGridSize = (
   objects: WireObject[],
   minSize: GridSize,
-  padding = DEFAULT_PADDING,
-): GridSize {
+  padding = DEFAULT_PADDING
+): GridSize => {
   if (objects.length === 0) {
     return minSize;
   }
@@ -34,12 +36,12 @@ export function getEffectiveGridSize(
 
   const cols = Math.min(
     Math.max(maxCol + padding, minSize.cols),
-    MAX_GRID_DIMENSION,
+    MAX_GRID_DIMENSION
   );
   const rows = Math.min(
     Math.max(maxRow + padding, minSize.rows),
-    MAX_GRID_DIMENSION,
+    MAX_GRID_DIMENSION
   );
 
   return { cols, rows };
-}
+};
