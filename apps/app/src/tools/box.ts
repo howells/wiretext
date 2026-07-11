@@ -1,42 +1,42 @@
 import type { BoxObject } from "@wiretext/engine";
+
 import { useEditorStore } from "@/store";
+
 import type { ToolHandler } from "./types";
 
 let dragStart: { col: number; row: number } | null = null;
 
-function makeDraftBox(
+const makeDraftBox = (
   startCol: number,
   startRow: number,
   endCol: number,
-  endRow: number,
-): Omit<BoxObject, "id"> {
+  endRow: number
+): Omit<BoxObject, "id"> => {
   const state = useEditorStore.getState();
   return {
-    type: "box",
+    borderStyle: "single",
+    height: Math.max(3, Math.abs(endRow - startRow) + 1),
+    layerId: state.activeLayerId,
     position: {
       col: Math.min(startCol, endCol),
       row: Math.min(startRow, endRow),
     },
+    type: "box",
     width: Math.max(3, Math.abs(endCol - startCol) + 1),
-    height: Math.max(3, Math.abs(endRow - startRow) + 1),
-    borderStyle: "single",
     zIndex: state.objects.length,
-    layerId: state.activeLayerId,
   };
-}
+};
 
 export const boxTool: ToolHandler = {
-  name: "box",
   cursor: "crosshair",
-
+  name: "box",
   onMouseDown(col, row) {
     dragStart = { col, row };
     useEditorStore.getState().setDraft({
       ...makeDraftBox(col, row, col, row),
       id: "__draft__",
-    } as BoxObject);
+    });
   },
-
   onMouseMove(col, row) {
     if (!dragStart) {
       return;
@@ -44,9 +44,8 @@ export const boxTool: ToolHandler = {
     useEditorStore.getState().setDraft({
       ...makeDraftBox(dragStart.col, dragStart.row, col, row),
       id: "__draft__",
-    } as BoxObject);
+    });
   },
-
   onMouseUp(col, row) {
     if (!dragStart) {
       return;
@@ -61,13 +60,13 @@ export const boxTool: ToolHandler = {
       state.addObject(makeDraftBox(dragStart.col, dragStart.row, col, row));
     } else {
       state.addObject({
-        type: "box",
-        position: { col: dragStart.col, row: dragStart.row },
-        width: 16,
-        height: 5,
         borderStyle: "single",
-        zIndex: state.objects.length,
+        height: 5,
         layerId: state.activeLayerId,
+        position: { col: dragStart.col, row: dragStart.row },
+        type: "box",
+        width: 16,
+        zIndex: state.objects.length,
       });
     }
 

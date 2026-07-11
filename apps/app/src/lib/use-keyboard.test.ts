@@ -1,37 +1,40 @@
 import type { BoxObject } from "@wiretext/engine";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { useEditorStore } from "@/store";
+
 import { handleArrowKeys } from "./use-keyboard";
 
-function makeBox(id: string, col: number, row: number): BoxObject {
-  return {
-    id,
-    type: "box",
-    position: { col, row },
-    width: 4,
-    height: 3,
-    borderStyle: "single",
-    zIndex: 0,
-    layerId: "layer-1",
-  };
-}
+const makeBox = (id: string, col: number, row: number): BoxObject => ({
+  borderStyle: "single",
+  height: 3,
+  id,
+  layerId: "layer-1",
+  position: { col, row },
+  type: "box",
+  width: 4,
+  zIndex: 0,
+});
 
-function fakeKeyEvent(opts: { shiftKey?: boolean } = {}) {
+type FakeKeyEvent = Pick<KeyboardEvent, "preventDefault" | "shiftKey"> & {
+  readonly defaultPrevented: boolean;
+};
+
+const fakeKeyEvent = (opts: { shiftKey?: boolean } = {}): FakeKeyEvent => {
   let prevented = false;
   return {
-    shiftKey: opts.shiftKey ?? false,
-    preventDefault: () => {
-      prevented = true;
-    },
     get defaultPrevented() {
       return prevented;
     },
-  } as unknown as KeyboardEvent;
-}
+    preventDefault: () => {
+      prevented = true;
+    },
+    shiftKey: opts.shiftKey ?? false,
+  };
+};
 
-function getPosition(id: string) {
-  return useEditorStore.getState().objects.find((o) => o.id === id)?.position;
-}
+const getPosition = (id: string) =>
+  useEditorStore.getState().objects.find((o) => o.id === id)?.position;
 
 describe("handleArrowKeys", () => {
   const box1 = makeBox("box-1", 10, 10);
@@ -39,10 +42,10 @@ describe("handleArrowKeys", () => {
 
   beforeEach(() => {
     useEditorStore.setState({
-      objects: [box1, box2],
-      selection: new Set(["box-1"]),
-      past: [],
       future: [],
+      objects: [box1, box2],
+      past: [],
+      selection: new Set(["box-1"]),
     });
   });
 

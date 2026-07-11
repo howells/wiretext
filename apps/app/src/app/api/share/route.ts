@@ -1,8 +1,15 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { decodeDocument } from "@wiretext/engine";
 import { nanoid } from "nanoid";
+
 import { redis } from "@/lib/redis";
 
+// Mints short `/w/:id` share links by persisting an encoded document to Upstash
+// Redis. Runs on the Edge runtime and is the untrusted-input boundary of the
+// hosted service: requests are IP rate-limited, size-capped (Content-Length and
+// body), and structurally revalidated before storage. Requires UPSTASH_* creds
+// (see lib/redis.ts) — without them redis.set rejects and POST 500s, while the
+// client-side `#…` fragment share still works.
 export const runtime = "edge";
 
 const MAX_PAYLOAD_BYTES = 100_000;
@@ -18,12 +25,18 @@ const VALID_OBJECT_TYPES = new Set([
 ]);
 
 const ratelimit = new Ratelimit({
-  redis,
   limiter: Ratelimit.slidingWindow(20, "1 m"),
+  redis,
 });
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object";
+
+const isObjectLike = (value: unknown): boolean =>
+  value !== null && typeof value === "object";
+
 /** Structural validation beyond what decodeDocument checks */
-function isValidDocument(data: string): boolean {
+const isValidDocument = (data: string): boolean => {
   const doc = decodeDocument(data);
   if (!doc) {
     return false;
@@ -39,7 +52,7 @@ function isValidDocument(data: string): boolean {
   }
 
   for (const obj of doc.objects) {
-    if (!obj || typeof obj !== "object") {
+    if (!isObjectLike(obj)) {
       return false;
     }
     if (!VALID_OBJECT_TYPES.has(obj.type)) {
@@ -51,7 +64,7 @@ function isValidDocument(data: string): boolean {
   }
 
   for (const layer of doc.layers) {
-    if (!layer || typeof layer !== "object") {
+    if (!isObjectLike(layer)) {
       return false;
     }
     if (typeof layer.id !== "string" || typeof layer.name !== "string") {
@@ -60,9 +73,47 @@ function isValidDocument(data: string): boolean {
   }
 
   return true;
-}
+};
 
-export async function POST(req: Request) {
+/** Extract the share payload from the request body, or an error response. */
+const readPayload = async (
+  req: Request
+): Promise<{ data: string } | { error: Response }> => {
+  try {
+    const body: unknown = await req.json();
+    const value = isRecord(body) ? body.data : undefined;
+    if (typeof value !== "string" || value.length === 0) {
+      return {
+        error: Response.json({ error: "Missing data field" }, { status: 400 }),
+      };
+    }
+    if (value.length > MAX_PAYLOAD_BYTES) {
+      return {
+        error: Response.json({ error: "Payload too large" }, { status: 413 }),
+      };
+    }
+    return { data: value };
+  } catch {
+    return {
+      error: Response.json({ error: "Invalid JSON" }, { status: 400 }),
+    };
+  }
+};
+
+/** Resolve the public origin for the share URL from request headers. */
+const resolveOrigin = (req: Request): string => {
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const forwardedHost = req.headers.get("host") ?? "wiretext.app";
+  return (
+    req.headers.get("origin") ??
+    (forwardedProto === null
+      ? undefined
+      : `${forwardedProto}://${forwardedHost}`) ??
+    "https://wiretext.app"
+  );
+};
+
+const handleSharePost = async (req: Request) => {
   // Rate limit by IP
   const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
   const { success, reset } = await ratelimit.limit(ip);
@@ -70,34 +121,29 @@ export async function POST(req: Request) {
     return Response.json(
       { error: "Rate limit exceeded" },
       {
-        status: 429,
         headers: {
           "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
         },
-      },
+        status: 429,
+      }
     );
   }
 
   // Check Content-Length header
   const contentLength = req.headers.get("content-length");
-  if (contentLength && Number.parseInt(contentLength, 10) > MAX_PAYLOAD_BYTES) {
+  if (
+    contentLength !== null &&
+    contentLength !== "" &&
+    Math.trunc(Number(contentLength)) > MAX_PAYLOAD_BYTES
+  ) {
     return Response.json({ error: "Payload too large" }, { status: 413 });
   }
 
-  // Parse body
-  let data: string;
-  try {
-    const body = await req.json();
-    data = body?.data;
-    if (typeof data !== "string" || data.length === 0) {
-      return Response.json({ error: "Missing data field" }, { status: 400 });
-    }
-    if (data.length > MAX_PAYLOAD_BYTES) {
-      return Response.json({ error: "Payload too large" }, { status: 413 });
-    }
-  } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 });
+  const payload = await readPayload(req);
+  if ("error" in payload) {
+    return payload.error;
   }
+  const { data } = payload;
 
   // Validate document structure
   if (!isValidDocument(data)) {
@@ -108,13 +154,9 @@ export async function POST(req: Request) {
   const id = nanoid(SHORT_ID_LENGTH);
   await redis.set(id, data);
 
-  const origin =
-    req.headers.get("origin") ??
-    req.headers
-      .get("x-forwarded-proto")
-      ?.concat("://", req.headers.get("host") ?? "wiretext.app") ??
-    "https://wiretext.app";
-  const url = `${origin}/w/${id}`;
+  const url = `${resolveOrigin(req)}/w/${id}`;
 
   return Response.json({ id, url }, { status: 201 });
-}
+};
+
+export { handleSharePost as POST };

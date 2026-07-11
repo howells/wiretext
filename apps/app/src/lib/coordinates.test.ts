@@ -8,6 +8,7 @@ import type {
   WireObject,
 } from "@wiretext/engine";
 import { describe, expect, it } from "vitest";
+
 import {
   fitViewport,
   gridToScreen,
@@ -19,66 +20,58 @@ const METRICS: CharMetrics = { charWidth: 8.4, lineHeight: 21 };
 
 const DEFAULT_VIEWPORT: Viewport = { panX: 0, panY: 0, zoom: 1 };
 
-function makeBox(
+const makeBox = (
   col: number,
   row: number,
   width: number,
-  height: number,
-): BoxObject {
-  return {
-    id: `box-${col}-${row}`,
-    type: "box",
-    position: { col, row },
-    width,
-    height,
-    borderStyle: "single",
-    zIndex: 0,
-    layerId: "layer-1",
-  };
-}
+  height: number
+): BoxObject => ({
+  borderStyle: "single",
+  height,
+  id: `box-${col}-${row}`,
+  layerId: "layer-1",
+  position: { col, row },
+  type: "box",
+  width,
+  zIndex: 0,
+});
 
-function makeLine(
+const makeLine = (
   col: number,
   row: number,
   endCol: number,
-  endRow: number,
-): LineObject {
-  return {
-    id: `line-${col}-${row}`,
-    type: "line",
-    position: { col, row },
-    endPosition: { col: endCol, row: endRow },
-    zIndex: 0,
-    layerId: "layer-1",
-  };
-}
+  endRow: number
+): LineObject => ({
+  endPosition: { col: endCol, row: endRow },
+  id: `line-${col}-${row}`,
+  layerId: "layer-1",
+  position: { col, row },
+  type: "line",
+  zIndex: 0,
+});
 
-function makeArrow(
+const makeArrow = (
   col: number,
   row: number,
   endCol: number,
-  endRow: number,
-): ArrowObject {
-  return {
-    id: `arrow-${col}-${row}`,
-    type: "arrow",
-    position: { col, row },
-    endPosition: { col: endCol, row: endRow },
-    zIndex: 0,
-    layerId: "layer-1",
-  };
-}
+  endRow: number
+): ArrowObject => ({
+  endPosition: { col: endCol, row: endRow },
+  id: `arrow-${col}-${row}`,
+  layerId: "layer-1",
+  position: { col, row },
+  type: "arrow",
+  zIndex: 0,
+});
 
-function makeText(col: number, row: number, content: string): TextObject {
-  return {
-    id: `text-${col}-${row}`,
-    type: "text",
-    position: { col, row },
-    content,
-    zIndex: 0,
-    layerId: "layer-1",
-  };
-}
+const makeText = (col: number, row: number, content: string): TextObject => ({
+  content,
+  id: `text-${col}-${row}`,
+  layerId: "layer-1",
+  position: { col, row },
+  type: "text",
+  zIndex: 0,
+});
 
 // ─── screenToGrid ──────────────────────────────────────
 
@@ -159,7 +152,7 @@ describe("gridToScreen", () => {
       screen.x + halfCellX,
       screen.y + halfCellY,
       viewport,
-      METRICS,
+      METRICS
     );
     expect(grid).toEqual({ col, row });
   });
@@ -173,7 +166,8 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(0);
     expect(result.originRow).toBe(0);
-    expect(result.renderObjects).toBe(objects); // same reference
+    // Same reference — no copy is made when nothing shifts
+    expect(result.renderObjects).toBe(objects);
   });
 
   it("shifts a box with negative row to row 0", () => {
@@ -181,7 +175,7 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(0);
     expect(result.originRow).toBe(-10);
-    expect(result.renderObjects[0].position).toEqual({ col: 5, row: 0 });
+    expect(result.renderObjects[0]?.position).toEqual({ col: 5, row: 0 });
   });
 
   it("shifts a box with negative col to col 0", () => {
@@ -189,7 +183,7 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(-8);
     expect(result.originRow).toBe(0);
-    expect(result.renderObjects[0].position).toEqual({ col: 0, row: 3 });
+    expect(result.renderObjects[0]?.position).toEqual({ col: 0, row: 3 });
   });
 
   it("shifts both col and row when both are negative", () => {
@@ -197,7 +191,7 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(-5);
     expect(result.originRow).toBe(-3);
-    expect(result.renderObjects[0].position).toEqual({ col: 0, row: 0 });
+    expect(result.renderObjects[0]?.position).toEqual({ col: 0, row: 0 });
   });
 
   it("uses the most-negative position as the origin", () => {
@@ -208,8 +202,8 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(-2);
     expect(result.originRow).toBe(-7);
-    expect(result.renderObjects[0].position).toEqual({ col: 0, row: 12 });
-    expect(result.renderObjects[1].position).toEqual({ col: 5, row: 0 });
+    expect(result.renderObjects[0]?.position).toEqual({ col: 0, row: 12 });
+    expect(result.renderObjects[1]?.position).toEqual({ col: 5, row: 0 });
   });
 
   it("shifts line endPosition along with position", () => {
@@ -217,7 +211,10 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(-5);
     expect(result.originRow).toBe(-3);
-    const shifted = result.renderObjects[0] as LineObject;
+    const [shifted] = result.renderObjects;
+    if (shifted?.type !== "line") {
+      throw new Error("expected a line object");
+    }
     expect(shifted.position).toEqual({ col: 0, row: 0 });
     expect(shifted.endPosition).toEqual({ col: 15, row: 11 });
   });
@@ -227,7 +224,10 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(-3);
     expect(result.originRow).toBe(-4);
-    const shifted = result.renderObjects[0] as ArrowObject;
+    const [shifted] = result.renderObjects;
+    if (shifted?.type !== "arrow") {
+      throw new Error("expected an arrow object");
+    }
     expect(shifted.position).toEqual({ col: 5, row: 0 });
     expect(shifted.endPosition).toEqual({ col: 0, row: 10 });
   });
@@ -238,7 +238,10 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(-3);
     expect(result.originRow).toBe(-2);
-    const shifted = result.renderObjects[0] as LineObject;
+    const [shifted] = result.renderObjects;
+    if (shifted?.type !== "line") {
+      throw new Error("expected a line object");
+    }
     expect(shifted.position).toEqual({ col: 8, row: 7 });
     expect(shifted.endPosition).toEqual({ col: 0, row: 0 });
   });
@@ -254,7 +257,10 @@ describe("shiftObjectsForRender", () => {
     const box = makeBox(-2, -1, 15, 8);
     const objects: WireObject[] = [box];
     const result = shiftObjectsForRender(objects);
-    const shifted = result.renderObjects[0] as BoxObject;
+    const [shifted] = result.renderObjects;
+    if (shifted?.type !== "box") {
+      throw new Error("expected a box object");
+    }
     expect(shifted.id).toBe(box.id);
     expect(shifted.type).toBe("box");
     expect(shifted.width).toBe(15);
@@ -267,7 +273,7 @@ describe("shiftObjectsForRender", () => {
     const result = shiftObjectsForRender(objects);
     expect(result.originCol).toBe(-3);
     expect(result.originRow).toBe(-2);
-    expect(result.renderObjects[0].position).toEqual({ col: 0, row: 0 });
+    expect(result.renderObjects[0]?.position).toEqual({ col: 0, row: 0 });
   });
 
   it("handles mixed positive and negative objects", () => {
@@ -280,11 +286,11 @@ describe("shiftObjectsForRender", () => {
     expect(result.originCol).toBe(-5);
     expect(result.originRow).toBe(-3);
     // Original (0,0) box shifts to (5,3)
-    expect(result.renderObjects[0].position).toEqual({ col: 5, row: 3 });
+    expect(result.renderObjects[0]?.position).toEqual({ col: 5, row: 3 });
     // Negative box shifts to (0,0)
-    expect(result.renderObjects[1].position).toEqual({ col: 0, row: 0 });
+    expect(result.renderObjects[1]?.position).toEqual({ col: 0, row: 0 });
     // Positive text shifts by the same offset
-    expect(result.renderObjects[2].position).toEqual({ col: 25, row: 13 });
+    expect(result.renderObjects[2]?.position).toEqual({ col: 25, row: 13 });
   });
 
   it("returns empty array for empty input", () => {
@@ -322,13 +328,14 @@ describe("fitViewport", () => {
     const vp = fitViewport(objects, CANVAS_W, CANVAS_H, METRICS);
 
     // The center of content should map to the center of canvas
-    const contentCenterCol = 5; // (0 + 10) / 2
-    const contentCenterRow = 2.5; // (0 + 5) / 2
+    // Center col = (0 + 10) / 2, center row = (0 + 5) / 2
+    const contentCenterCol = 5;
+    const contentCenterRow = 2.5;
     const screenCenter = gridToScreen(
       contentCenterCol,
       contentCenterRow,
       vp,
-      METRICS,
+      METRICS
     );
 
     expect(screenCenter.x).toBeCloseTo(CANVAS_W / 2, 0);
@@ -446,9 +453,9 @@ describe("pre position consistency", () => {
     const preTop =
       viewport.panY + originRow * METRICS.lineHeight * viewport.zoom;
 
-    // The box's shifted position in the grid
-    const shiftedCol = renderObjects[0].position.col; // 0
-    const shiftedRow = renderObjects[0].position.row; // 0
+    // The box's shifted position in the grid (both shift to 0)
+    const shiftedCol = renderObjects[0]?.position.col ?? Number.NaN;
+    const shiftedRow = renderObjects[0]?.position.row ?? Number.NaN;
 
     // Pixel position of the box text in the pre
     const textPixelX = preLeft + shiftedCol * METRICS.charWidth * viewport.zoom;
@@ -477,9 +484,13 @@ describe("pre position consistency", () => {
         viewport.panY + originRow * METRICS.lineHeight * viewport.zoom;
 
       // Check both objects
-      for (let i = 0; i < objects.length; i++) {
-        const origPos = objects[i].position;
-        const shiftedPos = renderObjects[i].position;
+      for (const [i, obj] of objects.entries()) {
+        const rendered = renderObjects[i];
+        if (!rendered) {
+          throw new Error(`missing render object at index ${i}`);
+        }
+        const origPos = obj.position;
+        const shiftedPos = rendered.position;
 
         const textX =
           preLeft + shiftedPos.col * METRICS.charWidth * viewport.zoom;
@@ -489,7 +500,7 @@ describe("pre position consistency", () => {
           origPos.col,
           origPos.row,
           viewport,
-          METRICS,
+          METRICS
         );
 
         expect(textX).toBeCloseTo(screen.x, 5);

@@ -6,23 +6,23 @@ import {
   gridToString,
 } from "@wiretext/engine";
 
-export function composeToText(
+export const composeToText = (
   objects: WireObject[],
   gridSize: GridSize,
-  layers?: Layer[],
-): string {
+  layers?: Layer[]
+): string => {
   const grid = compose(objects, gridSize, layers);
   return gridToString(grid);
-}
+};
 
 /**
  * Compose only the selected objects into text, shifted so the bounding box
  * starts at (0,0). Produces a minimal grid containing just the selection.
  */
-export function composeSelectionToText(
+export const composeSelectionToText = (
   objects: WireObject[],
-  selection: Set<ObjectId>,
-): string {
+  selection: Set<ObjectId>
+): string => {
   const selected = objects.filter((obj) => selection.has(obj.id));
   if (selected.length === 0) {
     return "";
@@ -40,58 +40,56 @@ export function composeSelectionToText(
 
   // Shift all selected objects so the selection starts at (0,0)
   const shifted = selected.map((obj): WireObject => {
-    const base = {
-      ...obj,
-      position: {
-        col: obj.position.col - minCol,
-        row: obj.position.row - minRow,
-      },
+    const position = {
+      col: obj.position.col - minCol,
+      row: obj.position.row - minRow,
     };
-    if ("endPosition" in obj) {
+    if (obj.type === "line" || obj.type === "arrow") {
       return {
-        ...base,
+        ...obj,
         endPosition: {
           col: obj.endPosition.col - minCol,
           row: obj.endPosition.row - minRow,
         },
-      } as WireObject;
+        position,
+      };
     }
-    return base as WireObject;
+    return { ...obj, position };
   });
 
   const gridSize = getEffectiveGridSize(shifted, { cols: 1, rows: 1 }, 1);
   const grid = compose(shifted, gridSize);
   return gridToString(grid);
-}
+};
 
-export function composeToMarkdown(
+export const composeToMarkdown = (
   objects: WireObject[],
   gridSize: GridSize,
-  layers?: Layer[],
-): string {
+  layers?: Layer[]
+): string => {
   const text = composeToText(objects, gridSize, layers);
   return `\`\`\`\n${text}\n\`\`\``;
-}
+};
 
-export function composeToHtml(
+export const composeToHtml = (
   objects: WireObject[],
   gridSize: GridSize,
-  layers?: Layer[],
-): string {
+  layers?: Layer[]
+): string => {
   const text = composeToText(objects, gridSize, layers);
   const escaped = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
   return `<pre style="font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5;">${escaped}</pre>`;
-}
+};
 
-export function composeToGitHub(
+export const composeToGitHub = (
   objects: WireObject[],
   gridSize: GridSize,
   shareUrl?: string,
-  layers?: Layer[],
-): string {
+  layers?: Layer[]
+): string => {
   const text = composeToText(objects, gridSize, layers);
   const lines = [
     "<details>",
@@ -101,18 +99,18 @@ export function composeToGitHub(
     text,
     "```",
   ];
-  if (shareUrl) {
+  if (shareUrl !== undefined && shareUrl !== "") {
     lines.push("", `[Edit in Wiretext](${shareUrl})`);
   }
   lines.push("", "</details>");
   return lines.join("\n");
-}
+};
 
-export async function copyToClipboard(text: string): Promise<boolean> {
+export const copyToClipboard = async (text: string): Promise<boolean> => {
   try {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
     return false;
   }
-}
+};

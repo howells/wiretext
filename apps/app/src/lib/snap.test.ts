@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { type BoundingRect, computeSnap } from "./snap";
 
-function rect(
+import { computeSnap } from "./snap";
+import type { BoundingRect } from "./snap";
+
+const rect = (
   col: number,
   row: number,
   width: number,
-  height: number,
-): BoundingRect {
-  return { col, row, width, height };
-}
+  height: number
+): BoundingRect => ({ col, height, row, width });
 
 // ─── computeSnap ──────────────────────────────────────
 
@@ -82,7 +82,7 @@ describe("computeSnap", () => {
     const target = rect(3, 20, 8, 4);
     const result = computeSnap(dragged, [target], 1);
 
-    expect(result.deltaCol).toBe(1); // 10 - 9
+    expect(result.deltaCol).toBe(1);
     expect(result.guides).toContainEqual({ axis: "col", position: 10 });
   });
 
@@ -101,7 +101,7 @@ describe("computeSnap", () => {
     const target = rect(20, 10, 8, 20);
     const result = computeSnap(dragged, [target], 1);
 
-    expect(result.deltaRow).toBe(1); // 10 - 9
+    expect(result.deltaRow).toBe(1);
     expect(result.guides).toContainEqual({ axis: "row", position: 10 });
   });
 
@@ -118,7 +118,7 @@ describe("computeSnap", () => {
     const target = rect(20, 3, 8, 8);
     const result = computeSnap(dragged, [target], 1);
 
-    expect(result.deltaRow).toBe(1); // 10 - 9
+    expect(result.deltaRow).toBe(1);
     expect(result.guides).toContainEqual({ axis: "row", position: 10 });
   });
 
@@ -174,7 +174,7 @@ describe("computeSnap", () => {
     const target = rect(0, 20, 10, 4);
     const result = computeSnap(dragged, [target], 2);
 
-    expect(result.deltaCol).toBe(1); // 9 - 8
+    expect(result.deltaCol).toBe(1);
     expect(result.guides).toContainEqual({ axis: "col", position: 9 });
   });
 
@@ -198,7 +198,7 @@ describe("computeSnap", () => {
     const target = rect(20, 0, 4, 10);
     const result = computeSnap(dragged, [target], 2);
 
-    expect(result.deltaRow).toBe(1); // 9 - 8
+    expect(result.deltaRow).toBe(1);
     expect(result.guides).toContainEqual({ axis: "row", position: 9 });
   });
 

@@ -1,18 +1,19 @@
 import type { BoxObject, GridSize } from "@wiretext/engine";
 import { describe, expect, it } from "vitest";
+
 import { composeToGitHub } from "./clipboard";
 
 const gridSize: GridSize = { cols: 20, rows: 10 };
 
 const box: BoxObject = {
-  id: "1",
-  type: "box",
-  position: { col: 0, row: 0 },
-  width: 6,
-  height: 3,
   borderStyle: "single",
-  zIndex: 0,
+  height: 3,
+  id: "1",
   layerId: "layer-1",
+  position: { col: 0, row: 0 },
+  type: "box",
+  width: 6,
+  zIndex: 0,
 };
 
 describe("composeToGitHub", () => {

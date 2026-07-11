@@ -1,60 +1,36 @@
 import {
-  type ArrowObject,
-  BORDERLESS_COMPONENTS,
-  type ConnectorObject,
-  type GridPoint,
-  getConnectorBounds,
   getObjectBounds,
   getResizeConstraint,
   hasRectBounds,
-  type Layer,
-  type LineObject,
-  resolveConnectorPath,
-  type WireObject,
 } from "@wiretext/engine";
+import type { WireObject } from "@wiretext/engine";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { type BoundingRect, computeSnap } from "@/lib/snap";
+
+import { computeSnap } from "@/lib/snap";
+import type { BoundingRect } from "@/lib/snap";
 import { useEditorStore } from "@/store";
+
+import {
+  getEndpointHandle,
+  getExcludedLayerIds,
+  getMinSize,
+  getResizeHandle,
+  getSelectionBounds,
+  hasLineEnds,
+  hitTest,
+  objectIntersectsRect,
+} from "./geometry";
+import type { ResizeHandle } from "./geometry";
 import type { ToolHandler } from "./types";
 
-function getMinSize(obj: WireObject): { minW: number; minH: number } {
-  if (
-    obj.type === "component" &&
-    BORDERLESS_COMPONENTS.has(obj.componentType)
-  ) {
-    return { minW: 1, minH: 1 };
-  }
-  return { minW: 3, minH: 3 };
-}
+export { getResizeCursor, hitTest } from "./geometry";
+export type { ResizeHandle } from "./geometry";
 
-/** Get the set of layer IDs that should be excluded from interaction */
-function getExcludedLayerIds(layers: Layer[]): Set<string> {
-  return new Set(layers.filter((l) => !l.visible || l.locked).map((l) => l.id));
-}
-
-function getSelectionBounds(objects: WireObject[]): BoundingRect {
-  let minCol = Number.POSITIVE_INFINITY;
-  let minRow = Number.POSITIVE_INFINITY;
-  let maxCol = Number.NEGATIVE_INFINITY;
-  let maxRow = Number.NEGATIVE_INFINITY;
-  for (const obj of objects) {
-    const b = getObjectBounds(obj);
-    minCol = Math.min(minCol, b.col);
-    minRow = Math.min(minRow, b.row);
-    maxCol = Math.max(maxCol, b.col + b.width);
-    maxRow = Math.max(maxRow, b.row + b.height);
-  }
-  return {
-    col: minCol,
-    row: minRow,
-    width: maxCol - minCol,
-    height: maxRow - minRow,
-  };
-}
+type EditorState = ReturnType<typeof useEditorStore.getState>;
 
 let dragStart: { col: number; row: number } | null = null;
 let dragTarget: string | null = null;
-let resizeHandle: string | null = null;
+let resizeHandle: ResizeHandle | null = null;
 let endpointHandle: "start" | "end" | null = null;
 let marqueeActive = false;
 let marqueeShift = false;
@@ -72,345 +48,11 @@ let rawDelta = { col: 0, row: 0 };
 /** Last snapped total displacement actually applied */
 let appliedDelta = { col: 0, row: 0 };
 
-export type ResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
-
-const HANDLE_CURSORS: Record<ResizeHandle, string> = {
-  nw: "nwse-resize",
-  se: "nwse-resize",
-  ne: "nesw-resize",
-  sw: "nesw-resize",
-  n: "ns-resize",
-  s: "ns-resize",
-  e: "ew-resize",
-  w: "ew-resize",
-};
-
-export function hitTest(
-  col: number,
-  row: number,
-  objects: WireObject[],
-  layers: Layer[],
-): WireObject | null {
-  const excluded = getExcludedLayerIds(layers);
-  const interactable = objects.filter((obj) => !excluded.has(obj.layerId));
-  const sorted = [...interactable].sort((a, b) => b.zIndex - a.zIndex);
-  for (const obj of sorted) {
-    if (isPointInObject(col, row, obj, objects)) {
-      return obj;
-    }
-  }
-  return null;
-}
-
-/** Check if a point lies on an axis-aligned segment between two grid points.
- *  tolerance adds a hit-test buffer in grid cells around the segment. */
-function isPointOnSegment(
-  col: number,
-  row: number,
-  a: GridPoint,
-  b: GridPoint,
-  tolerance = 0,
-): boolean {
-  if (a.row === b.row) {
-    return (
-      Math.abs(row - a.row) <= tolerance &&
-      col >= Math.min(a.col, b.col) - tolerance &&
-      col <= Math.max(a.col, b.col) + tolerance
-    );
-  }
-  if (a.col === b.col) {
-    return (
-      Math.abs(col - a.col) <= tolerance &&
-      row >= Math.min(a.row, b.row) - tolerance &&
-      row <= Math.max(a.row, b.row) + tolerance
-    );
-  }
-  return false;
-}
-
-function isPointInRect(
-  col: number,
-  row: number,
-  pos: { col: number; row: number },
-  width: number,
-  height: number,
-): boolean {
-  return (
-    col >= pos.col &&
-    col < pos.col + width &&
-    row >= pos.row &&
-    row < pos.row + height
-  );
-}
-
-function isPointOnLine(
-  col: number,
-  row: number,
-  obj: LineObject | ArrowObject,
-): boolean {
-  const { col: c1, row: r1 } = obj.position;
-  const { col: c2, row: r2 } = obj.endPosition;
-  if (r1 === r2) {
-    return row === r1 && col >= Math.min(c1, c2) && col <= Math.max(c1, c2);
-  }
-  if (c1 === c2) {
-    return col === c1 && row >= Math.min(r1, r2) && row <= Math.max(r1, r2);
-  }
-  const dc = c2 - c1;
-  const dr = r2 - r1;
-  const steps = Math.max(Math.abs(dc), Math.abs(dr));
-  for (let i = 0; i <= steps; i++) {
-    const lc = c1 + Math.round((dc * i) / steps);
-    const lr = r1 + Math.round((dr * i) / steps);
-    if (Math.abs(col - lc) <= 1 && Math.abs(row - lr) <= 1) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function isPointOnConnector(
-  col: number,
-  row: number,
-  obj: ConnectorObject,
-  allObjects: readonly WireObject[],
-): boolean {
-  const path = resolveConnectorPath(obj, allObjects);
-  if (!path || path.points.length < 2) {
-    return false;
-  }
-  for (let i = 0; i < path.points.length - 1; i++) {
-    if (isPointOnSegment(col, row, path.points[i], path.points[i + 1], 1)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function isPointInObject(
-  col: number,
-  row: number,
-  obj: WireObject,
-  allObjects?: readonly WireObject[],
-): boolean {
-  switch (obj.type) {
-    case "box":
-    case "component":
-      return isPointInRect(col, row, obj.position, obj.width, obj.height);
-    case "text": {
-      const lines = obj.content.split("\n");
-      const maxWidth = Math.max(...lines.map((l) => l.length), 1);
-      return isPointInRect(col, row, obj.position, maxWidth, lines.length);
-    }
-    case "line":
-    case "arrow":
-      return isPointOnLine(col, row, obj);
-    case "connector":
-      return allObjects ? isPointOnConnector(col, row, obj, allObjects) : false;
-    default:
-      return false;
-  }
-}
-
-interface EdgeFlags {
-  inColRange: boolean;
-  inRowRange: boolean;
-  onBottom: boolean;
-  onLeft: boolean;
-  onRight: boolean;
-  onTop: boolean;
-}
-
-function computeEdgeFlags(
-  col: number,
-  row: number,
-  bCol: number,
-  bRow: number,
-  right: number,
-  bottom: number,
-): EdgeFlags {
-  return {
-    onLeft: col >= bCol - 1 && col <= bCol,
-    onRight: col >= right && col <= right + 1,
-    onTop: row >= bRow - 1 && row <= bRow,
-    onBottom: row >= bottom && row <= bottom + 1,
-    inColRange: col >= bCol - 1 && col <= right + 1,
-    inRowRange: row >= bRow - 1 && row <= bottom + 1,
-  };
-}
-
-function resolveCorner(f: EdgeFlags): ResizeHandle | null {
-  if (f.onTop && f.onLeft) {
-    return "nw";
-  }
-  if (f.onTop && f.onRight) {
-    return "ne";
-  }
-  if (f.onBottom && f.onLeft) {
-    return "sw";
-  }
-  if (f.onBottom && f.onRight) {
-    return "se";
-  }
-  return null;
-}
-
-function resolveEdge(f: EdgeFlags): ResizeHandle | null {
-  if (f.onTop && f.inColRange) {
-    return "n";
-  }
-  if (f.onBottom && f.inColRange) {
-    return "s";
-  }
-  if (f.onRight && f.inRowRange) {
-    return "e";
-  }
-  if (f.onLeft && f.inRowRange) {
-    return "w";
-  }
-  return null;
-}
-
-export function getResizeHandle(
-  col: number,
-  row: number,
-  obj: WireObject,
-): ResizeHandle | null {
-  if (!hasRectBounds(obj)) {
-    return null;
-  }
-  const constraint = getResizeConstraint(obj);
-  if (constraint === "none") {
-    return null;
-  }
-  const { col: bCol, row: bRow } = obj.position;
-  const flags = computeEdgeFlags(
-    col,
-    row,
-    bCol,
-    bRow,
-    bCol + obj.width - 1,
-    bRow + obj.height - 1,
-  );
-  const handle = resolveCorner(flags) ?? resolveEdge(flags);
-  if (!handle) {
-    return null;
-  }
-  // Fixed-height components only allow horizontal resize
-  if (constraint === "horizontal") {
-    const vertical = handle.includes("n") || handle.includes("s");
-    if (vertical && !handle.includes("e") && !handle.includes("w")) {
-      return null;
-    }
-    // Convert corner handles to horizontal-only
-    if (handle === "ne" || handle === "se") {
-      return "e";
-    }
-    if (handle === "nw" || handle === "sw") {
-      return "w";
-    }
-  }
-  return handle;
-}
-
-export function getResizeCursor(handle: ResizeHandle): string {
-  return HANDLE_CURSORS[handle];
-}
-
-/** Get the bounding rect for any object in grid coordinates */
-function getLocalObjectBounds(
-  obj: WireObject,
-  allObjects?: readonly WireObject[],
-) {
-  switch (obj.type) {
-    case "box":
-    case "component":
-      return {
-        col: obj.position.col,
-        row: obj.position.row,
-        width: obj.width,
-        height: obj.height,
-      };
-    case "text": {
-      const lines = obj.content.split("\n");
-      return {
-        col: obj.position.col,
-        row: obj.position.row,
-        width: Math.max(...lines.map((l) => l.length), 1),
-        height: lines.length || 1,
-      };
-    }
-    case "line":
-    case "arrow": {
-      const minCol = Math.min(obj.position.col, obj.endPosition.col);
-      const minRow = Math.min(obj.position.row, obj.endPosition.row);
-      return {
-        col: minCol,
-        row: minRow,
-        width: Math.max(obj.position.col, obj.endPosition.col) - minCol + 1,
-        height: Math.max(obj.position.row, obj.endPosition.row) - minRow + 1,
-      };
-    }
-    case "connector":
-      if (allObjects) {
-        return getConnectorBounds(obj, allObjects);
-      }
-      return {
-        col: obj.position.col,
-        row: obj.position.row,
-        width: 1,
-        height: 1,
-      };
-    default:
-      return { col: 0, row: 0, width: 0, height: 0 };
-  }
-}
-
-/** Check if an object's bounds intersect with a marquee rectangle */
-function objectIntersectsRect(
-  obj: WireObject,
-  minCol: number,
-  minRow: number,
-  maxCol: number,
-  maxRow: number,
-  allObjects?: readonly WireObject[],
-): boolean {
-  const b = getLocalObjectBounds(obj, allObjects);
-  return (
-    b.col < maxCol &&
-    b.col + b.width > minCol &&
-    b.row < maxRow &&
-    b.row + b.height > minRow
-  );
-}
-
-function hasLineEnds(obj: WireObject): obj is LineObject | ArrowObject {
-  return obj.type === "line" || obj.type === "arrow";
-}
-
-/** Check if a point is near a line/arrow endpoint (within 1 cell) */
-function getEndpointHandle(
-  col: number,
-  row: number,
-  obj: LineObject | ArrowObject,
-): "start" | "end" | null {
-  const { col: c1, row: r1 } = obj.position;
-  const { col: c2, row: r2 } = obj.endPosition;
-  // Check end first so dragging overlapping endpoints prefers the arrowhead
-  if (Math.abs(col - c2) <= 1 && Math.abs(row - r2) <= 1) {
-    return "end";
-  }
-  if (Math.abs(col - c1) <= 1 && Math.abs(row - r1) <= 1) {
-    return "start";
-  }
-  return null;
-}
-
 /** Check if a grid point is over a resize/endpoint handle of any selected object */
-export function getHoveredHandle(
+export const getHoveredHandle = (
   col: number,
-  row: number,
-): ResizeHandle | "endpoint" | null {
+  row: number
+): ResizeHandle | "endpoint" | null => {
   const state = useEditorStore.getState();
   if (state.activeTool !== "select") {
     return null;
@@ -434,16 +76,16 @@ export function getHoveredHandle(
     }
   }
   return null;
-}
+};
 
 // --- onMouseDown helpers ---
 
 /** Try to initiate a resize or endpoint drag on a selected object */
-function tryHandleDrag(
+const tryHandleDrag = (
   col: number,
   row: number,
-  state: ReturnType<typeof useEditorStore.getState>,
-): boolean {
+  state: EditorState
+): boolean => {
   const excluded = getExcludedLayerIds(state.layers);
   for (const obj of state.objects) {
     if (!state.selection.has(obj.id) || excluded.has(obj.layerId)) {
@@ -456,7 +98,7 @@ function tryHandleDrag(
         dragStart = { col, row };
         dragTarget = obj.id;
         originalPosition = { ...obj.position };
-        originalSize = { width: obj.width, height: obj.height };
+        originalSize = { height: obj.height, width: obj.width };
         return true;
       }
     }
@@ -473,15 +115,12 @@ function tryHandleDrag(
     }
   }
   return false;
-}
+};
 
 const NO_INLINE_EDIT = new Set(["tabs", "navbar", "table", "progress"]);
 
 /** Handle double-click editing on text/box/component objects */
-function tryDoubleClickEdit(
-  hit: WireObject,
-  state: ReturnType<typeof useEditorStore.getState>,
-): boolean {
+const tryDoubleClickEdit = (hit: WireObject, state: EditorState): boolean => {
   if (hit.type === "text") {
     state.setEditingTextId(hit.id);
     state.selectObject(hit.id);
@@ -503,14 +142,14 @@ function tryDoubleClickEdit(
     return true;
   }
   return false;
-}
+};
 
-function startMarquee(
+const startMarquee = (
   col: number,
   row: number,
   e: ReactMouseEvent,
-  state: ReturnType<typeof useEditorStore.getState>,
-) {
+  state: EditorState
+) => {
   if (!e.shiftKey) {
     state.clearSelection();
   }
@@ -519,13 +158,17 @@ function startMarquee(
   marqueeShift = e.shiftKey;
   dragStart = { col, row };
   dragTarget = null;
-  state.setMarquee({ startCol: col, startRow: row, endCol: col, endRow: row });
-}
+  state.setMarquee({ endCol: col, endRow: row, startCol: col, startRow: row });
+};
 
 // --- onMouseMove helpers ---
 
-function handleResizeMove(col: number, row: number) {
+const handleResizeMove = (col: number, row: number) => {
   if (!(originalPosition && originalSize && dragStart)) {
+    return;
+  }
+  const handle = resizeHandle;
+  if (handle === null) {
     return;
   }
   const deltaCol = col - dragStart.col;
@@ -538,19 +181,19 @@ function handleResizeMove(col: number, row: number) {
 
   const state = useEditorStore.getState();
   const obj = state.objects.find((o) => o.id === dragTarget);
-  const { minW, minH } = obj ? getMinSize(obj) : { minW: 3, minH: 3 };
+  const { minW, minH } = obj ? getMinSize(obj) : { minH: 3, minW: 3 };
 
-  if (resizeHandle?.includes("e")) {
+  if (handle.includes("e")) {
     newW = Math.max(minW, originalSize.width + deltaCol);
   }
-  if (resizeHandle?.includes("w")) {
+  if (handle.includes("w")) {
     newW = Math.max(minW, originalSize.width - deltaCol);
     newCol = originalPosition.col + (originalSize.width - newW);
   }
-  if (resizeHandle?.includes("s")) {
+  if (handle.includes("s")) {
     newH = Math.max(minH, originalSize.height + deltaRow);
   }
-  if (resizeHandle?.includes("n")) {
+  if (handle.includes("n")) {
     newH = Math.max(minH, originalSize.height - deltaRow);
     newRow = originalPosition.row + (originalSize.height - newH);
   }
@@ -562,14 +205,14 @@ function handleResizeMove(col: number, row: number) {
     }
     state.setDraft({
       ...obj,
+      height: newH,
       position: { col: newCol, row: newRow },
       width: newW,
-      height: newH,
     });
   }
-}
+};
 
-function handleEndpointMove(col: number, row: number) {
+const handleEndpointMove = (col: number, row: number) => {
   if (!(originalPosition && originalEndPosition && dragStart)) {
     return;
   }
@@ -594,28 +237,78 @@ function handleEndpointMove(col: number, row: number) {
           row: originalEndPosition.row + deltaRow,
         }
       : obj.endPosition;
-  state.setDraft({ ...obj, position: newPos, endPosition: newEnd });
-}
+  state.setDraft({ ...obj, endPosition: newEnd, position: newPos });
+};
+
+/** Resolve the snapped total displacement and update guide lines. */
+const applyDragSnap = (state: EditorState): { col: number; row: number } => {
+  if (!(state.snapEnabled && dragOriginBounds)) {
+    state.setSnapGuides({ cols: [], rows: [] });
+    return { col: rawDelta.col, row: rawDelta.row };
+  }
+
+  const proposedBounds: BoundingRect = {
+    col: dragOriginBounds.col + rawDelta.col,
+    height: dragOriginBounds.height,
+    row: dragOriginBounds.row + rawDelta.row,
+    width: dragOriginBounds.width,
+  };
+
+  // Collect snap targets: all non-selected, non-connector, visible+unlocked objects
+  const excluded = getExcludedLayerIds(state.layers);
+  const otherBounds: BoundingRect[] = [];
+  for (const obj of state.objects) {
+    if (
+      state.selection.has(obj.id) ||
+      obj.type === "connector" ||
+      excluded.has(obj.layerId)
+    ) {
+      continue;
+    }
+    const b = getObjectBounds(obj);
+    otherBounds.push({
+      col: b.col,
+      height: b.height,
+      row: b.row,
+      width: b.width,
+    });
+  }
+
+  const snap = computeSnap(proposedBounds, otherBounds, 1);
+  const cols = snap.guides
+    .filter((g) => g.axis === "col")
+    .map((g) => g.position);
+  const rows = snap.guides
+    .filter((g) => g.axis === "row")
+    .map((g) => g.position);
+  state.setSnapGuides({ cols, rows });
+
+  return {
+    col: rawDelta.col + snap.deltaCol,
+    row: rawDelta.row + snap.deltaRow,
+  };
+};
 
 // --- onMouseUp helpers ---
 
 /** Expand a set of hit object IDs to include all members of their groups */
-function expandHitsToGroups(
+const expandHitsToGroups = (
   hits: WireObject[],
   allObjects: WireObject[],
-  excluded: Set<string>,
-): Set<string> {
+  excluded: Set<string>
+): Set<string> => {
   const ids = new Set(hits.map((o) => o.id));
   const groupIds = new Set<string>();
   for (const obj of hits) {
-    if (obj.groupId) {
+    if (obj.groupId !== undefined && obj.groupId !== "") {
       groupIds.add(obj.groupId);
     }
   }
   if (groupIds.size > 0) {
     for (const obj of allObjects) {
       if (
-        obj.groupId &&
+        obj.groupId !== undefined &&
+        obj.groupId !== "" &&
         groupIds.has(obj.groupId) &&
         !excluded.has(obj.layerId)
       ) {
@@ -624,9 +317,9 @@ function expandHitsToGroups(
     }
   }
   return ids;
-}
+};
 
-function finalizeMarquee() {
+const finalizeMarquee = () => {
   const state = useEditorStore.getState();
   const m = state.marquee;
   if (m) {
@@ -645,8 +338,8 @@ function finalizeMarquee() {
             minRow,
             maxCol + 1,
             maxRow + 1,
-            state.objects,
-          ),
+            state.objects
+          )
       );
       const ids = expandHitsToGroups(hits, state.objects, excluded);
       if (marqueeShift) {
@@ -661,12 +354,14 @@ function finalizeMarquee() {
   marqueeActive = false;
   marqueeShift = false;
   dragStart = null;
-}
+};
 
-function finalizeResize() {
+const finalizeResize = () => {
   const state = useEditorStore.getState();
-  const draft = state.draft;
-  if (!(draft && hasRectBounds(draft) && dragTarget)) {
+  const { draft } = state;
+  if (
+    !(draft && hasRectBounds(draft) && dragTarget !== null && dragTarget !== "")
+  ) {
     return;
   }
   state.setDraft(null);
@@ -680,25 +375,27 @@ function finalizeResize() {
     state.moveObject(
       dragTarget,
       draft.position.col - obj.position.col,
-      draft.position.row - obj.position.row,
+      draft.position.row - obj.position.row
     );
   }
-}
+};
 
-function finalizeEndpoint() {
+const finalizeEndpoint = () => {
   const state = useEditorStore.getState();
-  const draft = state.draft;
-  if (!(draft && hasLineEnds(draft) && dragTarget)) {
+  const { draft } = state;
+  if (
+    !(draft && hasLineEnds(draft) && dragTarget !== null && dragTarget !== "")
+  ) {
     return;
   }
   state.setDraft(null);
   state.updateObject(dragTarget, {
-    position: draft.position,
     endPosition: draft.endPosition,
-  } as Partial<WireObject>);
-}
+    position: draft.position,
+  });
+};
 
-function resetDragState() {
+const resetDragState = () => {
   dragStart = null;
   dragTarget = null;
   resizeHandle = null;
@@ -713,14 +410,13 @@ function resetDragState() {
   rawDelta = { col: 0, row: 0 };
   appliedDelta = { col: 0, row: 0 };
   useEditorStore.getState().setSnapGuides({ cols: [], rows: [] });
-}
+};
 
 // --- Tool handler ---
 
 export const selectTool: ToolHandler = {
-  name: "select",
   cursor: "default",
-
+  name: "select",
   onMouseDown(col, row, e) {
     const state = useEditorStore.getState();
 
@@ -769,17 +465,13 @@ export const selectTool: ToolHandler = {
     // Capture selection bounds for snap
     const snapState = useEditorStore.getState();
     const selObjects = snapState.objects.filter(
-      (o) => snapState.selection.has(o.id) && o.type !== "connector",
+      (o) => snapState.selection.has(o.id) && o.type !== "connector"
     );
-    if (selObjects.length > 0) {
-      dragOriginBounds = getSelectionBounds(selObjects);
-    } else {
-      dragOriginBounds = null;
-    }
+    dragOriginBounds =
+      selObjects.length > 0 ? getSelectionBounds(selObjects) : null;
     rawDelta = { col: 0, row: 0 };
     appliedDelta = { col: 0, row: 0 };
   },
-
   onMouseMove(col, row) {
     if (!dragStart) {
       return;
@@ -787,19 +479,19 @@ export const selectTool: ToolHandler = {
 
     if (marqueeActive) {
       useEditorStore.getState().setMarquee({
-        startCol: dragStart.col,
-        startRow: dragStart.row,
         endCol: col,
         endRow: row,
+        startCol: dragStart.col,
+        startRow: dragStart.row,
       });
       return;
     }
 
-    if (!dragTarget) {
+    if (dragTarget === null || dragTarget === "") {
       return;
     }
 
-    if (resizeHandle && originalPosition && originalSize) {
+    if (resizeHandle !== null && originalPosition && originalSize) {
       handleResizeMove(col, row);
       return;
     }
@@ -823,55 +515,7 @@ export const selectTool: ToolHandler = {
     rawDelta = { col: rawDelta.col + deltaCol, row: rawDelta.row + deltaRow };
 
     const state = useEditorStore.getState();
-
-    let snappedTotal = { col: rawDelta.col, row: rawDelta.row };
-
-    if (state.snapEnabled && dragOriginBounds) {
-      // Build proposed bounds at raw position
-      const proposedBounds: BoundingRect = {
-        col: dragOriginBounds.col + rawDelta.col,
-        row: dragOriginBounds.row + rawDelta.row,
-        width: dragOriginBounds.width,
-        height: dragOriginBounds.height,
-      };
-
-      // Collect snap targets: all non-selected, non-connector, visible+unlocked objects
-      const excluded = getExcludedLayerIds(state.layers);
-      const otherBounds: BoundingRect[] = [];
-      for (const obj of state.objects) {
-        if (
-          state.selection.has(obj.id) ||
-          obj.type === "connector" ||
-          excluded.has(obj.layerId)
-        ) {
-          continue;
-        }
-        const b = getObjectBounds(obj);
-        otherBounds.push({
-          col: b.col,
-          row: b.row,
-          width: b.width,
-          height: b.height,
-        });
-      }
-
-      const snap = computeSnap(proposedBounds, otherBounds, 1);
-      snappedTotal = {
-        col: rawDelta.col + snap.deltaCol,
-        row: rawDelta.row + snap.deltaRow,
-      };
-
-      // Update guide lines
-      const cols = snap.guides
-        .filter((g) => g.axis === "col")
-        .map((g) => g.position);
-      const rows = snap.guides
-        .filter((g) => g.axis === "row")
-        .map((g) => g.position);
-      state.setSnapGuides({ cols, rows });
-    } else {
-      state.setSnapGuides({ cols: [], rows: [] });
-    }
+    const snappedTotal = applyDragSnap(state);
 
     // Compute incremental move from what was already applied
     const moveCol = snappedTotal.col - appliedDelta.col;
@@ -882,24 +526,23 @@ export const selectTool: ToolHandler = {
       state.moveSelection(moveCol, moveRow);
     }
   },
-
   onMouseUp(_col, _row) {
     if (marqueeActive && dragStart) {
       finalizeMarquee();
       return;
     }
 
-    if (resizeHandle && dragTarget && originalPosition && originalSize) {
+    if (resizeHandle !== null) {
       finalizeResize();
     }
 
-    if (endpointHandle && dragTarget) {
+    if (endpointHandle !== null) {
       finalizeEndpoint();
     }
 
     // Deferred deselect: clicked an already-selected object without dragging,
     // so now narrow the selection down to just that object.
-    if (deferredDeselect && !didDrag) {
+    if (deferredDeselect !== null && deferredDeselect !== "" && !didDrag) {
       useEditorStore.getState().selectObject(deferredDeselect);
     }
 

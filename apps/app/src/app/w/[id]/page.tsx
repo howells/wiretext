@@ -1,6 +1,7 @@
 import { decodeDocument } from "@wiretext/engine";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
 import { EditorShell } from "@/components/editor/editor-shell";
 import { redis } from "@/lib/redis";
 
@@ -10,18 +11,18 @@ interface Params {
   id: string;
 }
 
-export async function generateMetadata({
+export const generateMetadata = async ({
   params,
 }: {
   params: Promise<Params>;
-}): Promise<Metadata> {
+}): Promise<Metadata> => {
   const { id } = await params;
   return {
-    title: `Wireframe ${id} — Wiretext`,
     description: "A shared wireframe created with Wiretext.",
     robots: { index: false },
+    title: `Wireframe ${id} — Wiretext`,
   };
-}
+};
 
 export default async function ShortUrlPage({
   params,
@@ -31,7 +32,7 @@ export default async function ShortUrlPage({
   const { id } = await params;
 
   const data = await redis.get<string>(id);
-  if (!data) {
+  if (data === null || data === "") {
     notFound();
   }
 

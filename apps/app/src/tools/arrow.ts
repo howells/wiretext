@@ -1,5 +1,5 @@
-import type { ArrowObject } from "@wiretext/engine";
 import { useEditorStore } from "@/store";
+
 import type { ToolHandler } from "./types";
 
 let dragStart: { col: number; row: number } | null = null;
@@ -9,12 +9,12 @@ let dragStart: { col: number; row: number } | null = null;
  * Monospace chars are ~2x taller than wide, so a visual 45° diagonal
  * needs a 2:1 col:row ratio to look correct on screen.
  */
-function snapDirection(
+const snapDirection = (
   startCol: number,
   startRow: number,
   endCol: number,
-  endRow: number,
-): { col: number; row: number } {
+  endRow: number
+): { col: number; row: number } => {
   const dx = endCol - startCol;
   const dy = endRow - startRow;
   const adx = Math.abs(dx);
@@ -34,25 +34,23 @@ function snapDirection(
     col: startCol + rowDist * 2 * Math.sign(dx),
     row: startRow + rowDist * Math.sign(dy),
   };
-}
+};
 
 export const arrowTool: ToolHandler = {
-  name: "arrow",
   cursor: "crosshair",
-
+  name: "arrow",
   onMouseDown(col, row) {
     dragStart = { col, row };
     const state = useEditorStore.getState();
     state.setDraft({
-      id: "__draft__",
-      type: "arrow",
-      position: { col, row },
       endPosition: { col, row },
-      zIndex: state.objects.length,
+      id: "__draft__",
       layerId: state.activeLayerId,
-    } as ArrowObject);
+      position: { col, row },
+      type: "arrow",
+      zIndex: state.objects.length,
+    });
   },
-
   onMouseMove(col, row) {
     if (!dragStart) {
       return;
@@ -60,15 +58,14 @@ export const arrowTool: ToolHandler = {
     const end = snapDirection(dragStart.col, dragStart.row, col, row);
     const state = useEditorStore.getState();
     state.setDraft({
-      id: "__draft__",
-      type: "arrow",
-      position: { col: dragStart.col, row: dragStart.row },
       endPosition: end,
-      zIndex: state.objects.length,
+      id: "__draft__",
       layerId: state.activeLayerId,
-    } as ArrowObject);
+      position: { col: dragStart.col, row: dragStart.row },
+      type: "arrow",
+      zIndex: state.objects.length,
+    });
   },
-
   onMouseUp(col, row) {
     if (!dragStart) {
       return;
@@ -79,11 +76,11 @@ export const arrowTool: ToolHandler = {
 
     if (end.col !== dragStart.col || end.row !== dragStart.row) {
       state.addObject({
-        type: "arrow",
-        position: { col: dragStart.col, row: dragStart.row },
         endPosition: end,
-        zIndex: state.objects.length,
         layerId: state.activeLayerId,
+        position: { col: dragStart.col, row: dragStart.row },
+        type: "arrow",
+        zIndex: state.objects.length,
       });
     }
 

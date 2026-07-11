@@ -2,6 +2,7 @@
 
 import { COMPONENT_BY_TYPE } from "@wiretext/engine";
 import Link from "next/link";
+
 import { version } from "@/../package.json";
 import { useEditorStore } from "@/store";
 
@@ -10,7 +11,7 @@ interface StatusBarProps {
   hoverRow: number;
 }
 
-export function StatusBar({ hoverCol, hoverRow }: StatusBarProps) {
+export const StatusBar = ({ hoverCol, hoverRow }: StatusBarProps) => {
   const activeTool = useEditorStore((s) => s.activeTool);
   const objects = useEditorStore((s) => s.objects);
   const viewport = useEditorStore((s) => s.viewport);
@@ -60,4 +61,4 @@ export function StatusBar({ hoverCol, hoverRow }: StatusBarProps) {
       </span>
     </div>
   );
-}
+};

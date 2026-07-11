@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
+
 import { initPostHog } from "@/lib/posthog";
 
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
+export const PostHogProvider = ({
+  children,
+  posthogKey,
+}: {
+  children: React.ReactNode;
+  posthogKey: string | undefined;
+}) => {
   useEffect(() => {
-    initPostHog();
-  }, []);
+    initPostHog(posthogKey);
+  }, [posthogKey]);
 
-  return children;
-}
+  // Keyed fragment keeps this a pure pass-through with a stable identity
+  return <Fragment key="posthog">{children}</Fragment>;
+};

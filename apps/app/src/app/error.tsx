@@ -3,7 +3,7 @@
 import posthog from "posthog-js";
 import { useEffect } from "react";
 
-export default function ErrorPage({
+export default function RouteError({
   error,
   reset,
 }: {

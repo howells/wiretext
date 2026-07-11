@@ -1,26 +1,29 @@
+// Named wrappers over posthog.capture, one per product event. When PostHog was
+// never initialized (no key — see posthog.ts), capture is a silent no-op, so
+// these are safe to call unconditionally from actions and components.
 import type { ToolType } from "@wiretext/engine";
 import posthog from "posthog-js";
 
-export function trackToolSelected(tool: ToolType) {
+export const trackToolSelected = (tool: ToolType) => {
   posthog.capture("tool_selected", { tool });
-}
+};
 
-export function trackObjectCreated(objectType: string) {
+export const trackObjectCreated = (objectType: string) => {
   posthog.capture("object_created", { object_type: objectType });
-}
+};
 
-export function trackExport(format: string) {
+export const trackExport = (format: string) => {
   posthog.capture("document_exported", { format });
-}
+};
 
-export function trackShare() {
+export const trackShare = () => {
   posthog.capture("document_shared");
-}
+};
 
-export function trackClearAll() {
+export const trackClearAll = () => {
   posthog.capture("canvas_cleared");
-}
+};
 
-export function trackDocumentLoaded() {
+export const trackDocumentLoaded = () => {
   posthog.capture("shared_document_loaded");
-}
+};

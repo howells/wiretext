@@ -6,42 +6,48 @@ import type {
 } from "@wiretext/engine";
 import { getConnectorBounds, getObjectBounds } from "@wiretext/engine";
 
-export function screenToGrid(
+// The single boundary between screen pixels and the grid. Everything downstream
+// (hit-testing, tools, the store) works in integer col/row cells; these two
+// functions are the only place pan/zoom and the monospace cell size (metrics)
+// enter the math. screenToGrid floors to a cell; gridToScreen returns the cell's
+// top-left pixel — they are inverse up to that flooring.
+
+export const screenToGrid = (
   screenX: number,
   screenY: number,
   viewport: Viewport,
-  metrics: CharMetrics,
-): GridPoint {
+  metrics: CharMetrics
+): GridPoint => {
   const worldX = (screenX - viewport.panX) / viewport.zoom;
   const worldY = (screenY - viewport.panY) / viewport.zoom;
   return {
     col: Math.floor(worldX / metrics.charWidth),
     row: Math.floor(worldY / metrics.lineHeight),
   };
-}
+};
 
-export function gridToScreen(
+export const gridToScreen = (
   col: number,
   row: number,
   viewport: Viewport,
-  metrics: CharMetrics,
-): { x: number; y: number } {
-  return {
-    x: col * metrics.charWidth * viewport.zoom + viewport.panX,
-    y: row * metrics.lineHeight * viewport.zoom + viewport.panY,
-  };
-}
+  metrics: CharMetrics
+): { x: number; y: number } => ({
+  x: col * metrics.charWidth * viewport.zoom + viewport.panX,
+  y: row * metrics.lineHeight * viewport.zoom + viewport.panY,
+});
 
 /**
  * Shift objects so all positions are non-negative for the compose grid.
  * Returns the shifted objects and the original grid origin (minimum col/row).
  * When no objects have negative positions, returns them unmodified.
  */
-export function shiftObjectsForRender(objects: WireObject[]): {
+export const shiftObjectsForRender = (
+  objects: WireObject[]
+): {
   renderObjects: WireObject[];
   originCol: number;
   originRow: number;
-} {
+} => {
   let oCol = 0;
   let oRow = 0;
   for (const obj of objects) {
@@ -53,7 +59,7 @@ export function shiftObjectsForRender(objects: WireObject[]): {
     }
   }
   if (oCol >= 0 && oRow >= 0) {
-    return { renderObjects: objects, originCol: 0, originRow: 0 };
+    return { originCol: 0, originRow: 0, renderObjects: objects };
   }
   const dCol = -oCol;
   const dRow = -oRow;
@@ -73,19 +79,19 @@ export function shiftObjectsForRender(objects: WireObject[]): {
     }
     return s;
   }) as WireObject[];
-  return { renderObjects: shifted, originCol: oCol, originRow: oRow };
-}
+  return { originCol: oCol, originRow: oRow, renderObjects: shifted };
+};
 
 /**
  * Compute a viewport that centers all objects within the given canvas area.
  * Keeps zoom at 1 unless content is too large to fit, in which case it zooms out.
  */
-export function fitViewport(
+export const fitViewport = (
   objects: WireObject[],
   canvasWidth: number,
   canvasHeight: number,
-  metrics: CharMetrics,
-): Viewport {
+  metrics: CharMetrics
+): Viewport => {
   if (objects.length === 0) {
     return { panX: 0, panY: 0, zoom: 1 };
   }
@@ -116,7 +122,7 @@ export function fitViewport(
   // Only zoom out if content doesn't fit; never zoom in past 1
   const zoom = Math.max(
     0.25,
-    Math.min(1, Math.min(availW / contentWidth, availH / contentHeight)),
+    Math.min(1, Math.min(availW / contentWidth, availH / contentHeight))
   );
 
   const scaledW = contentWidth * zoom;
@@ -127,4 +133,4 @@ export function fitViewport(
     (canvasHeight - scaledH) / 2 - minRow * metrics.lineHeight * zoom;
 
   return { panX, panY, zoom };
-}
+};

@@ -1,6 +1,8 @@
 "use client";
 
+import type { Layer, ObjectId } from "@wiretext/engine";
 import { useEffect, useRef } from "react";
+
 import { useEditorStore } from "@/store";
 
 interface MenuItem {
@@ -22,47 +24,187 @@ interface SubMenuItem {
 
 type MenuEntry = MenuItem | MenuSeparator | SubMenuItem;
 
-function isSeparator(entry: MenuEntry): entry is MenuSeparator {
-  return "type" in entry && entry.type === "separator";
-}
+const isSeparator = (entry: MenuEntry): entry is MenuSeparator =>
+  "type" in entry && entry.type === "separator";
 
-function isSubmenu(entry: MenuEntry): entry is SubMenuItem {
-  return "items" in entry;
-}
+const isSubmenu = (entry: MenuEntry): entry is SubMenuItem => "items" in entry;
 
-function MenuItemRow({ item }: { item: MenuItem }) {
-  return (
-    <button
-      className="flex w-full items-center justify-between gap-4 rounded px-2 py-1 text-left text-text text-xs transition-colors hover:bg-surface-hover disabled:opacity-40 disabled:hover:bg-transparent"
-      disabled={item.disabled}
-      onClick={item.action}
-      type="button"
-    >
+const MenuItemRow = ({ item }: { item: MenuItem }) => (
+  <button
+    className="flex w-full items-center justify-between gap-4 rounded px-2 py-1 text-left text-text text-xs transition-colors hover:bg-surface-hover disabled:opacity-40 disabled:hover:bg-transparent"
+    disabled={item.disabled}
+    onClick={() => {
+      item.action();
+    }}
+    type="button"
+  >
+    <span>{item.label}</span>
+    {item.shortcut !== undefined && item.shortcut !== "" && (
+      <span className="text-[10px] text-text-dim">{item.shortcut}</span>
+    )}
+  </button>
+);
+
+const SubmenuRow = ({ item }: { item: SubMenuItem }) => (
+  <div className="group/sub relative">
+    <div className="flex w-full items-center justify-between gap-4 rounded px-2 py-1 text-left text-text text-xs transition-colors hover:bg-surface-hover">
       <span>{item.label}</span>
-      {item.shortcut && (
-        <span className="text-[10px] text-text-dim">{item.shortcut}</span>
-      )}
-    </button>
-  );
-}
-
-function SubmenuRow({ item }: { item: SubMenuItem }) {
-  return (
-    <div className="group/sub relative">
-      <div className="flex w-full items-center justify-between gap-4 rounded px-2 py-1 text-left text-text text-xs transition-colors hover:bg-surface-hover">
-        <span>{item.label}</span>
-        <span className="text-[10px] text-text-dim">▸</span>
-      </div>
-      <div className="invisible absolute top-0 left-full ml-1 min-w-[120px] rounded border border-border bg-surface p-1 shadow-lg group-hover/sub:visible">
-        {item.items.map((subItem) => (
-          <MenuItemRow item={subItem} key={subItem.label} />
-        ))}
-      </div>
+      <span className="text-[10px] text-text-dim">▸</span>
     </div>
-  );
+    <div className="invisible absolute top-0 left-full ml-1 min-w-[120px] rounded border border-border bg-surface p-1 shadow-lg group-hover/sub:visible">
+      {item.items.map((subItem) => (
+        <MenuItemRow item={subItem} key={subItem.label} />
+      ))}
+    </div>
+  </div>
+);
+
+interface SelectionEntryContext {
+  act: (fn: () => void) => () => void;
+  canGroup: boolean;
+  hasClipboard: boolean;
+  hasGroupInSelection: boolean;
+  otherLayers: Layer[];
+  selection: Set<ObjectId>;
 }
 
-export function ContextMenu() {
+const buildSelectionEntries = ({
+  act,
+  canGroup,
+  hasClipboard,
+  hasGroupInSelection,
+  otherLayers,
+  selection,
+}: SelectionEntryContext): MenuEntry[] => {
+  const entries: MenuEntry[] = [
+    {
+      action: act(() => {
+        useEditorStore.getState().copySelection();
+      }),
+      label: "Copy",
+      shortcut: "⌘C",
+    },
+    {
+      action: act(() => {
+        useEditorStore.getState().cutSelection();
+      }),
+      label: "Cut",
+      shortcut: "⌘X",
+    },
+    {
+      action: act(() => {
+        useEditorStore.getState().pasteClipboard();
+      }),
+      disabled: !hasClipboard,
+      label: "Paste",
+      shortcut: "⌘V",
+    },
+    {
+      action: act(() => {
+        useEditorStore.getState().duplicateSelection();
+      }),
+      label: "Duplicate",
+      shortcut: "⌘D",
+    },
+    {
+      action: act(() => {
+        useEditorStore.getState().deleteSelection();
+      }),
+      label: "Delete",
+      shortcut: "⌫",
+    },
+    { id: "sep-edit-order", type: "separator" },
+    {
+      action: act(() => {
+        useEditorStore.getState().bringToFront([...selection]);
+      }),
+      label: "Bring to Front",
+      shortcut: "⌘]",
+    },
+    {
+      action: act(() => {
+        useEditorStore.getState().bringForward([...selection]);
+      }),
+      label: "Bring Forward",
+      shortcut: "]",
+    },
+    {
+      action: act(() => {
+        useEditorStore.getState().sendBackward([...selection]);
+      }),
+      label: "Send Backward",
+      shortcut: "[",
+    },
+    {
+      action: act(() => {
+        useEditorStore.getState().sendToBack([...selection]);
+      }),
+      label: "Send to Back",
+      shortcut: "⌘[",
+    },
+  ];
+
+  if (otherLayers.length > 0) {
+    entries.push(
+      { id: "sep-order-layer", type: "separator" },
+      {
+        items: otherLayers.map((l) => ({
+          action: act(() => {
+            useEditorStore.getState().moveObjectsToLayer([...selection], l.id);
+          }),
+          label: l.name,
+        })),
+        label: "Move to Layer",
+      }
+    );
+  }
+
+  entries.push(
+    { id: "sep-layer-group", type: "separator" },
+    {
+      action: act(() => {
+        useEditorStore.getState().groupSelection();
+      }),
+      disabled: !canGroup,
+      label: "Group Selection",
+      shortcut: "⌘G",
+    },
+    {
+      action: act(() => {
+        useEditorStore.getState().ungroupSelection();
+      }),
+      disabled: !hasGroupInSelection,
+      label: "Ungroup",
+      shortcut: "⌘⇧G",
+    }
+  );
+
+  return entries;
+};
+
+// Empty canvas context menu
+const buildEmptyCanvasEntries = (
+  act: (fn: () => void) => () => void,
+  hasClipboard: boolean
+): MenuEntry[] => [
+  {
+    action: act(() => {
+      useEditorStore.getState().pasteClipboard();
+    }),
+    disabled: !hasClipboard,
+    label: "Paste",
+    shortcut: "⌘V",
+  },
+  {
+    action: act(() => {
+      useEditorStore.getState().selectAll();
+    }),
+    label: "Select All",
+    shortcut: "⌘A",
+  },
+];
+
+export const ContextMenu = () => {
   const contextMenu = useEditorStore((s) => s.contextMenu);
   const setContextMenu = useEditorStore((s) => s.setContextMenu);
   const selection = useEditorStore((s) => s.selection);
@@ -73,16 +215,22 @@ export function ContextMenu() {
 
   // Close on outside click
   useEffect(() => {
-    if (!contextMenu) {
-      return;
-    }
     const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (!contextMenu) {
+        return;
+      }
+      if (
+        menuRef.current &&
+        e.target instanceof Node &&
+        !menuRef.current.contains(e.target)
+      ) {
         setContextMenu(null);
       }
     };
     document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+    };
   }, [contextMenu, setContextMenu]);
 
   // Clamp position to viewport
@@ -107,13 +255,14 @@ export function ContextMenu() {
     return null;
   }
 
-  const close = () => setContextMenu(null);
+  const close = () => {
+    setContextMenu(null);
+  };
   const act = (fn: () => void) => () => {
     fn();
     close();
   };
 
-  const store = useEditorStore.getState();
   const hasSelection = selection.size > 0;
   const hasClipboard = clipboard.length > 0;
 
@@ -121,7 +270,9 @@ export function ContextMenu() {
   const selectedLayerIds = new Set(selectedObjs.map((o) => o.layerId));
   const allSameLayer = selectedLayerIds.size === 1;
   const canGroup = selection.size >= 2 && allSameLayer;
-  const hasGroupInSelection = selectedObjs.some((o) => o.groupId);
+  const hasGroupInSelection = selectedObjs.some(
+    (o) => o.groupId !== undefined && o.groupId !== ""
+  );
 
   // Other layers for "Move to Layer" submenu
   const otherLayers = layers.filter((l) => {
@@ -131,97 +282,16 @@ export function ContextMenu() {
     return true;
   });
 
-  const entries: MenuEntry[] = [];
-
-  if (hasSelection) {
-    entries.push(
-      {
-        label: "Copy",
-        shortcut: "⌘C",
-        action: act(() => store.copySelection()),
-      },
-      { label: "Cut", shortcut: "⌘X", action: act(() => store.cutSelection()) },
-      {
-        label: "Paste",
-        shortcut: "⌘V",
-        action: act(() => store.pasteClipboard()),
-        disabled: !hasClipboard,
-      },
-      {
-        label: "Duplicate",
-        shortcut: "⌘D",
-        action: act(() => store.duplicateSelection()),
-      },
-      {
-        label: "Delete",
-        shortcut: "⌫",
-        action: act(() => store.deleteSelection()),
-      },
-      { type: "separator", id: "sep-edit-order" },
-      {
-        label: "Bring to Front",
-        shortcut: "⌘]",
-        action: act(() => store.bringToFront([...selection])),
-      },
-      {
-        label: "Bring Forward",
-        shortcut: "]",
-        action: act(() => store.bringForward([...selection])),
-      },
-      {
-        label: "Send Backward",
-        shortcut: "[",
-        action: act(() => store.sendBackward([...selection])),
-      },
-      {
-        label: "Send to Back",
-        shortcut: "⌘[",
-        action: act(() => store.sendToBack([...selection])),
-      },
-    );
-
-    if (otherLayers.length > 0) {
-      entries.push(
-        { type: "separator", id: "sep-order-layer" },
-        {
-          label: "Move to Layer",
-          items: otherLayers.map((l) => ({
-            label: l.name,
-            action: act(() => store.moveObjectsToLayer([...selection], l.id)),
-          })),
-        },
-      );
-    }
-
-    entries.push({ type: "separator", id: "sep-layer-group" });
-    entries.push({
-      label: "Group Selection",
-      shortcut: "⌘G",
-      action: act(() => store.groupSelection()),
-      disabled: !canGroup,
-    });
-    entries.push({
-      label: "Ungroup",
-      shortcut: "⌘⇧G",
-      action: act(() => store.ungroupSelection()),
-      disabled: !hasGroupInSelection,
-    });
-  } else {
-    // Empty canvas context menu
-    entries.push(
-      {
-        label: "Paste",
-        shortcut: "⌘V",
-        action: act(() => store.pasteClipboard()),
-        disabled: !hasClipboard,
-      },
-      {
-        label: "Select All",
-        shortcut: "⌘A",
-        action: act(() => store.selectAll()),
-      },
-    );
-  }
+  const entries: MenuEntry[] = hasSelection
+    ? buildSelectionEntries({
+        act,
+        canGroup,
+        hasClipboard,
+        hasGroupInSelection,
+        otherLayers,
+        selection,
+      })
+    : buildEmptyCanvasEntries(act, hasClipboard);
 
   return (
     <div
@@ -240,4 +310,4 @@ export function ContextMenu() {
       })}
     </div>
   );
-}
+};

@@ -1,21 +1,23 @@
 import type { Layer, TextObject, WireObject } from "@wiretext/engine";
 import type { MouseEvent as ReactMouseEvent } from "react";
+
 import { useEditorStore } from "@/store";
+
 import type { ToolHandler } from "./types";
 
 let creating = false;
 
 /** Find the topmost text object at a grid position */
-function hitTestText(
+const hitTestText = (
   col: number,
   row: number,
   objects: WireObject[],
-  layers: Layer[],
-): TextObject | null {
+  layers: Layer[]
+): TextObject | null => {
   const excluded = new Set(
-    layers.filter((l) => !l.visible || l.locked).map((l) => l.id),
+    layers.filter((l) => !l.visible || l.locked).map((l) => l.id)
   );
-  const sorted = [...objects].sort((a, b) => b.zIndex - a.zIndex);
+  const sorted = [...objects].toSorted((a, b) => b.zIndex - a.zIndex);
   for (const obj of sorted) {
     if (obj.type !== "text" || excluded.has(obj.layerId)) {
       continue;
@@ -32,12 +34,11 @@ function hitTestText(
     }
   }
   return null;
-}
+};
 
 export const textTool: ToolHandler = {
-  name: "text",
   cursor: "text",
-
+  name: "text",
   onMouseDown(col: number, row: number, e: ReactMouseEvent) {
     // Guard against double-fire (React Strict Mode / event replay)
     if (creating) {
@@ -51,7 +52,8 @@ export const textTool: ToolHandler = {
     const state = useEditorStore.getState();
 
     // If already editing, exit editing first
-    const wasEditing = !!state.editingTextId;
+    const wasEditing =
+      state.editingTextId !== null && state.editingTextId !== "";
     if (wasEditing) {
       state.setEditingTextId(null);
     }
@@ -72,11 +74,11 @@ export const textTool: ToolHandler = {
     }
 
     const obj = state.addObject({
-      type: "text",
-      position: { col, row },
       content: "",
-      zIndex: state.objects.length,
       layerId: state.activeLayerId,
+      position: { col, row },
+      type: "text",
+      zIndex: state.objects.length,
     });
 
     state.setEditingTextId(obj.id);

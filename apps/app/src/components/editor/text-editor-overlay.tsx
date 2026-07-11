@@ -1,7 +1,8 @@
 "use client";
 
-import type { CharMetrics, TextObject } from "@wiretext/engine";
+import type { CharMetrics } from "@wiretext/engine";
 import { useEffect, useRef } from "react";
+
 import { gridToScreen } from "@/lib/coordinates";
 import { useEditorStore } from "@/store";
 
@@ -9,7 +10,17 @@ interface TextEditorOverlayProps {
   metrics: CharMetrics;
 }
 
-export function TextEditorOverlay({ metrics }: TextEditorOverlayProps) {
+/**
+ * Floating textarea for editing a text object in place, positioned over the
+ * object in screen space via gridToScreen.
+ *
+ * There is no explicit save: every keystroke writes straight to the object
+ * through updateObject, so the canvas updates live. Editing ends on blur or
+ * Escape, and if the content is blank at that point the (empty) object is
+ * deleted. A 100ms guard after mount swallows the spurious blur that can fire
+ * during focus hand-off, which would otherwise delete a just-created object.
+ */
+export const TextEditorOverlay = ({ metrics }: TextEditorOverlayProps) => {
   const editingTextId = useEditorStore((s) => s.editingTextId);
   const objects = useEditorStore((s) => s.objects);
   const viewport = useEditorStore((s) => s.viewport);
@@ -17,19 +28,28 @@ export function TextEditorOverlay({ metrics }: TextEditorOverlayProps) {
   const setEditingTextId = useEditorStore((s) => s.setEditingTextId);
   const deleteObject = useEditorStore((s) => s.deleteObject);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mountedAt = useRef(0);
+  const canBlurRef = useRef(false);
 
-  const textObj = editingTextId
-    ? (objects.find((o) => o.id === editingTextId) as TextObject | undefined)
-    : null;
+  const found =
+    editingTextId !== null && editingTextId !== ""
+      ? objects.find((o) => o.id === editingTextId)
+      : undefined;
+  const textObj = found?.type === "text" ? found : null;
 
   useEffect(() => {
-    if (editingTextId && textareaRef.current) {
-      mountedAt.current = Date.now();
+    let readyTimer: ReturnType<typeof setTimeout> | undefined;
+    if (editingTextId !== null && editingTextId !== "" && textareaRef.current) {
+      canBlurRef.current = false;
+      readyTimer = setTimeout(() => {
+        canBlurRef.current = true;
+      }, 100);
       requestAnimationFrame(() => {
         textareaRef.current?.focus();
       });
     }
+    return () => {
+      clearTimeout(readyTimer);
+    };
   }, [editingTextId]);
 
   if (!textObj) {
@@ -40,13 +60,13 @@ export function TextEditorOverlay({ metrics }: TextEditorOverlayProps) {
     textObj.position.col,
     textObj.position.row,
     viewport,
-    metrics,
+    metrics
   );
 
   const handleBlur = () => {
-    // Ignore blur if it happens too quickly (within 100ms of mount)
-    // This prevents immediate deletion from focus race conditions
-    if (Date.now() - mountedAt.current < 100) {
+    // Ignore blur that happens too quickly after mount (within 100ms).
+    // This prevents immediate deletion from focus race conditions.
+    if (!canBlurRef.current) {
       textareaRef.current?.focus();
       return;
     }
@@ -80,24 +100,26 @@ export function TextEditorOverlay({ metrics }: TextEditorOverlayProps) {
     <textarea
       className="absolute z-50 resize-none border border-accent bg-bg/80 p-0 font-mono text-text outline-none"
       onBlur={handleBlur}
-      onChange={(e) =>
+      onChange={(e) => {
         updateObject(textObj.id, {
           content: e.target.value,
-        } as Partial<TextObject>)
-      }
+        });
+      }}
       onKeyDown={handleKeyDown}
-      onMouseDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+      }}
       ref={textareaRef}
       spellCheck={false}
       style={{
-        left: pos.x,
-        top: pos.y,
         fontSize: `${14 * viewport.zoom}px`,
-        lineHeight: "1.5",
-        width: contentWidth,
         height: contentHeight,
+        left: pos.x,
+        lineHeight: "1.5",
+        top: pos.y,
+        width: contentWidth,
       }}
       value={textObj.content}
     />
   );
-}
+};
