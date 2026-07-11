@@ -1,0 +1,17 @@
+{
+  "extends": "@howells/typescript-config/bundler-no-dom-app",
+  "compilerOptions": {
+    "types": ["node"],
+    "typeRoots": ["../apps/cli/node_modules/@types"],
+    // "dom" is needed for in-browser callbacks (page.waitForFunction) in capture-demo.ts
+    "lib": ["es2023", "dom"],
+    "paths": {
+      "@wiretext/engine": ["../packages/engine/src/index.ts"]
+    }
+  },
+  "include": ["*.ts"],
+  // capture-demo.ts imports "playwright", which is not a dependency of this repo
+  // (install it ad hoc: npx playwright install chromium). Excluded so the project
+  // typechecks without it.
+  "exclude": ["capture-demo.ts"]
+}

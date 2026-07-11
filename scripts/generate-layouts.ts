@@ -1,11 +1,13 @@
 import { writeFileSync } from "node:fs";
-import { compose, gridToString } from "../src/engine/compose";
+
 import {
+  compose,
   computeRenderGridSize,
+  encodeDocument,
   fillDefaults,
+  gridToString,
   type MinimalObject,
-} from "../src/engine/defaults";
-import { encodeDocument } from "../src/lib/sharing";
+} from "@wiretext/engine";
 
 const BASE_URL = "https://wiretext.app";
 
@@ -1996,7 +1998,7 @@ ${results
           <pre class="preview">${escapeHtml(r.ascii)}</pre>
         </div>
       </div>
-    </div>`,
+    </div>`
   )
   .join("\n")}
   </div>

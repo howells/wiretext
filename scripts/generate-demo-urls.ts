@@ -4,10 +4,14 @@
  * Run with: npx tsx /tmp/wiretext-demo-urls.ts
  */
 
-import { SHOWCASE_LAYOUTS } from "../src/data/showcase-layouts";
-import { fillDefaults, type MinimalObject } from "../src/engine/defaults";
-import { resolveLayers } from "../src/engine/layers";
-import { encodeDocument } from "../src/lib/sharing";
+import {
+  encodeDocument,
+  fillDefaults,
+  type MinimalObject,
+  resolveLayers,
+} from "@wiretext/engine";
+
+import { SHOWCASE_LAYOUTS } from "../apps/app/src/data/showcase-layouts";
 
 const BASE_URL = "https://wiretext.app";
 
@@ -1818,7 +1822,7 @@ for (const layout of allLayouts) {
   const { objects: finalObjects, layers } = resolveLayers(
     filled,
     defaultLayer,
-    layout.layers,
+    layout.layers
   );
   const encoded = encodeDocument(finalObjects, layers);
   const url = `${BASE_URL}/#${encoded}`;

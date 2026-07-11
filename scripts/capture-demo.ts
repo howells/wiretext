@@ -11,11 +11,16 @@
 import { execSync } from "node:child_process";
 import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
+
+import {
+  encodeDocument,
+  fillDefaults,
+  type MinimalObject,
+  resolveLayers,
+} from "@wiretext/engine";
 import { chromium } from "playwright";
-import { SHOWCASE_LAYOUTS } from "../src/data/showcase-layouts";
-import { fillDefaults, type MinimalObject } from "../src/engine/defaults";
-import { resolveLayers } from "../src/engine/layers";
-import { encodeDocument } from "../src/lib/sharing";
+
+import { SHOWCASE_LAYOUTS } from "../apps/app/src/data/showcase-layouts";
 
 // ── Config ─────────────────────────────────────────────────────
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:36000";
@@ -1718,7 +1723,7 @@ function generateUrl(layout: DemoLayout): string {
   const { objects: finalObjects, layers } = resolveLayers(
     filled,
     defaultLayer,
-    layout.layers,
+    layout.layers
   );
   const encoded = encodeDocument(finalObjects, layers);
   return `${BASE_URL}/#${encoded}`;
@@ -1747,7 +1752,7 @@ async function main() {
     await page.goto(BASE_URL, { waitUntil: "networkidle", timeout: 10000 });
   } catch {
     console.error(
-      `Could not connect to ${BASE_URL}. Is the dev server running?`,
+      `Could not connect to ${BASE_URL}. Is the dev server running?`
     );
     console.error("Start it with: npm run dev");
     await browser.close();
@@ -1755,8 +1760,7 @@ async function main() {
   }
 
   // Capture each wireframe
-  for (let i = 0; i < allLayouts.length; i++) {
-    const layout = allLayouts[i];
+  for (const [i, layout] of allLayouts.entries()) {
     const url = generateUrl(layout);
     const localUrl = url.replace("https://wiretext.app", BASE_URL);
 
@@ -1781,7 +1785,7 @@ async function main() {
             }
             return false;
           },
-          { timeout: 5000 },
+          { timeout: 5000 }
         )
         .then(() => true)
         .catch(() => false);
@@ -1789,7 +1793,7 @@ async function main() {
 
     if (!loaded) {
       console.warn(
-        `    WARNING: ${layout.name} still shows 0 objects after ${MAX_RETRIES} attempts`,
+        `    WARNING: ${layout.name} still shows 0 objects after ${MAX_RETRIES} attempts`
       );
     }
 
@@ -1813,21 +1817,6 @@ async function main() {
 
   // Create MP4 with ffmpeg (better for Twitter than GIF)
   console.log("\nCreating MP4 video...");
-  const ffmpegCmd = [
-    "ffmpeg -y",
-    `-framerate 1/2`, // 2 seconds per frame
-    `-i "${OUTPUT_DIR}/%02d-*.png"`,
-    // Use glob pattern
-    `-pattern_type glob`,
-    `-i "${OUTPUT_DIR}/*.png"`,
-    `-vf "scale=1280:800:force_original_aspect_ratio=decrease,pad=1280:800:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv420p"`,
-    `-c:v libx264 -preset slow -crf 18`,
-    `-movflags +faststart`,
-    `"${MP4_PATH}"`,
-  ].join(" ");
-
-  // Simpler ffmpeg approach with explicit file list
-  const fileList = files.map((f) => `file '${join(OUTPUT_DIR, f)}'`).join("\n");
   const listFile = join(OUTPUT_DIR, "filelist.txt");
   const { writeFileSync } = await import("node:fs");
 
@@ -1836,10 +1825,14 @@ async function main() {
     .map((f) => `file '${join(OUTPUT_DIR, f)}'\nduration 0.8`)
     .join("\n");
   // Add last file again (ffmpeg concat requires it)
-  const lastFile = files[files.length - 1];
+  const lastFile = files.at(-1);
+  if (!lastFile) {
+    console.error("No screenshots captured; skipping video generation.");
+    process.exit(1);
+  }
   writeFileSync(
     listFile,
-    `${concatList}\nfile '${join(OUTPUT_DIR, lastFile)}'`,
+    `${concatList}\nfile '${join(OUTPUT_DIR, lastFile)}'`
   );
 
   try {
@@ -1852,10 +1845,10 @@ async function main() {
         `-movflags +faststart`,
         `"${MP4_PATH}"`,
       ].join(" "),
-      { stdio: "pipe" },
+      { stdio: "pipe" }
     );
     console.log(`\nMP4 created: ${MP4_PATH}`);
-  } catch (err) {
+  } catch {
     console.error("ffmpeg MP4 failed, trying GIF...");
   }
 
@@ -1868,7 +1861,7 @@ async function main() {
         `-vf "fps=1,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"`,
         `"${GIF_PATH}"`,
       ].join(" "),
-      { stdio: "pipe" },
+      { stdio: "pipe" }
     );
     console.log(`GIF created: ${GIF_PATH}`);
   } catch (err) {

@@ -9,9 +9,9 @@
  * to paste into showcase-layouts.ts.
  */
 
-import { SHOWCASE_LAYOUTS } from "../src/data/showcase-layouts";
-import { fillDefaults } from "../src/engine/defaults";
-import { encodeDocument } from "../src/lib/sharing";
+import { encodeDocument, fillDefaults } from "@wiretext/engine";
+
+import { SHOWCASE_LAYOUTS } from "../apps/app/src/data/showcase-layouts";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 
