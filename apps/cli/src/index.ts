@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+
 import {
   addPadding,
   compose,
@@ -14,22 +15,39 @@ import {
 import { layerSchema, wireObjectSchema } from "@wiretext/schemas";
 import { z } from "zod";
 
+/** Production Wiretext host. Overridden per-invocation by `--base-url`. */
 const DEFAULT_BASE_URL = "https://wiretext.app";
 
-// Top-level regex patterns for input hardening (biome requires top-level scope)
-// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — reject null bytes and control chars in untrusted input
-const CONTROL_CHARS_RE = /[\u0000-\u001f]/;
-const ENCODED_TRAVERSAL_RE = /%(?:2[eEfF]|5[cC])/i;
-const HASH_FRAGMENT_PREFIX_RE = /^[^#]*#/;
-const QUERY_OR_HASH_RE = /[?#]/;
+// Regex patterns for input hardening, kept at module scope so they compile
+// once instead of on every call. Control characters (null bytes, escape
+// sequences, etc.) are rejected outright because they have no legitimate use
+// in a file path or hash value and are a common vector for terminal/log
+// injection and path confusion.
+// oxlint-disable-next-line no-control-regex -- matching control characters is the point: this guard rejects them in untrusted input
+const CONTROL_CHARS_RE = /[\u{0}-\u{1F}]/u;
+const ENCODED_TRAVERSAL_RE = /%(?:2[eEfF]|5[cC])/iu;
+const HASH_FRAGMENT_PREFIX_RE = /^[^#]*#/u;
+const QUERY_OR_HASH_RE = /[?#]/u;
 
 // ---------------------------------------------------------------------------
-// Axis 1: Machine-Readable Output — structured JSON, auto-detected in non-TTY
+// Machine-readable output
+//
+// Every command speaks one JSON envelope so agents never have to guess:
+//   success  { "ok": true, ... }   (plus a command-specific payload)
+//   failure  { "ok": false, "error": string, "code": string }
+// Failures exit 1, success exits 0. JSON is forced by --json and also
+// auto-selected in any non-TTY context (piped or redirected), so the output is
+// human-friendly only at an interactive terminal.
 // ---------------------------------------------------------------------------
 
 type OutputMode = "human" | "json";
 
-function detectMode(jsonFlag: boolean): OutputMode {
+/**
+ * Pick the output mode: JSON when `--json`/`--output json` is set, or whenever
+ * stdout is not a TTY (piped into a file, process, or agent). Only a bare
+ * interactive terminal gets human-readable output.
+ */
+const detectMode = (jsonFlag: boolean): OutputMode => {
   if (jsonFlag) {
     return "json";
   }
@@ -37,35 +55,51 @@ function detectMode(jsonFlag: boolean): OutputMode {
     return "json";
   }
   return "human";
-}
+};
 
-function emitJson(data: Record<string, unknown>): void {
+const emitJson = (data: Record<string, unknown>): void => {
   console.log(JSON.stringify(data));
-}
+};
 
-function emitError(mode: OutputMode, message: string, code: string): never {
+/**
+ * Report a failure and exit 1 (hence `never`). JSON mode emits the failure
+ * envelope `{ ok: false, error, code }`; human mode writes just the message to
+ * stderr.
+ */
+const emitError = (mode: OutputMode, message: string, code: string): never => {
   if (mode === "json") {
-    emitJson({ ok: false, error: message, code });
+    emitJson({ code, error: message, ok: false });
   } else {
     console.error(message);
   }
   process.exit(1);
-}
+};
 
 // ---------------------------------------------------------------------------
-// Axis 5: Input Hardening — defend against agent hallucination patterns
+// Input hardening — defend against agent hallucination patterns
 // ---------------------------------------------------------------------------
 
-function validateFilePath(filePath: string): void {
+/**
+ * Guard a file path before it reaches the filesystem. Rejects control
+ * characters (terminal/log injection) and percent-encoded `.`/`/`/`\` segments
+ * (`%2e`, `%2f`, `%5c`) that smuggle traversal past a naive `..` check.
+ * Resolution of the literal path is left to the OS.
+ */
+const validateFilePath = (filePath: string): void => {
   if (CONTROL_CHARS_RE.test(filePath)) {
     throw new Error("Invalid file path: contains control characters");
   }
   if (ENCODED_TRAVERSAL_RE.test(filePath)) {
     throw new Error("Invalid file path: contains encoded path segments");
   }
-}
+};
 
-function validateBaseUrl(baseUrl: string): void {
+/**
+ * Guard `--base-url` before it is used to build request URLs. Requires a
+ * well-formed http(s) URL and forbids an embedded query or fragment, so the
+ * value cannot graft attacker-controlled params onto the `/api/share` request.
+ */
+const validateBaseUrl = (baseUrl: string): void => {
   let parsed: URL;
   try {
     parsed = new URL(baseUrl);
@@ -77,55 +111,75 @@ function validateBaseUrl(baseUrl: string): void {
   }
   if (parsed.search || parsed.hash) {
     throw new Error(
-      "Invalid --base-url: must not contain query string or fragment",
+      "Invalid --base-url: must not contain query string or fragment"
     );
   }
-}
+};
 
-function validateHashValue(hash: string): void {
+/**
+ * Guard `--hash`, which accepts either a full editor URL or a bare encoded
+ * fragment. Rejects control characters, then strips any leading `...#` and
+ * checks the remaining fragment carries no `?`/`#` of its own — blocking
+ * query/param smuggling into the shared payload.
+ */
+const validateHashValue = (hash: string): void => {
   if (CONTROL_CHARS_RE.test(hash)) {
     throw new Error("Invalid --hash: contains control characters");
   }
   if (QUERY_OR_HASH_RE.test(hash.replace(HASH_FRAGMENT_PREFIX_RE, ""))) {
     throw new Error("Invalid --hash: contains embedded query params");
   }
-}
+};
 
 // ---------------------------------------------------------------------------
 // Input parsing & validation
 // ---------------------------------------------------------------------------
 
 const objectsArraySchema = z.array(wireObjectSchema).superRefine((arr, ctx) => {
-  for (let i = 0; i < arr.length; i++) {
-    for (const err of validateContentWidth(arr[i])) {
+  for (let i = 0; i < arr.length; i += 1) {
+    const item = arr[i];
+    if (!item) {
+      continue;
+    }
+    for (const err of validateContentWidth(item)) {
       ctx.addIssue({
         code: "custom",
-        path: [i, ...err.path],
         message: err.message,
+        path: [i, ...err.path],
       });
     }
   }
 });
 
-function readInput(filePath?: string): string {
-  if (filePath && filePath !== "-") {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+/**
+ * Read raw JSON input. A real path is read from disk (after
+ * {@link validateFilePath}); an omitted path, empty string, or the
+ * conventional `-` all read from stdin (fd 0), so `… | wiretext render` and
+ * `wiretext render -` behave identically.
+ */
+const readInput = (filePath?: string): string => {
+  if (filePath !== undefined && filePath !== "" && filePath !== "-") {
     validateFilePath(filePath);
     return readFileSync(filePath, "utf-8");
   }
   return readFileSync(0, "utf-8");
-}
+};
 
 interface ParsedInput {
   layers?: z.infer<typeof layerSchema>[];
   objects: z.infer<typeof wireObjectSchema>[];
 }
 
-function parseInput(raw: string): ParsedInput {
-  const parsed = JSON.parse(raw);
+const parseInput = (raw: string): ParsedInput => {
+  const parsed: unknown = JSON.parse(raw);
+  const source = isRecord(parsed) ? parsed : undefined;
 
-  const arr = Array.isArray(parsed) ? parsed : parsed?.objects;
+  const arr = Array.isArray(parsed) ? parsed : source?.objects;
   if (!Array.isArray(arr)) {
-    throw new Error('Input must be a JSON array or { "objects": [...] }');
+    throw new TypeError('Input must be a JSON array or { "objects": [...] }');
   }
 
   const result = objectsArraySchema.safeParse(arr);
@@ -141,73 +195,109 @@ function parseInput(raw: string): ParsedInput {
   }
 
   let layers: z.infer<typeof layerSchema>[] | undefined;
-  if (!Array.isArray(parsed) && Array.isArray(parsed?.layers)) {
-    const layerResult = z.array(layerSchema).safeParse(parsed.layers);
+  const rawLayers = source?.layers;
+  if (Array.isArray(rawLayers)) {
+    const layerResult = z.array(layerSchema).safeParse(rawLayers);
     if (layerResult.success) {
       layers = layerResult.data;
     }
   }
 
-  return { objects: result.data, layers };
-}
+  return { layers, objects: result.data };
+};
 
 // ---------------------------------------------------------------------------
-// Axis 5 continued: shell-injection-safe platform helpers (execFileSync)
+// Shell-injection-safe platform helpers (execFileSync)
 // ---------------------------------------------------------------------------
 
-function copyToClipboard(text: string): boolean {
+const copyToClipboard = (text: string): boolean => {
   try {
-    const platform = process.platform;
+    const { platform } = process;
     if (platform === "darwin") {
-      execFileSync("pbcopy", [], { input: text });
+      execFileSync("/usr/bin/pbcopy", [], { input: text });
     } else if (platform === "win32") {
-      execFileSync("clip", [], { input: text });
+      execFileSync("C:\\Windows\\System32\\clip.exe", [], { input: text });
     } else {
-      execFileSync("xclip", ["-selection", "clipboard"], { input: text });
+      execFileSync("/usr/bin/xclip", ["-selection", "clipboard"], {
+        input: text,
+      });
     }
     return true;
   } catch {
     return false;
   }
-}
+};
 
-function openInBrowser(url: string): boolean {
+const openInBrowser = (url: string): boolean => {
   try {
-    const platform = process.platform;
+    const { platform } = process;
     if (platform === "darwin") {
-      execFileSync("open", [url]);
+      execFileSync("/usr/bin/open", [url]);
     } else if (platform === "win32") {
-      execFileSync("cmd", ["/c", "start", "", url]);
+      execFileSync("C:\\Windows\\System32\\cmd.exe", ["/c", "start", "", url]);
     } else {
-      execFileSync("xdg-open", [url]);
+      execFileSync("/usr/bin/xdg-open", [url]);
     }
     return true;
   } catch {
     return false;
   }
-}
+};
 
 // ---------------------------------------------------------------------------
-// Axis 6: Safety Rails — dry-run for mutating commands
+// Share API client — POST helpers and response parsing
 // ---------------------------------------------------------------------------
 
-async function postShare(
+const tryParseJson = async (res: Response): Promise<unknown> => {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+};
+
+const getErrorMessage = (body: unknown): string | undefined => {
+  if (isRecord(body) && typeof body.error === "string") {
+    return body.error;
+  }
+  return undefined;
+};
+
+const parseShareResponse = (body: unknown): { id: string; url: string } => {
+  if (
+    isRecord(body) &&
+    typeof body.id === "string" &&
+    typeof body.url === "string"
+  ) {
+    return { id: body.id, url: body.url };
+  }
+  throw new Error("Malformed share response: missing id or url");
+};
+
+/**
+ * POST an encoded document to the share API and return its short id + URL.
+ * A non-2xx response throws with the API's own `error` field when present,
+ * falling back to the HTTP status text; a 2xx body missing `id`/`url` is
+ * treated as malformed ({@link parseShareResponse}).
+ */
+const postShare = async (
   baseUrl: string,
-  data: string,
-): Promise<{ id: string; url: string }> {
+  data: string
+): Promise<{ id: string; url: string }> => {
   const res = await fetch(`${baseUrl}/api/share`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
+    const body = await tryParseJson(res);
     throw new Error(
-      `Share failed (${res.status}): ${(body as { error?: string }).error ?? res.statusText}`,
+      `Share failed (${res.status}): ${getErrorMessage(body) ?? res.statusText}`
     );
   }
-  return res.json() as Promise<{ id: string; url: string }>;
-}
+  const body = await tryParseJson(res);
+  return parseShareResponse(body);
+};
 
 // ---------------------------------------------------------------------------
 // Commands
@@ -225,12 +315,12 @@ interface ShareCommandOptions extends CommandOptions {
   hash?: string;
 }
 
-function emitUrl(
+const emitUrl = (
   mode: OutputMode,
   url: string,
   copyLabel: string,
-  options: { copy: boolean; open: boolean },
-): void {
+  options: { copy: boolean; open: boolean }
+): void => {
   if (mode === "json") {
     emitJson({ ok: true, url });
     return;
@@ -256,37 +346,37 @@ function emitUrl(
   if (!(options.copy || options.open)) {
     console.log(url);
   }
-}
+};
 
-function cmdCreate(
+const cmdCreate = (
   filePath: string | undefined,
-  options: CommandOptions,
-): void {
+  options: CommandOptions
+): void => {
   const raw = readInput(filePath);
   const { objects: minimal, layers: userLayers } = parseInput(raw);
   const { objects: filled, layer: defaultLayer } = fillDefaults(minimal);
   const { objects: resolved, layers } = resolveLayers(
     filled,
     defaultLayer,
-    userLayers,
+    userLayers
   );
   const objects = addPadding(resolved, 1);
   const encoded = encodeDocument(objects, layers);
   const url = `${options.baseUrl}/#${encoded}`;
   emitUrl(options.mode, url, "URL", options);
-}
+};
 
-async function cmdShare(
+const cmdShare = async (
   filePath: string | undefined,
-  options: ShareCommandOptions,
-): Promise<void> {
+  options: ShareCommandOptions
+): Promise<void> => {
   let encoded: string;
   let objectCount: number | undefined;
 
-  if (options.hash) {
+  if (options.hash !== undefined && options.hash !== "") {
     validateHashValue(options.hash);
     const hashValue = options.hash.includes("#")
-      ? options.hash.split("#")[1]
+      ? (options.hash.split("#")[1] ?? "")
       : options.hash;
     encoded = hashValue;
   } else {
@@ -297,27 +387,29 @@ async function cmdShare(
     const { objects: resolved, layers } = resolveLayers(
       filled,
       defaultLayer,
-      userLayers,
+      userLayers
     );
     const objects = addPadding(resolved, 1);
     encoded = encodeDocument(objects, layers);
   }
 
-  // Axis 6: --dry-run validates without POSTing
+  // --dry-run runs the full encode/validate pipeline but stops before the POST,
+  // reporting encoded byte size and object count so callers can vet input
+  // (and estimate URL length) without creating anything.
   if (options.dryRun) {
     if (options.mode === "json") {
       emitJson({
-        ok: true,
         dryRun: true,
-        valid: true,
-        objectCount: objectCount ?? null,
         encodedBytes: encoded.length,
+        objectCount: objectCount ?? null,
+        ok: true,
+        valid: true,
       });
     } else {
       const countMsg =
         objectCount === undefined ? "" : `, ${objectCount} object(s)`;
       console.log(
-        `Dry run: valid input${countMsg}, ${encoded.length} bytes encoded. No URL created.`,
+        `Dry run: valid input${countMsg}, ${encoded.length} bytes encoded. No URL created.`
       );
     }
     return;
@@ -325,95 +417,95 @@ async function cmdShare(
 
   const { url } = await postShare(options.baseUrl, encoded);
   emitUrl(options.mode, url, "Short URL", options);
-}
+};
 
-function cmdRender(
+const cmdRender = (
   filePath: string | undefined,
-  options: { mode: OutputMode },
-): void {
+  options: { mode: OutputMode }
+): void => {
   const raw = readInput(filePath);
   const { objects: minimal, layers: userLayers } = parseInput(raw);
   const { objects: filled, layer: defaultLayer } = fillDefaults(minimal);
   const { objects: resolved, layers } = resolveLayers(
     filled,
     defaultLayer,
-    userLayers,
+    userLayers
   );
   const objects = addPadding(resolved, 1);
   const gridSize = computeRenderGridSize(objects);
   const grid = compose(objects, gridSize, layers);
   const ascii = gridToString(grid);
 
-  // Axis 4: structured output includes dimensions for context window awareness
+  // structured output includes dimensions for context window awareness
   if (options.mode === "json") {
     emitJson({
-      ok: true,
       ascii,
-      width: gridSize.cols,
       height: gridSize.rows,
       objectCount: minimal.length,
+      ok: true,
+      width: gridSize.cols,
     });
     return;
   }
   console.log(ascii);
-}
+};
 
 // ---------------------------------------------------------------------------
-// Axis 3: Schema Introspection — runtime JSON Schema from Zod definitions
+// Schema introspection — runtime JSON Schema from Zod definitions
 // ---------------------------------------------------------------------------
 
-function cmdSchema(): void {
+const cmdSchema = (): void => {
   const documentSchema = z.object({
-    objects: z
-      .array(wireObjectSchema)
-      .describe("Array of wire objects to render"),
     layers: z
       .array(layerSchema)
       .optional()
       .describe(
-        "Named layers for organizing objects. Objects reference layers via layerId.",
+        "Named layers for organizing objects. Objects reference layers via layerId."
       ),
+    objects: z
+      .array(wireObjectSchema)
+      .describe("Array of wire objects to render"),
   });
   const jsonSchema = z.toJSONSchema(documentSchema);
   console.log(JSON.stringify(jsonSchema, null, 2));
-}
+};
 
 // ---------------------------------------------------------------------------
-// Axis 7: Agent Knowledge Packaging — layout guide accessible via CLI
+// Agent knowledge packaging — layout guide accessible via CLI
 // ---------------------------------------------------------------------------
 
-function cmdContext(): void {
+const cmdContext = (): void => {
   console.log(LAYOUT_GUIDE);
-}
+};
 
 // ---------------------------------------------------------------------------
 // Help — structured in JSON mode, human-readable otherwise
 // ---------------------------------------------------------------------------
 
-function printHelp(mode: OutputMode): void {
+const printHelp = (mode: OutputMode): void => {
   if (mode === "json") {
     emitJson({
-      ok: true,
       commands: {
+        context: "Print the layout guide for AI agent use",
         create: "Generate an editable Wiretext URL (hash fragment)",
-        share: "Generate a short Wiretext URL via the share API",
         render: "Render ASCII art to stdout",
         schema: "Print JSON Schema for the wire object input format",
-        context: "Print the layout guide for AI agent use",
-      },
-      options: {
-        "--json": "Structured JSON output (auto-enabled when piped)",
-        "--open, -o": "Open URL in default browser (create/share)",
-        "--copy, -c": "Copy URL to clipboard (create/share)",
-        "--dry-run": "Validate without posting (share only)",
-        "--base-url <url>": `Base URL (default: ${DEFAULT_BASE_URL})`,
-        "--hash <url|hash>": "Share an existing hash URL (share only)",
+        share: "Generate a short Wiretext URL via the share API",
       },
       input: '{ "objects": [...], "layers": [...] } or bare [...]',
+      ok: true,
+      options: {
+        "--base-url <url>": `Base URL (default: ${DEFAULT_BASE_URL})`,
+        "--copy, -c": "Copy URL to clipboard (create/share)",
+        "--dry-run": "Validate without posting (share only)",
+        "--hash <url|hash>": "Share an existing hash URL (share only)",
+        "--json": "Structured JSON output (auto-enabled when piped)",
+        "--open, -o": "Open URL in default browser (create/share)",
+      },
       outputFormats: {
+        error: '{ "ok": false, "error": "...", "code": "..." }',
         success:
           '{ "ok": true, "url": "..." } or { "ok": true, "ascii": "...", "width": N, "height": N }',
-        error: '{ "ok": false, "error": "...", "code": "..." }',
       },
     });
     return;
@@ -449,7 +541,7 @@ JSON output (auto-enabled in non-TTY / piped contexts):
 Agent introspection:
   wiretext schema       Full JSON Schema for the input format
   wiretext context      Layout guide with sizing rules and gotchas`);
-}
+};
 
 // ---------------------------------------------------------------------------
 // Arg parsing (extracted for complexity budget)
@@ -467,32 +559,48 @@ interface ParsedArgs {
 }
 
 const BOOLEAN_FLAGS: Record<string, keyof ParsedArgs> = {
+  "--copy": "shouldCopy",
+  "--dry-run": "dryRun",
   "--json": "jsonFlag",
   "--open": "shouldOpen",
-  "-o": "shouldOpen",
-  "--copy": "shouldCopy",
   "-c": "shouldCopy",
-  "--dry-run": "dryRun",
+  "-o": "shouldOpen",
 };
 
-function parseArgs(args: string[]): ParsedArgs {
+/**
+ * Parse argv into a flat options record. Grammar:
+ *   - boolean flags from {@link BOOLEAN_FLAGS} (`--json`, `--open`/`-o`,
+ *     `--copy`/`-c`, `--dry-run`)
+ *   - `--output json` — agent-friendly alias for `--json`
+ *   - `--base-url <url>` and `--hash <url|hash>` each consume the next token
+ *   - everything else is positional: `[0]` is the command, `[1]` the file path
+ *     (where `-` means stdin, per {@link readInput})
+ * Unknown flags fall through to positionals rather than erroring.
+ */
+const parseArgs = (args: string[]): ParsedArgs => {
   let baseUrl = DEFAULT_BASE_URL;
   let hashValue: string | undefined;
   const booleans: Record<string, boolean> = {};
   const positional: string[] = [];
 
-  for (let i = 0; i < args.length; i++) {
+  for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
+    if (arg === undefined) {
+      continue;
+    }
+    const next = args[i + 1];
     const boolKey = BOOLEAN_FLAGS[arg];
     if (boolKey) {
       booleans[boolKey] = true;
-    } else if (arg === "--output" && args[i + 1] === "json") {
+    } else if (arg === "--output" && next === "json") {
       booleans.jsonFlag = true;
-      i++;
-    } else if (arg === "--base-url" && i + 1 < args.length) {
-      baseUrl = args[++i];
-    } else if (arg === "--hash" && i + 1 < args.length) {
-      hashValue = args[++i];
+      i += 1;
+    } else if (arg === "--base-url" && next !== undefined) {
+      baseUrl = next;
+      i += 1;
+    } else if (arg === "--hash" && next !== undefined) {
+      hashValue = next;
+      i += 1;
     } else {
       positional.push(arg);
     }
@@ -508,17 +616,22 @@ function parseArgs(args: string[]): ParsedArgs {
     shouldCopy: booleans.shouldCopy ?? false,
     shouldOpen: booleans.shouldOpen ?? false,
   };
-}
+};
 
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
-async function main(): Promise<void> {
+const main = async (): Promise<void> => {
   const parsed = parseArgs(process.argv.slice(2));
   const mode = detectMode(parsed.jsonFlag);
 
-  if (!parsed.cmd || parsed.cmd === "--help" || parsed.cmd === "-h") {
+  if (
+    parsed.cmd === undefined ||
+    parsed.cmd === "" ||
+    parsed.cmd === "--help" ||
+    parsed.cmd === "-h"
+  ) {
     printHelp(mode);
     process.exit(0);
   }
@@ -535,32 +648,43 @@ async function main(): Promise<void> {
   };
 
   switch (parsed.cmd) {
-    case "create":
+    case "create": {
       cmdCreate(parsed.filePath, cmdOptions);
       break;
-    case "share":
+    }
+    case "share": {
       await cmdShare(parsed.filePath, {
         ...cmdOptions,
         dryRun: parsed.dryRun,
         hash: parsed.hashValue,
       });
       break;
-    case "render":
+    }
+    case "render": {
       cmdRender(parsed.filePath, { mode });
       break;
-    case "schema":
+    }
+    case "schema": {
       cmdSchema();
       break;
-    case "context":
+    }
+    case "context": {
       cmdContext();
       break;
-    default:
+    }
+    default: {
       emitError(mode, `Unknown command: ${parsed.cmd}`, "UNKNOWN_COMMAND");
+    }
   }
-}
+};
 
-main().catch((error) => {
+// Last-resort handler for anything main() throws (bad input, fs/network errors).
+// Mode is re-derived straight from argv because arg parsing may itself have
+// failed, and errors must still honor --json / non-TTY output.
+try {
+  await main();
+} catch (error) {
   const message = error instanceof Error ? error.message : String(error);
   const mode = detectMode(process.argv.includes("--json"));
   emitError(mode, message, "ERROR");
-});
+}

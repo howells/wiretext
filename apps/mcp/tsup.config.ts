@@ -1,11 +1,11 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
+  banner: { js: "#!/usr/bin/env node" },
+  bundle: true,
   entry: ["src/server.ts"],
   format: ["esm"],
-  target: "node20",
-  bundle: true,
   minify: true,
-  banner: { js: "#!/usr/bin/env node" },
-  noExternal: [/.*/],
+  noExternal: [/.*/u],
+  target: "node20",
 });

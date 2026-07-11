@@ -72,31 +72,31 @@ Render wire objects as ASCII art. Useful for previewing layouts inline.
 
 **Components:**
 
-| Type | Description | Key Props |
-|------|-------------|-----------|
-| `button` | Clickable button | `label`, `icon`, `align` |
-| `input` | Text input field | `label`, `icon` |
-| `select` | Dropdown select | `label` |
-| `checkbox` | Checkbox with label | `label`, `checked` |
-| `radio` | Radio button with label | `label`, `checked` |
-| `toggle` | On/off switch | `label`, `checked` |
-| `table` | Data table | `columns`, `rows`, `filterable` |
-| `modal` | Modal dialog | `label` |
-| `browser` | Browser window | `label` (URL) |
-| `card` | Content card | `label` (title) |
-| `navbar` | Navigation bar | `navItems` |
-| `tabs` | Tab bar | `tabs` |
-| `progress` | Progress bar | `progress` (0-100) |
-| `icon` | Single icon character | `icon` |
-| `image` | Image placeholder | `label`, `icon` |
-| `alert` | Alert banner | `label`, `alertType` |
-| `avatar` | User avatar | `label` (initials), `icon` |
-| `divider` | Horizontal rule | `label` |
-| `breadcrumb` | Breadcrumb nav | `items`, `separator` |
-| `list` | Bulleted/numbered list | `items`, `listStyle` |
-| `stepper` | Step indicator | `items`, `activeStep` |
-| `rating` | Dot rating | `value`, `maxValue` |
-| `skeleton` | Loading placeholder | width, height |
+| Type         | Description             | Key Props                       |
+| ------------ | ----------------------- | ------------------------------- |
+| `button`     | Clickable button        | `label`, `icon`, `align`        |
+| `input`      | Text input field        | `label`, `icon`                 |
+| `select`     | Dropdown select         | `label`                         |
+| `checkbox`   | Checkbox with label     | `label`, `checked`              |
+| `radio`      | Radio button with label | `label`, `checked`              |
+| `toggle`     | On/off switch           | `label`, `checked`              |
+| `table`      | Data table              | `columns`, `rows`, `filterable` |
+| `modal`      | Modal dialog            | `label`                         |
+| `browser`    | Browser window          | `label` (URL)                   |
+| `card`       | Content card            | `label` (title)                 |
+| `navbar`     | Navigation bar          | `navItems`                      |
+| `tabs`       | Tab bar                 | `tabs`                          |
+| `progress`   | Progress bar            | `progress` (0-100)              |
+| `icon`       | Single icon character   | `icon`                          |
+| `image`      | Image placeholder       | `label`, `icon`                 |
+| `alert`      | Alert banner            | `label`, `alertType`            |
+| `avatar`     | User avatar             | `label` (initials), `icon`      |
+| `divider`    | Horizontal rule         | `label`                         |
+| `breadcrumb` | Breadcrumb nav          | `items`, `separator`            |
+| `list`       | Bulleted/numbered list  | `items`, `listStyle`            |
+| `stepper`    | Step indicator          | `items`, `activeStep`           |
+| `rating`     | Dot rating              | `value`, `maxValue`             |
+| `skeleton`   | Loading placeholder     | width, height                   |
 
 ## Example
 
