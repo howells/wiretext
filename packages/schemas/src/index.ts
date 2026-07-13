@@ -295,7 +295,7 @@ export const componentSchema = z.object({
     .min(3)
     .optional()
     .describe(
-      "Width including borders. Minimum varies by component: button=label+4, input=label+6, checkbox/radio=label+8, table=24, card/modal=10, browser=20, tabs=20, progress=8, icon=3, navbar=20."
+      "Width including borders; the engine clamps to a per-type minimum. Labeled components need about label-length + padding — button/input/image +4, select +5, toggle/alert +6, checkbox/radio +8, card/modal +4, browser +12 (input adds 2 more with an icon) — with a small floor when unlabeled. Content components (table, tabs, navbar, breadcrumb, list, stepper, rating) size to their items. icon=1, progress=3, skeleton=1."
     ),
 });
 
