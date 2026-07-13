@@ -15,7 +15,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/commoninstruments/wiretext.git",
+    "url": "git+https://github.com/howells/wiretext.git",
     "directory": "apps/cli"
   },
   "bin": {
