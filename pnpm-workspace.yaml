@@ -7,15 +7,6 @@ allowBuilds:
   esbuild: true
   sharp: true
 
-# Trusted publishers exempt from the release-age supply-chain gate:
-# our own packages plus fast-release transitives of @howells/lint and posthog-js.
-minimumReleaseAgeExclude:
-  - "@howells/*"
-  - "@wiretext/*"
-  - "posthog-js"
-  - "@posthog/*"
-  - "@eslint/*"
-
 onlyBuiltDependencies:
   - "@biomejs/biome"
   - core-js
