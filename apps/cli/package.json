@@ -33,6 +33,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "lint": "howells-check .",
     "lint:fix": "howells-fix .",
     "prepublishOnly": "pnpm build"
@@ -43,6 +44,7 @@
     "@wiretext/schemas": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.10",
     "zod": "^4.4.3"
   }
 }

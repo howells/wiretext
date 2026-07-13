@@ -1,9 +1,9 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import type { Redis } from "@upstash/redis";
-import { decodeDocument } from "@wiretext/engine";
 import { nanoid } from "nanoid";
 
 import { redis } from "@/lib/redis";
+import { isValidDocument } from "@/lib/share-validation";
 
 // Mints short `/w/:id` share links by persisting an encoded document to Upstash
 // Redis. Runs on the Edge runtime and is the untrusted-input boundary of the
@@ -19,15 +19,6 @@ const SHORT_ID_LENGTH = 8;
 // collisions are astronomically unlikely, so 3 is ample headroom).
 const SHARE_ID_ATTEMPTS = 3;
 
-const VALID_OBJECT_TYPES = new Set([
-  "box",
-  "text",
-  "line",
-  "arrow",
-  "connector",
-  "component",
-]);
-
 const ratelimit =
   redis === null
     ? null
@@ -38,49 +29,6 @@ const ratelimit =
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object";
-
-const isObjectLike = (value: unknown): boolean =>
-  value !== null && typeof value === "object";
-
-/** Structural validation beyond what decodeDocument checks */
-const isValidDocument = (data: string): boolean => {
-  const doc = decodeDocument(data);
-  if (!doc) {
-    return false;
-  }
-  if (!(Array.isArray(doc.objects) && Array.isArray(doc.layers))) {
-    return false;
-  }
-  if (doc.objects.length > 500) {
-    return false;
-  }
-  if (doc.layers.length > 50) {
-    return false;
-  }
-
-  for (const obj of doc.objects) {
-    if (!isObjectLike(obj)) {
-      return false;
-    }
-    if (!VALID_OBJECT_TYPES.has(obj.type)) {
-      return false;
-    }
-    if (typeof obj.id !== "string") {
-      return false;
-    }
-  }
-
-  for (const layer of doc.layers) {
-    if (!isObjectLike(layer)) {
-      return false;
-    }
-    if (typeof layer.id !== "string" || typeof layer.name !== "string") {
-      return false;
-    }
-  }
-
-  return true;
-};
 
 /** Extract the share payload from the request body, or an error response. */
 const readPayload = async (

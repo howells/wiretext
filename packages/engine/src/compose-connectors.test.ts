@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { compose, gridToString } from "./compose";
+import { compose, getConnectorMidpoint, gridToString } from "./compose";
 import { must } from "./test-utils";
-import type { BoxObject, ConnectorObject } from "./types";
+import type { BoxObject, ConnectorObject, GridPoint } from "./types";
 
 const makeConnector = (
   overrides: Partial<ConnectorObject> = {}
@@ -232,6 +232,59 @@ describe("compose", () => {
       for (let c = 0; c < 20; c += 1) {
         expect(must(grid[7])[c]).toBe(c === 5 ? "│" : " ");
       }
+    });
+  });
+});
+
+describe("getConnectorMidpoint", () => {
+  it("returns the midpoint of a single horizontal segment", () => {
+    const points: GridPoint[] = [
+      { col: 0, row: 5 },
+      { col: 10, row: 5 },
+    ];
+    // totalLength = 10, halfLen = 5; midpoint is 5 cols in from (0, 5)
+    expect(getConnectorMidpoint(points)).toEqual({
+      col: 5,
+      isHorizontal: true,
+      row: 5,
+    });
+  });
+
+  it("returns the midpoint of a single vertical segment", () => {
+    const points: GridPoint[] = [
+      { col: 3, row: 0 },
+      { col: 3, row: 8 },
+    ];
+    // totalLength = 8, halfLen = 4; midpoint is 4 rows down from (3, 0)
+    expect(getConnectorMidpoint(points)).toEqual({
+      col: 3,
+      isHorizontal: false,
+      row: 4,
+    });
+  });
+
+  it("finds the midpoint on the correct segment of a multi-segment L-shaped path", () => {
+    const points: GridPoint[] = [
+      { col: 0, row: 0 },
+      { col: 0, row: 5 },
+      { col: 8, row: 5 },
+    ];
+    // Segment 1 (vertical): length 5. Segment 2 (horizontal): length 8.
+    // totalLength = 13, halfLen = 6.5.
+    // 6.5 falls within segment 2: remaining = 6.5 - 5 = 1.5, Math.round(1.5) = 2.
+    // Midpoint lands on the horizontal segment at (0 + 2, 5).
+    expect(getConnectorMidpoint(points)).toEqual({
+      col: 2,
+      isHorizontal: true,
+      row: 5,
+    });
+  });
+
+  it("returns the fallback origin for an empty path", () => {
+    expect(getConnectorMidpoint([])).toEqual({
+      col: 0,
+      isHorizontal: true,
+      row: 0,
     });
   });
 });
