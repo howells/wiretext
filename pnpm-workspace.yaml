@@ -7,6 +7,12 @@ allowBuilds:
   esbuild: true
   sharp: true
 
+# pnpm enforces a 24h minimum-release-age supply-chain gate by default. Exempt
+# only our own first-party scope, so a freshly published @howells/* release
+# doesn't fail install/CI; the gate still applies to all third-party packages.
+minimumReleaseAgeExclude:
+  - "@howells/*"
+
 onlyBuiltDependencies:
   - "@biomejs/biome"
   - core-js
