@@ -1,0 +1,207 @@
+# The only GitHub Actions workflow in this repository, and the only thing it does
+# is publish to npm. Checks run locally; nothing here runs on push, on pull
+# request, or on a schedule.
+#
+# It exists because npm will not let a package be published unattended from a
+# developer machine. Trusted publishing (OIDC) is the one path that needs no
+# token and no one-time code, and it only works from a hosted CI runner.
+#
+# Renaming this file breaks publishing: npm's trusted publisher configuration
+# names the workflow by filename.
+name: Publish
+
+# A version tag is what ships a release, and it names the package because this
+# repository publishes more than one: `wiretext@0.3.5`. The tag stays in
+# the repo as the record of what went out, and the job refuses to run when the
+# tag and the package.json version disagree, so a mistyped tag stops rather than
+# publishes. workflow_dispatch is kept for the dry run and for re-running a
+# failed publish without cutting a second tag.
+on:
+  push:
+    tags:
+      - "*@[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to publish
+        required: true
+        type: choice
+        options:
+          - "wiretext"
+          - "@wiretext/mcp"
+      dry_run:
+        description: Run every check and pack the tarball, but do not publish
+        type: boolean
+        default: false
+
+# id-token is what npm exchanges for publish rights. Nothing here writes to the
+# repository.
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.15.0
+          cache: pnpm
+
+      # Trusted publishing needs npm 11.5.1 or later. Node 24.15 already ships
+      # 11.12.1, so assert rather than reinstall: a global npm install is a
+      # moving part that buys nothing and can itself fail.
+      - name: Check npm can do trusted publishing
+        run: |
+          set -euo pipefail
+          have=$(npm --version)
+          need=11.5.1
+          if [ "$(printf '%s\n%s\n' "$need" "$have" | sort -V | head -1)" != "$need" ]; then
+            echo "::error::npm $have predates trusted publishing (need >= $need)"
+            exit 1
+          fi
+          echo "npm $have"
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # The workspace is the source of truth for where a package lives, so a new
+      # package needs no change here beyond its name in the dispatch list.
+      - name: Resolve the release target
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            tag="$GITHUB_REF_NAME"
+            wanted="${tag%@*}"
+            tagged="${tag##*@}"
+          else
+            wanted='${{ inputs.package }}'
+            tagged=""
+          fi
+          target=$(pnpm list -r --depth -1 --json | node -e "
+            const wanted = process.argv[1];
+            let raw = '';
+            process.stdin.on('data', (chunk) => { raw += chunk; });
+            process.stdin.on('end', () => {
+              const found = JSON.parse(raw).find((entry) => entry.name === wanted);
+              if (!found) {
+                throw new Error(wanted + ' is not a package in this workspace');
+              }
+              const relative = require('node:path').relative(process.cwd(), found.path);
+              console.log([found.name, found.version, relative].join(' '));
+            });
+          " "$wanted")
+          name=${target%% *}
+          rest=${target#* }
+          version=${rest%% *}
+          directory=${rest#* }
+          # The tag is a claim about what is being shipped; the manifest is what
+          # actually ships. A mistyped tag stops here instead of publishing a
+          # version nobody asked for.
+          if [ -n "$tagged" ] && [ "$tagged" != "$version" ]; then
+            echo "::error::tag says $tagged but $directory/package.json says $version"
+            exit 1
+          fi
+          {
+            echo "name=$name"
+            echo "version=$version"
+            echo "directory=$directory"
+            echo "manifest=$directory/package.json"
+            echo "slug=$(echo "$name" | tr '@/' '--' | sed 's/^-//')"
+          } >> "$GITHUB_OUTPUT"
+          echo "Publishing $name@$version from $directory at $GITHUB_SHA"
+      # A clearer failure than npm's 403 when the version is already taken.
+      # Skipped on a dry run: a rehearsal of the checks should not need a
+      # version bump to be allowed to run.
+      - name: Refuse to republish an existing version
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          name='${{ steps.version.outputs.name }}'
+          version='${{ steps.version.outputs.version }}'
+          encoded=$(node -p "encodeURIComponent('$name')")
+          status=$(curl -s -o /dev/null -w '%{http_code}' -H 'Authorization:' \
+            "https://registry.npmjs.org/$encoded/$version")
+          if [ "$status" = "200" ]; then
+            echo "::error::$name@$version is already on the registry. Bump the version first."
+            exit 1
+          fi
+          echo "$name@$version is not published yet (registry returned $status)."
+
+      - name: Verify and pack
+        run: |
+          set -euo pipefail
+          pnpm check
+          pnpm build
+          mkdir -p "$GITHUB_WORKSPACE/release-artifacts"
+          pnpm --filter "${{ steps.version.outputs.name }}" pack \
+            --pack-destination "$GITHUB_WORKSPACE/release-artifacts"
+      # Installing the tarball into a fresh consumer outside the working
+      # directory is what catches an uninstallable package, and a green build
+      # does not replace it. It also catches a workspace: or catalog: specifier
+      # that never got rewritten, which installs fine from the repo and fails
+      # for the first stranger who runs npm install.
+      - name: Install the tarball into a fresh consumer
+        run: |
+          set -euo pipefail
+          tarball=$(ls "$GITHUB_WORKSPACE"/release-artifacts/*.tgz)
+          if tar -xzOf "$tarball" package/package.json | grep -q '"\(workspace\|catalog\):'; then
+            echo "::error::the tarball still names a workspace: or catalog: specifier"
+            exit 1
+          fi
+          consumer=$(mktemp -d)
+          echo '{"private":true,"type":"module"}' > "$consumer/package.json"
+          cd "$consumer"
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock "$tarball"
+          node -e "
+            const { existsSync } = require('node:fs');
+            const name = '${{ steps.version.outputs.name }}';
+            const installed = 'node_modules/' + name + '/package.json';
+            if (!existsSync(installed)) {
+              throw new Error(name + ' did not install into the consumer');
+            }
+            const manifest = require('./' + installed);
+            if (manifest.version !== '${{ steps.version.outputs.version }}') {
+              throw new Error('installed ' + manifest.version + ', expected ${{ steps.version.outputs.version }}');
+            }
+            console.log('Installed ' + name + '@' + manifest.version + ' from the packed tarball');
+          "
+      # Publishing the packed tarball, never the working directory. No --access
+      # flag; publishConfig decides, and npm access is package-level rather than
+      # version-level.
+      #
+      # --provenance is passed explicitly. npm documents trusted publishing as
+      # attaching provenance by itself; measured as a controlled pair on
+      # @howells/lint, the flag is what actually attaches it.
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          npm publish "$(ls "$GITHUB_WORKSPACE"/release-artifacts/*.tgz)" --provenance
+
+      # Proves anonymous consumers can reach the release, which a successful
+      # publish does not prove on its own. No credentials exist on this runner -
+      # trusted publishing leaves no token behind - so the install is genuinely
+      # anonymous, and a restricted package fails it.
+      - name: Verify anonymous resolution
+        if: ${{ !inputs.dry_run }}
+        run: node scripts/check-published-package.mjs "${{ steps.version.outputs.manifest }}"
+
+      - name: Keep the release artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.version.outputs.slug }}-${{ steps.version.outputs.version }}
+          path: release-artifacts/
+          retention-days: 90
+          if-no-files-found: error
