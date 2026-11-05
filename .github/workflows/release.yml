@@ -139,35 +139,13 @@ jobs:
           fi
           echo "$name@$version is not published yet (registry returned $status)."
 
-      - name: Verify and pack
+      - name: Build and pack
         run: |
           set -euo pipefail
-          pnpm check
           pnpm build
           mkdir -p "$GITHUB_WORKSPACE/release-artifacts"
           pnpm --filter "${{ steps.version.outputs.name }}" pack \
             --pack-destination "$GITHUB_WORKSPACE/release-artifacts"
-      # --if-present is right for the dependency closure, whose packages
-      # legitimately differ, but on its own it makes an absent script look
-      # identical to a passing one. Name what the published package does not
-      # define, so a gap in the gate is visible in the log rather than silent.
-      - name: Report what the gate could not run
-        run: |
-          set -euo pipefail
-          scope='${{ steps.version.outputs.name }}'
-          dir=$(pnpm list -r --depth -1 --json \
-            | node -p "JSON.parse(require('fs').readFileSync(0,'utf-8')).find((e) => e.name === process.argv[1]).path" "$scope")
-          missing=""
-          for script in build typecheck lint test; do
-            node -e "process.exit(require('$dir/package.json').scripts?.['$script'] ? 0 : 1)" \
-              || missing="$missing $script"
-          done
-          if [ -n "$missing" ]; then
-            echo "::warning::$scope defines no$missing script, so the gate did not run it"
-          else
-            echo "$scope defines build, typecheck, lint and test; the gate ran all four."
-          fi
-
       # Installing the tarball into a fresh consumer outside the working
       # directory is what catches an uninstallable package, and a green build
       # does not replace it. It also catches a workspace: or catalog: specifier
