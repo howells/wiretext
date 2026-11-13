@@ -6,12 +6,12 @@ Unicode wireframe design tool: structured JSON in, ASCII/Unicode layouts out, vi
 
 ### Issue tracker
 
-Linear, workspace howells, team Wiretext (WIR). See docs/agents/issue-tracker.md.
+Linear, workspace `howells`, team `WIR`. See `~/Sites/home/docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Default triage labels. See ~/Sites/home/docs/agents/triage-labels.md.
+Default triage labels. See `~/Sites/home/docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context. See ~/Sites/home/docs/agents/domain.md.
+Single-context. See `~/Sites/home/docs/agents/domain.md`.
