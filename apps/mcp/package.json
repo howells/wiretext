@@ -36,7 +36,7 @@
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "@types/node": "^26.1.1",
     "@wiretext/engine": "workspace:*",
     "@wiretext/schemas": "workspace:*",
