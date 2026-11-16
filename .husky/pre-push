@@ -1,0 +1,2 @@
+pnpm typecheck || exit 1
+pnpm lint || exit 1
