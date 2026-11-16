@@ -1072,9 +1072,9 @@ const orgChart: DemoLayout = {
       type: "component",
       componentType: "avatar",
       position: { col: 26, row: 4 },
-      label: "JC",
+      label: "PM",
     },
-    { type: "text", content: "Jane Chen", position: { col: 32, row: 5 } },
+    { type: "text", content: "Polly Murray", position: { col: 32, row: 5 } },
     {
       type: "line",
       position: { col: 34, row: 7 },

@@ -774,7 +774,7 @@ const chat: ShowcaseLayout = {
     {
       componentType: "list",
       items: [
-        "● Sarah Chen",
+        "● Nancy Stevens",
         "● Mike Ross",
         "○ Amy Park",
         "○ Tom Blake",
@@ -791,7 +791,7 @@ const chat: ShowcaseLayout = {
       type: "box",
       width: 48,
     },
-    { content: "Sarah Chen ●", position: { col: 25, row: 4 }, type: "text" },
+    { content: "Nancy Stevens ●", position: { col: 25, row: 4 }, type: "text" },
     {
       componentType: "divider",
       position: { col: 24, row: 5 },
@@ -836,7 +836,7 @@ const chat: ShowcaseLayout = {
     },
     { content: "10:34 AM", position: { col: 25, row: 25 }, type: "text" },
     {
-      content: "Sarah is typing...",
+      content: "Nancy is typing...",
       position: { col: 25, row: 30 },
       type: "text",
     },
@@ -1340,7 +1340,7 @@ const adminUsers: ShowcaseLayout = {
         ["Alice Wang", "alice@acme.com", "Viewer", "Active", "3 hours ago"],
         ["Tom Brown", "tom@acme.com", "Editor", "Inactive", "30 days ago"],
         ["Sara Lee", "sara@acme.com", "Admin", "Active", "2 hours ago"],
-        ["Mike Chen", "mike@acme.com", "Viewer", "Pending", "Never"],
+        ["Tony Robertson", "tony@acme.com", "Viewer", "Pending", "Never"],
       ],
       type: "component",
       width: 80,
